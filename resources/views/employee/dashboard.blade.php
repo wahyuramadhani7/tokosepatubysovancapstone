@@ -1,102 +1,160 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="dashboard-container">
-    <!-- Top Navigation Bar -->
-    <div class="top-nav">
-        <div class="nav-logo">
-            <img src="path-to-your-logo.svg" alt="Logo">
-        </div>
-        <div class="nav-links">
-            <a href="#" class="active">DASHBOARD</a>
-            <a href="#">Inventory</a>
-            <a href="#">Transaksi</a>
-            <a href="#">Laporan</a>
-        </div>
-    </div>
-
+<div class="w-full bg-white">
     <!-- Hero Section with Background -->
-    <div class="hero-section">
-        <div class="brand-tag">
-            <h2>@SEPATUBYSOVAN</h2>
+    <div class="relative w-full h-48 bg-gray-200 overflow-hidden">
+        <!-- Background image will be replaced by you -->
+        <div class="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200">
+            <!-- You'll replace this with your actual background image -->
+        </div>
+        
+        <!-- Brand Tag -->
+        <div class="absolute left-10 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-80 px-5 py-2 rounded-lg">
+            <h2 class="text-orange-500 font-bold text-lg">@SEPATUBYSOVAN</h2>
         </div>
     </div>
 
     <!-- Main Dashboard Content -->
-    <div class="dashboard-content">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <!-- Daily Report Section -->
-        <div class="report-section">
-            <h2 class="section-title">LAPORAN HARIAN</h2>
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-center mb-6">LAPORAN HARIAN</h2>
             
-            <div class="stats-cards">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <img src="path-to-shoe-icon.svg" alt="Product Icon">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Total Product Card -->
+                <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-center shadow-sm">
+                    <div class="mr-4">
+                        <div class="w-12 h-12 bg-orange-500 rounded-md flex items-center justify-center">
+                            <!-- Shoe icon placeholder -->
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <h3>Total Produk</h3>
-                        <div class="stat-value">--</div>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <img src="path-to-user-icon.svg" alt="User Icon">
-                    </div>
-                    <div class="stat-info">
-                        <h3>Pengunjung Hari Ini</h3>
-                        <div class="stat-value">--</div>
+                    <div>
+                        <h3 class="text-sm text-gray-700 mb-1">Total Produk</h3>
+                        <div class="bg-gray-800 text-white px-4 py-1 rounded font-bold text-xl">--</div>
                     </div>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <img src="path-to-stock-icon.svg" alt="Stock Icon">
+                <!-- Visitors Card -->
+                <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-center shadow-sm">
+                    <div class="mr-4">
+                        <div class="w-12 h-12 bg-orange-500 rounded-md flex items-center justify-center">
+                            <!-- User icon placeholder -->
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <h3>Total Stok</h3>
-                        <div class="stat-value">--</div>
+                    <div>
+                        <h3 class="text-sm text-gray-700 mb-1">Pengunjung Hari Ini</h3>
+                        <div class="bg-gray-800 text-white px-4 py-1 rounded font-bold text-xl">--</div>
+                    </div>
+                </div>
+                
+                <!-- Stock Card -->
+                <div class="bg-white rounded-lg border border-gray-200 p-4 flex items-center shadow-sm">
+                    <div class="mr-4">
+                        <div class="w-12 h-12 bg-orange-500 rounded-md flex items-center justify-center">
+                            <!-- Stock icon placeholder -->
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm text-gray-700 mb-1">Total Stok</h3>
+                        <div class="bg-gray-800 text-white px-4 py-1 rounded font-bold text-xl">--</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Charts Section -->
-        <div class="charts-section">
-            <div class="chart-container pie-chart">
-                <h3 class="chart-title">Produk Terlaris</h3>
-                <div class="chart" id="productsPieChart"></div>
-                <div class="chart-legends">
-                    <div class="legend-item"></div>
-                    <div class="legend-item"></div>
-                    <div class="legend-item"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Pie Chart -->
+            <div class="bg-gray-800 rounded-lg p-5 text-white">
+                <h3 class="text-lg font-semibold mb-3">Produk Terlaris</h3>
+                <div class="aspect-w-1 aspect-h-1 bg-gray-700 rounded-lg mb-4">
+                    <!-- Replace with actual chart -->
+                    <div class="w-full h-64 flex items-center justify-center">
+                        <!-- Placeholder for pie chart -->
+                        <div class="relative w-40 h-40">
+                            <div class="absolute inset-0 rounded-full border-8 border-orange-500" style="clip-path: polygon(50% 50%, 100% 0, 100% 100%)"></div>
+                            <div class="absolute inset-0 rounded-full border-8 border-blue-500" style="clip-path: polygon(50% 50%, 0 0, 50% 0)"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-2 bg-gray-600 rounded"></div>
+                    <div class="h-2 bg-gray-600 rounded"></div>
+                    <div class="h-2 bg-gray-600 rounded"></div>
                 </div>
             </div>
             
-            <div class="chart-container line-chart">
-                <h3 class="chart-title">Grafik Pengunjung Mingguan</h3>
-                <p class="chart-subtitle">Laporan Pengunjung Selama Seminggu</p>
-                <div class="chart" id="weeklyVisitorsChart"></div>
+            <!-- Line Chart -->
+            <div class="bg-gray-800 rounded-lg p-5 text-white">
+                <h3 class="text-lg font-semibold mb-1">Grafik Pengunjung Mingguan</h3>
+                <p class="text-xs text-gray-400 mb-4">Laporan Pengunjung Selama Seminggu</p>
+                <div class="w-full h-64 bg-gray-700 rounded-lg">
+                    <!-- Placeholder for line chart -->
+                    <div class="w-full h-full flex items-end justify-between px-2">
+                        <div class="w-1/7 h-1/3 bg-orange-500 opacity-80 rounded-t"></div>
+                        <div class="w-1/7 h-1/5 bg-orange-500 opacity-80 rounded-t"></div>
+                        <div class="w-1/7 h-2/3 bg-orange-500 opacity-80 rounded-t"></div>
+                        <div class="w-1/7 h-4/5 bg-orange-500 opacity-80 rounded-t"></div>
+                        <div class="w-1/7 h-3/5 bg-orange-500 opacity-80 rounded-t"></div>
+                        <div class="w-1/7 h-1/4 bg-orange-500 opacity-80 rounded-t"></div>
+                        <div class="w-1/7 h-1/2 bg-orange-500 opacity-80 rounded-t"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Transactions Detail Section -->
-        <div class="transactions-section">
-            <h3 class="section-title">Detail Transaksi</h3>
-            <div class="transactions-table">
-                <table>
+        <div class="bg-white rounded-lg border border-gray-200 p-5 mb-8">
+            <h3 class="text-xl font-semibold mb-4">Detail Transaksi</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Tanggal</th>
-                            <th>Customer</th>
-                            <th>Produk</th>
-                            <th>Harga</th>
-                            <th>Status</th>
+                            <th class="px-6 py-3 bg-gray-100 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 bg-gray-100 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Tanggal</th>
+                            <th class="px-6 py-3 bg-gray-100 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 bg-gray-100 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Produk</th>
+                            <th class="px-6 py-3 bg-gray-100 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Harga</th>
+                            <th class="px-6 py-3 bg-gray-100 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Transaction data will be populated here -->
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Empty rows for demonstration -->
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">&nbsp;</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -104,236 +162,50 @@
     </div>
 </div>
 
-<style>
-    /* Base Styles */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    
-    body {
-        font-family: 'Arial', sans-serif;
-        background-color: #f5f5f5;
-    }
-    
-    .dashboard-container {
-        width: 100%;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-    
-    /* Top Navigation */
-    .top-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #212121;
-        padding: 15px 30px;
-        color: white;
-    }
-    
-    .nav-logo img {
-        height: 30px;
-    }
-    
-    .nav-links {
-        display: flex;
-        gap: 30px;
-    }
-    
-    .nav-links a {
-        color: white;
-        text-decoration: none;
-        font-size: 14px;
-        transition: color 0.3s;
-    }
-    
-    .nav-links a.active {
-        font-weight: bold;
-    }
-    
-    /* Hero Section */
-    .hero-section {
-        height: 180px;
-        background-color: #e0e0e0;
-        position: relative;
-        /* Replace with your background image */
-        background-image: url('path-to-your-background.jpg');
-        background-size: cover;
-        background-position: center;
-    }
-    
-    .brand-tag {
-        position: absolute;
-        left: 40px;
-        top: 50%;
-        transform: translateY(-50%);
-        background-color: rgba(0, 0, 0, 0.8);
-        padding: 10px 20px;
-        border-radius: 8px;
-    }
-    
-    .brand-tag h2 {
-        color: #ff5722;
-        font-size: 18px;
-    }
-    
-    /* Report Section */
-    .report-section {
-        margin-top: 20px;
-    }
-    
-    .section-title {
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        text-align: center;
-    }
-    
-    .stats-cards {
-        display: flex;
-        justify-content: space-between;
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    
-    .stat-card {
-        background-color: #fff;
-        border-radius: 10px;
-        padding: 15px;
-        display: flex;
-        align-items: center;
-        flex: 1;
-        border: 1px solid #ddd;
-    }
-    
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        background-color: #ff5722;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 15px;
-    }
-    
-    .stat-icon img {
-        width: 30px;
-        height: 30px;
-    }
-    
-    .stat-info h3 {
-        font-size: 14px;
-        color: #333;
-        margin-bottom: 5px;
-    }
-    
-    .stat-value {
-        font-size: 22px;
-        font-weight: bold;
-        background-color: #333;
-        color: white;
-        padding: 5px 15px;
-        border-radius: 5px;
-    }
-    
-    /* Charts Section */
-    .charts-section {
-        display: flex;
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    
-    .chart-container {
-        flex: 1;
-        background-color: #333;
-        border-radius: 10px;
-        padding: 20px;
-        color: white;
-    }
-    
-    .chart-title {
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    
-    .chart-subtitle {
-        font-size: 12px;
-        color: #aaa;
-        margin-bottom: 15px;
-    }
-    
-    .chart {
-        height: 200px;
-        width: 100%;
-        background-color: #444;
-        border-radius: 8px;
-    }
-    
-    .chart-legends {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-top: 15px;
-    }
-    
-    .legend-item {
-        height: 10px;
-        background-color: #555;
-        border-radius: 3px;
-    }
-    
-    /* Transactions Section */
-    .transactions-section {
-        background-color: white;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 30px;
-    }
-    
-    .transactions-table {
-        width: 100%;
-        overflow-x: auto;
-    }
-    
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    table th, table td {
-        padding: 12px 15px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-    }
-    
-    table th {
-        background-color: #f5f5f5;
-        font-weight: bold;
-    }
-    
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        .stats-cards, .charts-section {
-            flex-direction: column;
-        }
-        
-        .nav-links {
-            gap: 15px;
-        }
-    }
-</style>
-
+@push('scripts')
 <script>
     // Placeholder for chart libraries
     // You would need to include Chart.js or another charting library
     
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize charts here
-        // This is just a placeholder. You'll need to implement actual charts
         console.log('Dashboard loaded. Charts should be initialized here.');
+        
+        // You would initialize your actual charts here
+        // Example with Chart.js (you'll need to include the library):
+        /*
+        const productsPieChart = new Chart(
+            document.getElementById('productsPieChart'),
+            {
+                type: 'pie',
+                data: {
+                    labels: ['Product A', 'Product B', 'Product C'],
+                    datasets: [{
+                        data: [65, 15, 20],
+                        backgroundColor: ['#FF5722', '#2563EB', '#22C55E']
+                    }]
+                }
+            }
+        );
+        
+        const visitorsChart = new Chart(
+            document.getElementById('visitorsChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+                    datasets: [{
+                        label: 'Pengunjung',
+                        data: [30, 20, 60, 80, 65, 25, 50],
+                        fill: true,
+                        backgroundColor: 'rgba(255, 87, 34, 0.5)',
+                        borderColor: '#FF5722'
+                    }]
+                }
+            }
+        );
+        */
     });
 </script>
+@endpush
 @endsection
