@@ -3,38 +3,35 @@
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
-            <div class="flex">
+            <div class="flex items-center">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
                         <div class="block h-10 w-10 bg-orange-600">
-                            <div class="h-full w-full flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                            </div>
+                            <!-- Removed the SVG to make it a solid orange square -->
                         </div>
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:ms-10 sm:flex">
-                    @auth
-                        
-                        
-                        {{-- Comment out or use appropriate URLs until routes are defined --}}
-                        <a href="{{ route('inventory.index') }}" class="inline-flex items-center px-1 pt-1 text-white {{ request()->routeIs('inventory.*') ? 'font-bold border-b-2 border-orange-600' : 'hover:text-gray-300' }}">
-                            {{ __('Inventory') }}
-                        </a>
-                        
-                        <a href="#" class="inline-flex items-center px-1 pt-1 text-white hover:text-gray-300">
-                            {{ __('Transaksi') }}
-                        </a>
-                        
-                        <a href="#" class="inline-flex items-center px-1 pt-1 text-white hover:text-gray-300">
-                            {{ __('Laporan') }}
-                        </a>
+                <div class="ml-10 flex space-x-8">
+                    <a href="{{ route('dashboard') }}" class="inline-flex items-center px-1 pt-1 text-white {{ request()->routeIs('dashboard') ? 'font-bold' : 'hover:text-gray-300' }}">
+                        {{ __('DASHBOARD') }}
+                    </a>
+                    
+                    <a href="{{ route('inventory.index') }}" class="inline-flex items-center px-1 pt-1 text-white {{ request()->routeIs('inventory.*') ? 'font-bold' : 'hover:text-gray-300' }}">
+                        {{ __('Inventory') }}
+                    </a>
+                    
+                    <a href="#" class="inline-flex items-center px-1 pt-1 text-white hover:text-gray-300">
+                        {{ __('Transaksi') }}
+                    </a>
+                    
+                    <a href="#" class="inline-flex items-center px-1 pt-1 text-white hover:text-gray-300">
+                        {{ __('Laporan') }}
+                    </a>
 
+                    @auth
                         @if (Auth::user()->role === 'employee')
                             <x-nav-link :href="route('employee.dashboard')" :active="request()->routeIs('employee.dashboard')" class="text-white hover:text-gray-300">
                                 {{ __('Employee') }}
@@ -48,7 +45,7 @@
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
+            <!-- Settings Dropdown - Preserved from original -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 @auth
                     <x-dropdown align="right" width="48">
@@ -98,25 +95,26 @@
         </div>
     </div>
 
-    <!-- Responsive Navigation Menu -->
+    <!-- Responsive Navigation Menu - Preserved from original -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            @auth
-                
-                
-                {{-- Comment out or use appropriate URLs until routes are defined --}}
-                <a href="#" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
-                    {{ __('Inventory') }}
-                </a>
-                
-                <a href="#" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
-                    {{ __('Transaksi') }}
-                </a>
-                
-                <a href="#" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
-                    {{ __('Laporan') }}
-                </a>
+            <a href="{{ route('dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
+                {{ __('DASHBOARD') }}
+            </a>
+            
+            <a href="{{ route('inventory.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
+                {{ __('Inventory') }}
+            </a>
+            
+            <a href="#" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
+                {{ __('Transaksi') }}
+            </a>
+            
+            <a href="#" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
+                {{ __('Laporan') }}
+            </a>
 
+            @auth
                 @if (Auth::user()->role === 'employee')
                     <x-responsive-nav-link :href="route('employee.dashboard')" :active="request()->routeIs('employee.dashboard')" class="text-white hover:text-gray-300">
                         {{ __('Employee Dashboard') }}
