@@ -15,10 +15,6 @@
 
                 <!-- Navigation Links -->
                 <div class="ml-10 flex space-x-8">
-                    <a href="{{ route('dashboard') }}" class="inline-flex items-center px-1 pt-1 text-white {{ request()->routeIs('dashboard') ? 'font-bold' : 'hover:text-gray-300' }}">
-                        {{ __('DASHBOARD') }}
-                    </a>
-                    
                     <a href="{{ route('inventory.index') }}" class="inline-flex items-center px-1 pt-1 text-white {{ request()->routeIs('inventory.*') ? 'font-bold' : 'hover:text-gray-300' }}">
                         {{ __('Inventory') }}
                     </a>
@@ -45,7 +41,7 @@
                 </div>
             </div>
 
-            <!-- Settings Dropdown - Preserved from original -->
+            <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 @auth
                     <x-dropdown align="right" width="48">
@@ -95,13 +91,9 @@
         </div>
     </div>
 
-    <!-- Responsive Navigation Menu - Preserved from original -->
+    <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <a href="{{ route('dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
-                {{ __('DASHBOARD') }}
-            </a>
-            
             <a href="{{ route('inventory.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
                 {{ __('Inventory') }}
             </a>
