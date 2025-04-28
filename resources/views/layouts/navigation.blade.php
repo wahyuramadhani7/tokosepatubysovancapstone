@@ -23,7 +23,7 @@
                         
                         
                         {{-- Comment out or use appropriate URLs until routes are defined --}}
-                        <a href="#" class="inline-flex items-center px-1 pt-1 text-white hover:text-gray-300">
+                        <a href="{{ route('inventory.index') }}" class="inline-flex items-center px-1 pt-1 text-white {{ request()->routeIs('inventory.*') ? 'font-bold border-b-2 border-orange-600' : 'hover:text-gray-300' }}">
                             {{ __('Inventory') }}
                         </a>
                         
