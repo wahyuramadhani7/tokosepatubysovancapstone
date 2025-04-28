@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class InventoryController extends Controller
 {
@@ -46,16 +46,35 @@ class InventoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'barcode' => 'required|string|max:255|unique:products',
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
+            'brand' => 'required|string|max:255',
+            'model' => 'required|string|max:255',
+            'color' => 'required|string|max:255',
             'size' => 'required|string|max:50',
             'stock' => 'required|integer|min:0',
-            'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
         ]);
 
-        Product::create($validated);
+        // Generate a temporary unique identifier for the QR Code (we'll update it with the product ID later)
+        $tempQrCodeContent = $validated['brand'] . '-' . $validated['model'] . '-' . $validated['size'] . '-' . time();
+        $qrCode = QrCode::format('svg')->size(200)->generate($tempQrCodeContent);
+        $qrCodeString = base64_encode($qrCode);
+
+        // Create the product with the QR Code
+        $product = Product::create([
+            'qr_code' => $qrCodeString,
+            'name' => $validated['brand'] . ' ' . $validated['model'],
+            'size' => $validated['size'],
+            'stock' => $validated['stock'],
+            'purchase_price' => 0, // Set default, as it's not in the form
+            'selling_price' => $validated['selling_price'],
+            'color' => $validated['color'],
+        ]);
+
+        // Optionally, update the QR Code to include the product ID for better uniqueness
+        $finalQrCodeContent = $product->id . '-' . $validated['brand'] . '-' . $validated['model'];
+        $finalQrCode = QrCode::format('svg')->size(200)->generate($finalQrCodeContent);
+        $finalQrCodeString = base64_encode($finalQrCode);
+        $product->update(['qr_code' => $finalQrCodeString]);
 
         return redirect()->route('inventory.index')->with('success', 'Produk berhasil ditambahkan');
     }
@@ -81,9 +100,8 @@ class InventoryController extends Controller
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'barcode' => 'required|string|max:255|unique:products,barcode,' . $product->id,
+            'qr_code' => 'required|string|max:255|unique:products,qr_code,' . $product->id,
             'name' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
             'size' => 'required|string|max:50',
             'stock' => 'required|integer|min:0',
             'purchase_price' => 'required|numeric|min:0',
@@ -131,8 +149,7 @@ class InventoryController extends Controller
         $keyword = $request->input('search');
         
         $products = Product::where('name', 'like', "%{$keyword}%")
-            ->orWhere('barcode', 'like', "%{$keyword}%")
-            ->orWhere('category', 'like', "%{$keyword}%")
+            ->orWhere('qr_code', 'like', "%{$keyword}%")
             ->paginate(10);
         
         // Get inventory summary data

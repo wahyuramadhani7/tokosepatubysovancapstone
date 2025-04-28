@@ -15,9 +15,9 @@ class Product extends Model
      * @var array
      */
     protected $fillable = [
-        'barcode',
+        'qr_code',
         'name',
-        'category',
+        'color',
         'size',
         'stock',
         'purchase_price',
