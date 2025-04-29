@@ -83,8 +83,8 @@
     <div class="receipt">
         <div class="header">
             <div class="store-name">Sepatu by Sovan</div>
-            <div class="store-address">Jl. Kalimantan No. 123, Jember</div>
-            <div class="store-contact">Telp: 0331-123456</div>
+            <div class="store-address">Jl. Puri Anjasmoro Blok B 10 no 9 Smg</div>
+            <div class="store-contact">08818671005</div>
         </div>
 
         <div class="invoice-info">
