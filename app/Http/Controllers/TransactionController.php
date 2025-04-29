@@ -111,9 +111,10 @@ class TransactionController extends Controller
             
             DB::commit();
             
-            return redirect()->route('transactions.show', $transaction->id)
-                ->with('success', 'Transaksi berhasil diselesaikan.');
-                
+            // Redirect ke halaman index dengan ID transaksi baru untuk digunakan di notifikasi
+            return redirect()->route('transactions.index')
+                ->with('success', 'Transaksi berhasil diselesaikan.')
+                ->with('transaction_id', $transaction->id);
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Transaksi gagal: ' . $e->getMessage()]);
@@ -129,6 +130,12 @@ class TransactionController extends Controller
     public function print(Transaction $transaction)
     {
         $transaction->load(['items.product', 'user']);
+        
+        // Cek apakah request meminta format HTML saja (untuk preview)
+        if (request('format') === 'html') {
+            return view('transactions.print', compact('transaction'))->render();
+        }
+        
         return view('transactions.print', compact('transaction'));
     }
 
