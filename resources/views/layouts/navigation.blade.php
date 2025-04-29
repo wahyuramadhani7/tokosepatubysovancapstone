@@ -1,6 +1,6 @@
 <nav x-data="{ open: false }" class="bg-gray-900 border-b border-blue-500">
     <!-- Primary Navigation Menu -->
-    <div class salts="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <!-- Logo -->
             <div class="flex items-center">
@@ -41,13 +41,15 @@
                         {{ __('Inventory') }}
                     </a>
                     
-                    <a href="#" class="inline-flex items-center px-1 pt-1 text-white hover:text-gray-300">
+                    <a href="{{ route('transactions.index') }}" class="inline-flex items-center px-1 pt-1 text-white {{ request()->routeIs('transactions.*') ? 'font-bold' : 'hover:text-gray-300' }}">
                         {{ __('Transaksi') }}
                     </a>
                     
-                    <a href="#" class="inline-flex items-center px-1 pt-1 text-white hover:text-gray-300">
+                    @if(Auth::user()->role === 'owner' || Auth::user()->role === 'admin')
+                    <a href="{{ route('transactions.report') }}" class="inline-flex items-center px-1 pt-1 text-white {{ request()->routeIs('transactions.report') ? 'font-bold' : 'hover:text-gray-300' }}">
                         {{ __('Laporan') }}
                     </a>
+                    @endif
                 </div>
             </div>
 
@@ -126,17 +128,19 @@
                 @endif
             @endauth
             
-            <a href="{{ route('inventory.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
+            <a href="{{ route('inventory.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white {{ request()->routeIs('inventory.*') ? 'font-bold border-blue-500' : 'hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                 {{ __('Inventory') }}
             </a>
             
-            <a href="#" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
+            <a href="{{ route('transactions.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white {{ request()->routeIs('transactions.*') ? 'font-bold border-blue-500' : 'hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                 {{ __('Transaksi') }}
             </a>
             
-            <a href="#" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 transition duration-150 ease-in-out">
+            @if(Auth::user()->role === 'owner' || Auth::user()->role === 'admin')
+            <a href="{{ route('transactions.report') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-white {{ request()->routeIs('transactions.report') ? 'font-bold border-blue-500' : 'hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                 {{ __('Laporan') }}
             </a>
+            @endif
 
             @auth
                 <x-responsive-nav-link :href="route('profile.edit')" class="text-white hover:text-gray-300">

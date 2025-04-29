@@ -44,38 +44,37 @@ class InventoryController extends Controller
     * @param string $content
     * @return string|Illuminate\View\View $qrCodePath
     */
-   public function generateQrCode($content = null)
-   {
-       // Jika dipanggil tanpa parameter, gunakan URL default
-       if ($content === null) {
-           $content = 'https://example.com';
-           // Return view jika dipanggil langsung sebagai route
-           $qrCode = QrCode::size(300)->format('svg')->generate($content);
-           return view('inventory.qr_code', compact('qrCode'));
-       }
-       
-       // Jika dipanggil dengan parameter, generate QR code sebagai SVG
-       $filename = 'qrcode-' . time() . '.svg';
-       $directory = 'qrcodes';
-       
-       // Pastikan direktori ada
-       if (!Storage::exists('public/' . $directory)) {
-           Storage::makeDirectory('public/' . $directory);
-       }
-       
-       // Generate QR code sebagai SVG (tidak memerlukan Imagick)
-       $qrCode = QrCode::format('svg')
-                      ->size(300)
-                      ->errorCorrection('H')
-                      ->generate($content);
-       
-       // Simpan file SVG
-       Storage::put('public/' . $directory . '/' . $filename, $qrCode);
-       
-       // Kembalikan path relatif untuk disimpan di database
-       return $directory . '/' . $filename;
-   }
-
+    public function generateQrCode($content = null)
+{
+    // Jika dipanggil tanpa parameter, gunakan URL default
+    if ($content === null) {
+        $content = 'https://example.com';
+        $qrCode = QrCode::size(300)->generate($content);
+        return view('inventory.qr_code', compact('qrCode'));
+    }
+    
+    // Generate QR code sebagai SVG
+    $filename = 'qrcode-' . time() . '.svg';
+    $directory = 'qrcodes';
+    $path = storage_path('app/public/' . $directory);
+    
+    // Pastikan direktori ada
+    if (!file_exists($path)) {
+        mkdir($path, 0755, true);
+    }
+    
+    // Generate QR code sebagai SVG
+    $svg = QrCode::size(300)
+            ->format('svg')
+            ->errorCorrection('H')
+            ->generate($content);
+    
+    // Simpan file SVG secara manual
+    file_put_contents($path . '/' . $filename, $svg);
+    
+    // Kembalikan path relatif untuk disimpan di database
+    return $directory . '/' . $filename;
+}
    /**
     * Store a newly created product in storage.
     *

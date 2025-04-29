@@ -41,7 +41,21 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
     });
 });
+// Tambahkan rute-rute berikut ke dalam file routes/web.php
 
+// Transactions Routes - accessible to all authenticated users
+Route::middleware(['auth'])->group(function () {
+    Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/create', [App\Http\Controllers\TransactionController::class, 'create'])->name('transactions.create');
+    Route::post('/transactions', [App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
+    Route::get('/transactions/{transaction}', [App\Http\Controllers\TransactionController::class, 'show'])->name('transactions.show');
+    Route::get('/transactions/{transaction}/print', [App\Http\Controllers\TransactionController::class, 'print'])->name('transactions.print');
+});
+
+// Transaction Reports - restricted to owner and admin
+Route::middleware(['auth', 'role:owner,admin'])->group(function () {
+    Route::get('/transactions/reports/sales', [App\Http\Controllers\TransactionController::class, 'report'])->name('transactions.report');
+});
 // Route untuk dashboard utama setelah login
 Route::get('/dashboard', function () {
     return view('dashboard');

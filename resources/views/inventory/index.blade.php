@@ -79,6 +79,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ukuran</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warna</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga Jual</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -88,15 +89,17 @@
                     @forelse ($products ?? [] as $product)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <!-- Menampilkan QR Code sebagai gambar -->
                                 @if($product->qr_code)
                                     <img src="{{ asset('storage/' . $product->qr_code) }}" alt="QR Code" class="h-16 w-16">
+                                    <!-- Untuk debugging -->
+                                    <div class="text-xs">{{ asset('storage/' . $product->qr_code) }}</div>
                                 @else
                                     <span>-</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $product->name ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $product->size ?? '-' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $product->color ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $product->stock ?? 0 }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -110,7 +113,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada produk ditemukan.</td>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">Tidak ada produk ditemukan.</td>
                         </tr>
                     @endforelse
                 </tbody>
