@@ -1,7 +1,6 @@
-<!-- resources/views/layouts/navigation.blade.php -->
 <nav x-data="{ open: false }" class="bg-gray-900 border-b border-blue-500">
     <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class salts="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <!-- Logo -->
             <div class="flex items-center">
@@ -24,6 +23,9 @@
                         @elseif (Auth::user()->role === 'owner')
                             <x-nav-link :href="route('owner.dashboard')" :active="request()->routeIs('owner.dashboard')" class="text-white hover:text-gray-300">
                                 {{ __('Owner') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('owner.employee-accounts')" :active="request()->routeIs('owner.employee-accounts*')" class="text-white hover:text-gray-300">
+                                {{ __('Employee Accounts') }}
                             </x-nav-link>
                         @elseif (Auth::user()->role === 'admin')
                             <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" class="text-white hover:text-gray-300">
@@ -110,6 +112,9 @@
                 @elseif (Auth::user()->role === 'owner')
                     <x-responsive-nav-link :href="route('owner.dashboard')" :active="request()->routeIs('owner.dashboard')" class="text-white hover:text-gray-300">
                         {{ __('Owner Dashboard') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('owner.employee-accounts')" :active="request()->routeIs('owner.employee-accounts*')" class="text-white hover:text-gray-300">
+                        {{ __('Employee Accounts') }}
                     </x-responsive-nav-link>
                 @elseif (Auth::user()->role === 'admin')
                     <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" class="text-white hover:text-gray-300">

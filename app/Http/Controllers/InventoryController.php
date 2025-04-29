@@ -6,6 +6,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Storage;
 
 class InventoryController extends Controller
 {
@@ -38,6 +39,18 @@ class InventoryController extends Controller
     }
 
     /**
+     * Generate and save the QR code for a product.
+     *
+     * @param string $content
+     * @return string $qrCodePath
+     */
+    public function generateQrCode()
+    {
+        $qrCode = QrCode::size(300)->generate('https://example.com');
+        return view('inventory.qr_code', compact('qrCode'));
+    }
+
+    /**
      * Store a newly created product in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -54,29 +67,40 @@ class InventoryController extends Controller
             'selling_price' => 'required|numeric|min:0',
         ]);
 
-        // Generate a temporary unique identifier for the QR Code (we'll update it with the product ID later)
+        // Generate the initial QR code content
         $tempQrCodeContent = $validated['brand'] . '-' . $validated['model'] . '-' . $validated['size'] . '-' . time();
-        $qrCode = QrCode::format('svg')->size(200)->generate($tempQrCodeContent);
-        $qrCodeString = base64_encode($qrCode);
 
-        // Create the product with the QR Code
-        $product = Product::create([
-            'qr_code' => $qrCodeString,
-            'name' => $validated['brand'] . ' ' . $validated['model'],
-            'size' => $validated['size'],
-            'stock' => $validated['stock'],
-            'purchase_price' => 0, // Set default, as it's not in the form
-            'selling_price' => $validated['selling_price'],
-            'color' => $validated['color'],
-        ]);
+        // Generate and store the QR code image
+        $qrCodePath = $this->generateQrCode($tempQrCodeContent);
 
-        // Optionally, update the QR Code to include the product ID for better uniqueness
-        $finalQrCodeContent = $product->id . '-' . $validated['brand'] . '-' . $validated['model'];
-        $finalQrCode = QrCode::format('svg')->size(200)->generate($finalQrCodeContent);
-        $finalQrCodeString = base64_encode($finalQrCode);
-        $product->update(['qr_code' => $finalQrCodeString]);
+        // Create the product with the path to the QR code image
+        DB::beginTransaction();
 
-        return redirect()->route('inventory.index')->with('success', 'Produk berhasil ditambahkan');
+        try {
+            $product = Product::create([
+                'qr_code' => $qrCodePath, // Store the image path in the database
+                'name' => $validated['brand'] . ' ' . $validated['model'],
+                'size' => $validated['size'],
+                'stock' => $validated['stock'],
+                'purchase_price' => 0, // Set default, as it's not in the form
+                'selling_price' => $validated['selling_price'],
+                'color' => $validated['color'],
+            ]);
+
+            // Update the QR code with product ID
+            $finalQrCodeContent = $product->id . '-' . $validated['brand'] . '-' . $validated['model'];
+            $finalQrCodePath = $this->generateQrCode($finalQrCodeContent);
+
+            // Update the product with the final QR code
+            $product->update(['qr_code' => $finalQrCodePath]);
+
+            DB::commit();
+
+            return redirect()->route('inventory.index')->with('success', 'Produk berhasil ditambahkan');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('inventory.index')->with('error', 'Terjadi kesalahan, produk gagal ditambahkan: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -121,21 +145,14 @@ class InventoryController extends Controller
      */
     public function destroy(Product $product)
     {
+        // Optional: Delete the QR code file if necessary
+        if (Storage::exists('public/' . $product->qr_code)) {
+            Storage::delete('public/' . $product->qr_code);
+        }
+
         $product->delete();
 
         return redirect()->route('inventory.index')->with('success', 'Produk berhasil dihapus');
-    }
-
-    /**
-     * Display the inventory history.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function history()
-    {
-        // This would typically come from a transaction or history model
-        // For now, just redirect to index
-        return redirect()->route('inventory.index')->with('info', 'Fitur riwayat masih dalam pengembangan');
     }
 
     /**

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('qr_code')->unique();
+            $table->string('qr_code')->nullable(); // Make it nullable since QR code might not be available immediately
             $table->string('name');
             $table->string('color')->nullable();
             $table->string('size');
