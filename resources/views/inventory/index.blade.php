@@ -42,17 +42,34 @@
 
         <!-- Search Bar and Buttons -->
         <div class="flex justify-between items-center mb-4">
-            <div class="relative w-full sm:w-1/3">
-                <input type="text" placeholder="Search..." class="w-full p-2 border rounded-lg pl-10">
-                <svg class="absolute left-3 top-3 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-            </div>
+            <form action="{{ route('inventory.search') }}" method="GET" class="relative w-full sm:w-1/3">
+                <input type="text" name="search" placeholder="Search..." class="w-full p-2 border rounded-lg pl-10">
+                <button type="submit" class="absolute left-3 top-3 h-5 w-5 text-gray-500">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+            </form>
             <div class="space-x-2 ml-4">
                 <a href="{{ route('inventory.create') }}" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">Tambah</a>
-                <a href="{{ route('inventory.history') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Riwayat</a>
+                @if(Route::has('inventory.history'))
+                    <a href="{{ route('inventory.history') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Riwayat</a>
+                @endif
             </div>
         </div>
+
+        <!-- Session Messages -->
+        @if(session('success'))
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">{{ session('success') }}</span>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">{{ session('error') }}</span>
+            </div>
+        @endif
 
         <!-- Table -->
         <div class="bg-white shadow rounded-lg overflow-hidden">
@@ -71,8 +88,12 @@
                     @forelse ($products ?? [] as $product)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{-- Jika nanti QR-nya berupa gambar, bisa gunakan <img src="..." /> --}}
-                                {{ $product->qr_code ?? '-' }}
+                                <!-- Menampilkan QR Code sebagai gambar -->
+                                @if($product->qr_code)
+                                    <img src="{{ asset('storage/' . $product->qr_code) }}" alt="QR Code" class="h-16 w-16">
+                                @else
+                                    <span>-</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $product->name ?? '-' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $product->size ?? '-' }}</td>
@@ -95,6 +116,13 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination -->
+        @if(isset($products) && $products->hasPages())
+            <div class="mt-4">
+                {{ $products->links() }}
+            </div>
+        @endif
     </div>
 </div>
 @endsection
