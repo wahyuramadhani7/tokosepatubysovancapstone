@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Transaction;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -10,11 +12,23 @@ class DashboardController extends Controller
 {
     public function owner()
     {
-        return view('owner.dashboard');
+        // Ambil data untuk ringkasan transaksi harian
+        $today = now()->format('Y-m-d');
+        $recentTransactions = Transaction::with('user')
+            ->whereDate('created_at', $today)
+            ->latest()
+            ->take(5)
+            ->get();
+        $totalTransactions = Transaction::whereDate('created_at', $today)->count();
+        $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
+        $totalProducts = Product::count();
+
+        return view('owner.dashboard', compact('recentTransactions', 'totalTransactions', 'totalSales', 'totalProducts'));
     }
+
     public function employee()
     {
-        return view('employee.dashboard'); // Pastikan view 'employee/dashboard.blade.php' ada
+        return view('employee.dashboard');
     }
 
     public function employeeAccounts()

@@ -78,6 +78,13 @@
                 <p class="text-gray-600 mt-2">Kelola semua transaksi penjualan sepatu.</p>
             </div>
             <div class="mt-4 md:mt-0 flex space-x-2">
+                <!-- Tombol Kembali ke Dashboard -->
+                <a href="{{ route('dashboard') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Kembali ke Dashboard
+                </a>
                 <!-- Tombol Cetak Laporan -->
                 <a href="{{ route('transactions.report') }}" target="_blank" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -165,8 +172,8 @@
                                 <div class="flex items-center cursor-pointer">
                                     ID
                                     <span class="ml-1" x-show="sortColumn === 'id'">
-                                        <template x-if="sortDirection === 'asc'">&#9650;</template>
-                                        <template x-if="sortDirection === 'desc'">&#9660;</template>
+                                        <template x-if="sortDirection === 'asc'">▲</template>
+                                        <template x-if="sortDirection === 'desc'">▼</template>
                                     </span>
                                 </div>
                             </th>
@@ -174,8 +181,8 @@
                                 <div class="flex items-center cursor-pointer">
                                     Tanggal
                                     <span class="ml-1" x-show="sortColumn === 'date'">
-                                        <template x-if="sortDirection === 'asc'">&#9650;</template>
-                                        <template x-if="sortDirection === 'desc'">&#9660;</template>
+                                        <template x-if="sortDirection === 'asc'">▲</template>
+                                        <template x-if="sortDirection === 'desc'">▼</template>
                                     </span>
                                 </div>
                             </th>
@@ -183,8 +190,8 @@
                                 <div class="flex items-center cursor-pointer">
                                     Pelanggan
                                     <span class="ml-1" x-show="sortColumn === 'customer'">
-                                        <template x-if="sortDirection === 'asc'">&#9650;</template>
-                                        <template x-if="sortDirection === 'desc'">&#9660;</template>
+                                        <template x-if="sortDirection === 'asc'">▲</template>
+                                        <template x-if="sortDirection === 'desc'">▼</template>
                                     </span>
                                 </div>
                             </th>
@@ -195,8 +202,8 @@
                                 <div class="flex items-center cursor-pointer">
                                     Total
                                     <span class="ml-1" x-show="sortColumn === 'total'">
-                                        <template x-if="sortDirection === 'asc'">&#9650;</template>
-                                        <template x-if="sortDirection === 'desc'">&#9660;</template>
+                                        <template x-if="sortDirection === 'asc'">▲</template>
+                                        <template x-if="sortDirection === 'desc'">▼</template>
                                     </span>
                                 </div>
                             </th>
@@ -240,25 +247,10 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
-                                        <!-- Lihat Detail -->
-                                        <a :href="'{{ url('/transactions') }}/' + transaction.id" class="text-indigo-600 hover:text-indigo-900 tooltip" title="Lihat Detail">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </a>
-                                        
                                         <!-- Print Invoice -->
                                         <a :href="'{{ url('/transactions') }}/' + transaction.id + '/print'" target="_blank" class="text-gray-600 hover:text-gray-900 tooltip" title="Cetak Invoice">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                            </svg>
-                                        </a>
-                                        
-                                        <!-- Edit -->
-                                        <a :href="'{{ url('/transactions') }}/' + transaction.id + '/edit'" class="text-blue-600 hover:text-blue-900 tooltip" title="Edit Transaksi">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
                                         </a>
                                         
@@ -365,14 +357,15 @@
                     <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
                 </div>
 
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true"></span>
                 
                 <div x-show="showDeleteModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="sm:flex sm:items-start">
                             <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                                 <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    <path stroke-cap
+                                    line="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                             </div>
                             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
@@ -449,7 +442,7 @@
     <script>
         function transactionListApp() {
             return {
-                transactions: @json($transactions ?? []),
+                transactions: @json($transactions->items() ?? []),
                 filteredTransactions: [],
                 searchQuery: '',
                 dateFrom: '',
@@ -466,8 +459,15 @@
                 printPreviewContent: '',
                 newTransactionId: @json(session('transaction_id') ?? null),
                 
-                // Menyimpan ID transaksi yang dibuat baru saja
                 init() {
+                    // Tambahkan transaksi baru dari session jika ada
+                    const newTransaction = @json(session('new_transaction') ?? null);
+                    if (newTransaction) {
+                        if (!this.transactions.find(t => t.id === newTransaction.id)) {
+                            this.transactions.unshift(newTransaction);
+                        }
+                    }
+                    
                     this.filterTransactions();
                     
                     // Auto focus ke transaksi baru jika ada
@@ -493,17 +493,10 @@
                 
                 // Highlight dan scroll ke transaksi baru
                 highlightNewTransaction() {
-                    // Mencari transaksi baru dalam daftar
                     const newTransactionIndex = this.transactions.findIndex(t => t.id == this.newTransactionId);
-                    
                     if (newTransactionIndex >= 0) {
-                        // Hitung halaman yang berisi transaksi baru
                         const pageOfNewTransaction = Math.floor(newTransactionIndex / this.perPage) + 1;
-                        
-                        // Pindah ke halaman tersebut
                         this.goToPage(pageOfNewTransaction);
-                        
-                        // Scroll ke elemen transaksi baru
                         this.$nextTick(() => {
                             const newTransactionRow = document.querySelector(`tr.bg-green-50`);
                             if (newTransactionRow) {
@@ -560,7 +553,6 @@
                 filterTransactions() {
                     let results = [...this.transactions];
                     
-                    // Apply search filter
                     if (this.searchQuery) {
                         const query = this.searchQuery.toLowerCase();
                         results = results.filter(transaction => 
@@ -572,7 +564,6 @@
                         );
                     }
                     
-                    // Apply date filters
                     if (this.dateFrom) {
                         const fromDate = new Date(this.dateFrom);
                         fromDate.setHours(0, 0, 0, 0);
@@ -584,19 +575,17 @@
                     
                     if (this.dateTo) {
                         const toDate = new Date(this.dateTo);
-                        toDate.setHours(23, 59, 59, 999); // End of the day
+                        toDate.setHours(23, 59, 59, 999);
                         results = results.filter(transaction => {
                             const txDate = new Date(transaction.created_at || transaction.date);
                             return txDate <= toDate;
                         });
                     }
                     
-                    // Apply payment method filter
                     if (this.paymentMethodFilter) {
                         results = results.filter(transaction => transaction.payment_method === this.paymentMethodFilter);
                     }
                     
-                    // Apply status filter
                     if (this.statusFilter) {
                         results = results.filter(transaction => 
                             transaction.payment_status === this.statusFilter || 
@@ -604,10 +593,8 @@
                         );
                     }
                     
-                    // Apply sorting
                     results.sort((a, b) => {
                         let aValue, bValue;
-                        
                         switch(this.sortColumn) {
                             case 'date':
                                 aValue = new Date(a.created_at || a.date);
@@ -621,11 +608,10 @@
                                 aValue = parseFloat(a.final_amount || a.total);
                                 bValue = parseFloat(b.final_amount || b.total);
                                 break;
-                            default: // id
+                            default:
                                 aValue = a.id;
                                 bValue = b.id;
                         }
-                        
                         if (aValue < bValue) {
                             return this.sortDirection === 'asc' ? -1 : 1;
                         }
@@ -636,7 +622,7 @@
                     });
                     
                     this.filteredTransactions = results;
-                    this.currentPage = 1; // Reset to first page when filtering
+                    this.currentPage = 1;
                 },
                 
                 // Sorting transactions
@@ -694,45 +680,30 @@
                     const currentPage = this.currentPage;
                     const pages = [];
                     
-                    // Show up to 5 pages
                     if (totalPages <= 5) {
                         for (let i = 1; i <= totalPages; i++) {
                             pages.push(i);
                         }
                     } else {
-                        // Always show first page
                         pages.push(1);
-                        
-                        // Calculate middle pages
                         let startPage = Math.max(2, currentPage - 1);
                         let endPage = Math.min(totalPages - 1, currentPage + 1);
-                        
-                        // Adjust if we're near the beginning or end
                         if (currentPage <= 3) {
                             endPage = 4;
                         } else if (currentPage >= totalPages - 2) {
                             startPage = totalPages - 3;
                         }
-                        
-                        // Add ellipsis if needed
                         if (startPage > 2) {
                             pages.push('...');
                         }
-                        
-                        // Add middle pages
                         for (let i = startPage; i <= endPage; i++) {
                             pages.push(i);
                         }
-                        
-                        // Add ellipsis if needed
                         if (endPage < totalPages - 1) {
                             pages.push('...');
                         }
-                        
-                        // Always show last page
                         pages.push(totalPages);
                     }
-                    
                     return pages;
                 },
                 
@@ -744,7 +715,6 @@
                 
                 // Tampilkan preview invoice dan cetak
                 showInvoicePreview(transactionId) {
-                    // Ambil konten invoice dari server
                     fetch(`{{ url('/transactions') }}/${transactionId}/print?format=html`)
                         .then(response => response.text())
                         .then(html => {

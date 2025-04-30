@@ -19,9 +19,22 @@ class TransactionController extends Controller
 
     public function create()
     {
-        // Hanya ambil produk yang memiliki stok > 0
         $products = Product::where('stock', '>', 0)->get();
         return view('transactions.create', compact('products'));
+    }
+
+    public function destroy(Transaction $transaction)
+    {
+        DB::beginTransaction();
+        try {
+            $transaction->items()->delete();
+            $transaction->delete();
+            DB::commit();
+            return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('transactions.index')->with('error', 'Gagal menghapus transaksi: ' . $e->getMessage());
+        }
     }
 
     public function store(Request $request)
@@ -43,10 +56,9 @@ class TransactionController extends Controller
 
             $totalAmount = 0;
             $finalAmount = 0;
-            $taxRate = 0.11; // 11% tax rate
+            $taxRate = 0.11;
             $transactionItems = [];
-            
-            // Validasi ketersediaan stok produk
+
             foreach ($request->products as $item) {
                 $product = Product::findOrFail($item['id']);
                 if ($product->stock < $item['quantity']) {
@@ -54,7 +66,6 @@ class TransactionController extends Controller
                 }
             }
 
-            // Buat transaksi baru
             $transaction = new Transaction();
             $transaction->invoice_number = Transaction::generateInvoiceNumber();
             $transaction->user_id = Auth::id();
@@ -63,23 +74,20 @@ class TransactionController extends Controller
             $transaction->customer_phone = $request->customer_phone;
             $transaction->customer_email = $request->customer_email;
             $transaction->notes = $request->notes;
-            $transaction->payment_status = 'paid'; // Default ke status paid
-            
-            // Hitung total dan simpan item
+            $transaction->payment_status = 'paid';
+
             foreach ($request->products as $item) {
                 $product = Product::findOrFail($item['id']);
                 $quantity = (int)$item['quantity'];
-                $price = $product->selling_price; // Gunakan selling_price dari model Product
+                $price = $product->selling_price;
                 $discount = isset($item['discount']) ? (float)$item['discount'] : 0;
                 $subtotal = ($price * $quantity) - $discount;
-                
+
                 $totalAmount += $subtotal;
-                
-                // Kurangi stok produk
+
                 $product->stock -= $quantity;
                 $product->save();
-                
-                // Buat item transaksi
+
                 $transactionItem = new TransactionItem([
                     'product_id' => $product->id,
                     'quantity' => $quantity,
@@ -87,34 +95,32 @@ class TransactionController extends Controller
                     'discount' => $discount,
                     'subtotal' => $subtotal,
                 ]);
-                
-                // Simpan di array untuk diproses setelah transaksi dibuat
+
                 $transactionItems[] = $transactionItem;
             }
-            
-            // Hitung pajak dan jumlah akhir
+
             $discountAmount = (float)($request->discount_amount ?? 0);
             $taxAmount = ($totalAmount - $discountAmount) * $taxRate;
             $finalAmount = $totalAmount - $discountAmount + $taxAmount;
-            
-            // Update nilai transaksi
+
             $transaction->total_amount = $totalAmount;
             $transaction->discount_amount = $discountAmount;
             $transaction->tax_amount = $taxAmount;
             $transaction->final_amount = $finalAmount;
             $transaction->save();
-            
-            // Simpan item transaksi
+
             foreach ($transactionItems as $item) {
                 $transaction->items()->save($item);
             }
-            
+
             DB::commit();
-            
-            // Redirect ke halaman index dengan ID transaksi baru untuk digunakan di notifikasi
+
+            $transactions = Transaction::with('user')->latest()->paginate(15);
+
             return redirect()->route('transactions.index')
                 ->with('success', 'Transaksi berhasil diselesaikan.')
-                ->with('transaction_id', $transaction->id);
+                ->with('transaction_id', $transaction->id)
+                ->with('new_transaction', $transaction);
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Transaksi gagal: ' . $e->getMessage()]);
@@ -130,12 +136,9 @@ class TransactionController extends Controller
     public function print(Transaction $transaction)
     {
         $transaction->load(['items.product', 'user']);
-        
-        // Cek apakah request meminta format HTML saja (untuk preview)
         if (request('format') === 'html') {
             return view('transactions.print', compact('transaction'))->render();
         }
-        
         return view('transactions.print', compact('transaction'));
     }
 
@@ -143,18 +146,22 @@ class TransactionController extends Controller
     {
         $dateStart = $request->date_start ?? now()->startOfMonth()->format('Y-m-d');
         $dateEnd = $request->date_end ?? now()->format('Y-m-d');
-        
+
         $query = Transaction::with('user')
             ->whereBetween('created_at', [$dateStart . ' 00:00:00', $dateEnd . ' 23:59:59']);
-            
-        if ($request->user_id) {
+
+        // Hanya owner atau admin yang bisa memfilter berdasarkan user_id
+        if ($request->user_id && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')) {
             $query->where('user_id', $request->user_id);
+        } elseif (Auth::user()->role === 'employee') {
+            // Employee hanya bisa melihat transaksi mereka sendiri
+            $query->where('user_id', Auth::id());
         }
-        
+
         $transactions = $query->latest()->get();
         $totalSales = $transactions->sum('final_amount');
         $totalTransactions = $transactions->count();
-        
+
         return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'dateStart', 'dateEnd'));
     }
 }

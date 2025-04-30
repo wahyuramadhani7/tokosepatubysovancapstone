@@ -3,10 +3,11 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('login'); // Arahkan langsung ke halaman login
+    return redirect()->route('login');
 });
 
 // Route untuk dashboard employee
@@ -18,15 +19,12 @@ Route::middleware(['auth', 'role:employee'])->group(function () {
 Route::middleware(['auth', 'role:owner'])->group(function () {
     Route::get('/owner/dashboard', [DashboardController::class, 'owner'])->name('owner.dashboard');
     Route::get('/owner/employee-accounts', [DashboardController::class, 'employeeAccounts'])->name('owner.employee-accounts');
-
-    // Tambahan untuk CRUD employee
     Route::get('/owner/employee-accounts/create', [DashboardController::class, 'createEmployee'])->name('owner.employee-accounts.create');
     Route::post('/owner/employee-accounts', [DashboardController::class, 'storeEmployee'])->name('owner.employee-accounts.store');
     Route::get('/owner/employee-accounts/{user}/edit', [DashboardController::class, 'editEmployee'])->name('owner.employee-accounts.edit');
     Route::put('/owner/employee-accounts/{user}', [DashboardController::class, 'updateEmployee'])->name('owner.employee-accounts.update');
     Route::delete('/owner/employee-accounts/{user}', [DashboardController::class, 'deleteEmployee'])->name('owner.employee-accounts.destroy');
 });
-
 
 // Route untuk inventory (diakses oleh employee dan owner)
 Route::middleware(['auth'])->group(function () {
@@ -40,22 +38,19 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/history', [InventoryController::class, 'history'])->name('inventory.history');
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
     });
-});
-// Tambahkan rute-rute berikut ke dalam file routes/web.php
 
-// Transactions Routes - accessible to all authenticated users
-Route::middleware(['auth'])->group(function () {
-    Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index'])->name('transactions.index');
-    Route::get('/transactions/create', [App\Http\Controllers\TransactionController::class, 'create'])->name('transactions.create');
-    Route::post('/transactions', [App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
-    Route::get('/transactions/{transaction}', [App\Http\Controllers\TransactionController::class, 'show'])->name('transactions.show');
-    Route::get('/transactions/{transaction}/print', [App\Http\Controllers\TransactionController::class, 'print'])->name('transactions.print');
+    // Transactions Routes - accessible to all authenticated users
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
+    Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+    Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+    Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+    Route::get('/transactions/{transaction}/print', [TransactionController::class, 'print'])->name('transactions.print');
+
+    // Transaction Reports - accessible to all authenticated users
+    Route::get('/transactions/reports/sales', [TransactionController::class, 'report'])->name('transactions.report');
 });
 
-// Transaction Reports - restricted to owner and admin
-Route::middleware(['auth', 'role:owner,admin'])->group(function () {
-    Route::get('/transactions/reports/sales', [App\Http\Controllers\TransactionController::class, 'report'])->name('transactions.report');
-});
 // Route untuk dashboard utama setelah login
 Route::get('/dashboard', function () {
     return view('dashboard');
