@@ -28,8 +28,8 @@
                             <h3 class="text-gray-800 text-sm md:text-base font-medium">Total Produk</h3>
                         </div>
                         <div class="flex">
-                            <div class="p-2 md:p-4 bg-white flex items-center justify-center" style="width: 60px; md:width: 80px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="#FF4500" class="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10">
+                            <div class="p-2 md:p-4 bg-white flex items-center justify-center" style="width: 60px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="#FF4500" class="w-6 h-6">
                                     <path d="M4 11c0 0 0.5-8 9-8s8.5 10 8.5 10l1.5 1v4c0 1.5-1 2-2 2h-17c-1 0-2-0.5-2-2v-4l2-3z"/>
                                     <rect x="2" y="14" width="20" height="2" fill="#FF4500"/>
                                 </svg>
@@ -45,8 +45,8 @@
                             <h3 class="text-gray-800 text-sm md:text-base font-medium">Total Transaksi</h3>
                         </div>
                         <div class="flex">
-                            <div class="p-2 md:p-4 bg-white flex items-center justify-center" style="width: 60px; md:width: 80px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="#FF4500" class="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10">
+                            <div class="p-2 md:p-4 bg-white flex items-center justify-center" style="width: 60px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="#FF4500" class="w-6 h-6">
                                     <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
                                 </svg>
                             </div>
@@ -61,8 +61,8 @@
                             <h3 class="text-gray-800 text-sm md:text-base font-medium">Total Penjualan</h3>
                         </div>
                         <div class="flex">
-                            <div class="p-2 md:p-4 bg-white flex items-center justify-center" style="width: 60px; md:width: 80px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="#FF4500" class="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10">
+                            <div class="p-2 md:p-4 bg-white flex items-center justify-center" style="width: 60px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="#FF4500" class="w-6 h-6">
                                     <path d="M4 11c0 0 0.5-8 9-8s8.5 10 8.5 10l1.5 1v4c0 1.5-1 2-2 2h-17c-1 0-2-0.5-2-2v-4l2-3z"/>
                                     <rect x="2" y="14" width="20" height="2" fill="#FF4500"/>
                                 </svg>
@@ -77,65 +77,32 @@
 
             <!-- Charts Section -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-                <!-- Pie Chart -->
+                <!-- Pie Chart (Produk Terlaris) -->
                 <div class="bg-gray-800 rounded-lg p-3 md:p-5 text-white">
                     <h3 class="text-base md:text-lg font-semibold mb-2 md:mb-3">Produk Terlaris</h3>
-                    <div class="aspect-w-1 aspect-h-1 bg-gray-700 rounded-lg mb-3 md:mb-4">
-                        <div class="w-full h-48 md:h-56 lg:h-64 flex items-center justify-center">
-                            <div class="relative w-32 h-32 md:w-40 md:h-40">
-                                <div class="absolute inset-0 rounded-full bg-orange-600" style="clip-path: polygon(50% 50%, 0 0, 0 100%, 50% 100%)"></div>
-                                <div class="absolute inset-0 rounded-full bg-orange-50" style="clip-path: polygon(50% 50%, 0 0, 50% 0, 100% 0, 100% 50%)"></div>
-                                <div class="absolute inset-0 rounded-full bg-blue-600" style="clip-path: polygon(50% 50%, 100% 50%, 100% 100%)"></div>
-                                <div class="absolute w-3 h-3 md:w-4 md:h-4 rounded-full bg-gray-900" style="top: calc(50% - 6px); left: calc(50% - 6px); md:top: calc(50% - 8px); md:left: calc(50% - 8px);"></div>
-                            </div>
-                        </div>
+                    <div class="w-full h-48 md:h-56 lg:h-64">
+                        <canvas id="topProductsChart"></canvas>
                     </div>
-                    <div class="space-y-1 md:space-y-2">
-                        <div class="h-1.5 md:h-2 bg-gray-600 rounded"></div>
-                        <div class="h-1.5 md:h-2 bg-gray-600 rounded"></div>
-                        <div class="h-1.5 md:h-2 bg-gray-600 rounded"></div>
+                    <div class="mt-3">
+                        <ul class="space-y-1">
+                            @forelse ($topProducts as $index => $product)
+                                <li class="flex items-center">
+                                    <span class="w-3 h-3 rounded-full mr-2" style="background-color: {{ ['#FF4500', '#FFA500', '#FFD700', '#00CED1', '#4682B4'][$index] }}"></span>
+                                    <span class="text-xs md:text-sm">{{ $product['name'] }} ({{ $product['quantity'] }})</span>
+                                </li>
+                            @empty
+                                <li class="text-xs md:text-sm text-gray-400">Tidak ada data produk terlaris.</li>
+                            @endforelse
+                        </ul>
                     </div>
                 </div>
 
-                <!-- Line Chart -->
+                <!-- Line Chart (Grafik Transaksi Harian) -->
                 <div class="bg-gray-800 rounded-lg p-3 md:p-5 text-white">
-                    <h3 class="text-base md:text-lg font-semibold mb-0.5 md:mb-1">Grafik Transaksi Mingguan</h3>
-                    <p class="text-2xs md:text-xs text-gray-400 mb-2 md:mb-4">Laporan Transaksi Selama Seminggu</p>
-                    <div class="w-full h-48 md:h-56 lg:h-64 bg-gray-800 rounded-lg relative">
-                        <div class="absolute inset-0 grid grid-cols-7 grid-rows-4">
-                            <div class="border-r border-gray-700 h-full"></div>
-                            <div class="border-r border-gray-700 h-full"></div>
-                            <div class="border-r border-gray-700 h-full"></div>
-                            <div class="border-r border-gray-700 h-full"></div>
-                            <div class="border-r border-gray-700 h-full"></div>
-                            <div class="border-r border-gray-700 h-full"></div>
-                            <div class="col-span-7 border-t border-gray-700 w-full absolute top-1/4"></div>
-                            <div class="col-span-7 border-t border-gray-700 w-full absolute top-2/4"></div>
-                            <div class="col-span-7 border-t border-gray-700 w-full absolute top-3/4"></div>
-                            <div class="col-span-7 border-t border-gray-700 w-full absolute bottom-0"></div>
-                        </div>
-                        <div class="absolute inset-0 flex items-end">
-                            <svg viewBox="0 0 700 300" class="w-full h-full">
-                                <path d="M0,150 L100,225 L200,75 L300,50 L400,75 L500,225 L600,100 L700,150 L700,300 L0,300 Z" 
-                                      fill="#C05621" fill-opacity="0.8" />
-                            </svg>
-                        </div>
-                        <div class="absolute bottom-0 w-full flex justify-between px-1 md:px-2 text-3xs sm:text-2xs md:text-xs text-gray-400">
-                            <div>SEN</div>
-                            <div>SEL</div>
-                            <div>RAB</div>
-                            <div>KAM</div>
-                            <div>JUM</div>
-                            <div>SAB</div>
-                            <div>MIN</div>
-                        </div>
-                        <div class="absolute left-0 h-full flex flex-col justify-between py-1 text-3xs sm:text-2xs md:text-xs text-gray-400">
-                            <div>100</div>
-                            <div>75</div>
-                            <div>50</div>
-                            <div>25</div>
-                            <div>0</div>
-                        </div>
+                    <h3 class="text-base md:text-lg font-semibold mb-0.5 md:mb-1">Grafik Transaksi Harian</h3>
+                    <p class="text-2xs md:text-xs text-gray-400 mb-2 md:mb-4">Laporan Transaksi Hari Ini ({{ now()->format('d M Y') }})</p>
+                    <div class="w-full h-48 md:h-56 lg:h-64">
+                        <canvas id="hourlyTransactionsChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -211,17 +178,97 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Dashboard loaded. Charts should be initialized here.');
-        // Responsive adjustments for mobile devices
-        const adjustForScreenSize = () => {
-            // Add any JavaScript-based responsive adjustments here if needed
-        };
-        
-        // Initial adjustment
-        adjustForScreenSize();
-        
-        // Adjust on resize
-        window.addEventListener('resize', adjustForScreenSize);
+        // Pie Chart untuk Produk Terlaris
+        const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+        new Chart(topProductsCtx, {
+            type: 'pie',
+            data: {
+                labels: [@foreach ($topProducts as $product) '{{ $product['name'] }}', @endforeach],
+                datasets: [{
+                    data: [@foreach ($topProducts as $product) {{ $product['quantity'] }}, @endforeach],
+                    backgroundColor: ['#FF4500', '#FFA500', '#FFD700', '#00CED1', '#4682B4'],
+                    borderColor: '#fff',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.raw + ' unit';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Line Chart untuk Transaksi Harian
+        const hourlyTransactionsCtx = document.getElementById('hourlyTransactionsChart').getContext('2d');
+        new Chart(hourlyTransactionsCtx, {
+            type: 'line',
+            data: {
+                labels: @json($labels),
+                datasets: [{
+                    label: 'Jumlah Transaksi',
+                    data: @json($hourlyData),
+                    fill: true,
+                    backgroundColor: 'rgba(192, 86, 33, 0.8)',
+                    borderColor: '#C05621',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            color: '#9CA3AF'
+                        },
+                        grid: {
+                            color: '#4B5563'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#9CA3AF',
+                            maxTicksLimit: 12, // Batasi jumlah label agar tidak terlalu padat
+                            callback: function(value, index, values) {
+                                // Tampilkan hanya beberapa label untuk kejelasan
+                                return index % 2 === 0 ? this.getLabelForValue(value) : '';
+                            }
+                        },
+                        grid: {
+                            color: '#4B5563'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.raw + ' transaksi';
+                            }
+                        }
+                    }
+                }
+            }
+        });
     });
 </script>
 @endpush

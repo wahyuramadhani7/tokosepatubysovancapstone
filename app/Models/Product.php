@@ -9,11 +9,6 @@ class Product extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'qr_code',
         'name',
@@ -23,4 +18,9 @@ class Product extends Model
         'purchase_price',
         'selling_price',
     ];
+
+    public function transactionItems()
+    {
+        return $this->hasMany(TransactionItem::class);
+    }
 }

@@ -37,6 +37,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
         Route::get('/history', [InventoryController::class, 'history'])->name('inventory.history');
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
+        Route::get('/{product}', [InventoryController::class, 'show'])->name('inventory.show');
     });
 
     // Transactions Routes - accessible to all authenticated users
