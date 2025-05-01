@@ -8,151 +8,343 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
     <style>
         [x-cloak] { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="bg-gray-50 font-sans" x-data="transactionApp()">
-    <div class="container mx-auto p-4 max-w-7xl">
-        <!-- Header -->
-        <div class="mb-4">
-            <h1 class="text-2xl font-bold text-gray-800">Buat Transaksi Baru</h1>
-            <p class="text-gray-600 text-sm">Tambahkan produk dan selesaikan transaksi.</p>
-        </div>
-
-        <!-- Form -->
-        <form action="{{ route('transactions.store') }}" method="POST" @submit="validateForm($event)">
-            @csrf
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Informasi Pelanggan -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Pelanggan</h2>
-                    <div class="space-y-3">
-                        <div>
-                            <input type="text" name="customer_name" placeholder="Nama Pelanggan" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <input type="text" name="customer_phone" placeholder="No. Telepon" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <input type="email" name="customer_email" placeholder="Email" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <select name="payment_method" id="payment_method" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500" required>
-                                <option value="" disabled selected>Metode Pembayaran</option>
-                                <option value="cash">Tunai</option>
-                                <option value="credit_card">Kartu Kredit</option>
-                                <option value="transfer">Transfer</option>
-                            </select>
-                        </div>
-                        <div>
-                            <textarea name="notes" rows="2" placeholder="Catatan" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500"></textarea>
-                        </div>
-                    </div>
-                    <!-- Scan QR -->
-                    <h2 class="text-lg font-semibold text-gray-800 mt-4 mb-3">Scan QR</h2>
-                    <div class="flex gap-2">
-                        <input type="text" x-model="qrCode" @keydown.enter.prevent="scanQR" placeholder="Kode QR" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500">
-                        <button type="button" @click="scanQR" class="px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Pindai</button>
+<body class="bg-gray-100 font-sans" x-data="transactionApp()">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header/Navigation -->
+        <header class="bg-gradient-to-r from-blue-800 to-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <div>
+                        <h1 class="font-bold text-xl">Sepatu by Sovan</h1>
+                        <p class="text-xs text-blue-100">Premium Footwear Collection</p>
                     </div>
                 </div>
-
-                <!-- Pilih Produk -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Produk</h2>
-                    <div class="mb-3">
-                        <input type="text" x-model="searchQuery" @input="searchProducts" placeholder="Cari Produk..." class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <!-- Hasil Pencarian -->
-                    <div x-show="searchResults.length > 0" class="max-h-40 overflow-y-auto mb-3" x-cloak>
-                        <ul class="divide-y divide-gray-200">
-                            <template x-for="product in searchResults" :key="product.id">
-                                <li class="py-2 flex justify-between">
-                                    <div>
-                                        <p class="font-medium text-gray-800" x-text="product.name"></p>
-                                        <p class="text-xs text-gray-500" x-text="`${product.color} | ${product.size} | Stok: ${product.stock}`"></p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-bold text-blue-600" x-text="formatRupiah(product.selling_price)"></p>
-                                        <button type="button" @click="addToCart(product)" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 py-1 px-2 rounded">+ Tambah</button>
-                                    </div>
-                                </li>
-                            </template>
-                        </ul>
-                    </div>
-                    <!-- Daftar Produk -->
-                    <div class="max-h-64 overflow-y-auto">
-                        <ul class="divide-y divide-gray-200">
-                            <template x-for="product in availableProducts" :key="product.id">
-                                <li class="py-2 flex justify-between hover:bg-gray-50">
-                                    <div>
-                                        <p class="font-medium text-gray-800" x-text="product.name"></p>
-                                        <p class="text-xs text-gray-500" x-text="`${product.color} | ${product.size} | Stok: ${product.stock}`"></p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-bold text-blue-600" x-text="formatRupiah(product.selling_price)"></p>
-                                        <button type="button" @click="addToCart(product)" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 py-1 px-2 rounded">+ Tambah</button>
-                                    </div>
-                                </li>
-                            </template>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Keranjang dan Checkout -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Keranjang</h2>
-                    <div x-show="cart.length === 0" class="text-center py-6 text-gray-500">
-                        <svg class="h-10 w-10 mx-auto text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                <div class="flex items-center space-x-2">
+                    <a href="{{ url('/transactions') }}" class="text-sm bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg transition-all flex items-center">
+                        <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        <p>Keranjang kosong</p>
-                    </div>
-                    <div x-show="cart.length > 0" class="max-h-64 overflow-y-auto mb-3">
-                        <template x-for="(item, index) in cart" :key="index">
-                            <div class="border rounded p-2 mb-2 relative">
-                                <button type="button" @click="removeItem(index)" class="absolute top-1 right-1 text-gray-400 hover:text-red-500">
-                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        Kembali
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 py-6">
+            <!-- Page Header -->
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Buat Transaksi Baru</h1>
+                <p class="text-gray-600 mt-1">Tambahkan produk ke keranjang dan selesaikan transaksi</p>
+            </div>
+
+            <!-- Form -->
+            <form action="{{ route('transactions.store') }}" method="POST" @submit="validateForm($event)">
+                @csrf
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Informasi Pelanggan -->
+                    <div class="bg-white rounded-xl shadow-md p-5">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg class="h-5 w-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Informasi Pelanggan
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Nama Pelanggan</label>
+                                <input type="text" name="customer_name" placeholder="Masukkan nama pelanggan" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">No. Telepon</label>
+                                <input type="text" name="customer_phone" placeholder="Contoh: 081234567890" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" name="customer_email" placeholder="email@example.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Metode Pembayaran <span class="text-red-500">*</span></label>
+                                <select name="payment_method" id="payment_method" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                    <option value="" disabled selected>Pilih metode pembayaran</option>
+                                    <option value="cash">Tunai</option>
+                                    <option value="credit_card">Kartu Kredit</option>
+                                    <option value="transfer">Transfer Bank</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Catatan</label>
+                                <textarea name="notes" rows="2" placeholder="Catatan tambahan untuk transaksi" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Scan QR -->
+                        <div class="mt-6 pt-5 border-t border-gray-100">
+                            <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                <svg class="h-5 w-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                </svg>
+                                Scan QR
+                            </h2>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" x-model="qrCode" @keydown.enter.prevent="scanQR" placeholder="Masukkan kode QR" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <button type="button" @click="scanQR" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                     </svg>
                                 </button>
-                                <p class="font-medium text-gray-800" x-text="item.name"></p>
-                                <p class="text-xs text-gray-500" x-text="`${item.color} | ${item.size}`"></p>
-                                <div class="flex justify-between items-center mt-2">
-                                    <div class="flex items-center">
-                                        <button type="button" @click="decrementQuantity(index)" class="bg-gray-200 h-6 w-6 rounded-l">-</button>
-                                        <input type="number" x-model.number="item.quantity" min="1" :max="item.stock" class="h-6 w-10 text-center border-y" @change="updateQuantity(index)">
-                                        <button type="button" @click="incrementQuantity(index)" class="bg-gray-200 h-6 w-6 rounded-r">+</button>
+                            </div>
+                            
+                            <!-- QR Scanner Button -->
+                            <button type="button" @click="openQRScanner" class="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center justify-center">
+                                <svg class="h-5 w-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Buka Kamera QR Scanner
+                            </button>
+                            
+                            <!-- QR Scanner Modal -->
+                            <div x-show="showQRScanner" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" x-cloak>
+                                <div class="bg-white rounded-xl p-5 w-full max-w-md">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-semibold text-gray-800">QR Code Scanner</h3>
+                                        <button @click="closeQRScanner" class="text-gray-500 hover:text-gray-700">
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
                                     </div>
-                                    <p class="font-bold text-blue-600" x-text="formatRupiah(item.selling_price * item.quantity)"></p>
+                                    
+                                    <div class="bg-gray-100 rounded-lg overflow-hidden relative" style="height: 300px;">
+                                        <video id="qr-video" class="w-full h-full object-cover"></video>
+                                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <div class="w-2/3 h-2/3 border-2 border-blue-500 rounded-lg opacity-70"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4 text-center text-sm text-gray-600">
+                                        <p x-show="!scanActive">Klik tombol di bawah untuk mulai memindai</p>
+                                        <p x-show="scanActive">Arahkan kamera ke QR Code produk...</p>
+                                        <p x-show="lastScanned" class="text-green-600 font-medium mt-2">
+                                            Berhasil memindai produk!
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="mt-4 flex justify-center">
+                                        <button type="button" @click="startScanning" x-show="!scanActive" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                            Mulai Pemindaian
+                                        </button>
+                                        <button type="button" @click="stopScanning" x-show="scanActive" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                            Hentikan Pemindaian
+                                        </button>
+                                    </div>
                                 </div>
-                                <input type="hidden" :name="'products['+index+'][id]'" x-model="item.id">
-                                <input type="hidden" :name="'products['+index+'][quantity]'" x-model="item.quantity">
-                            </div>
-                        </template>
-                    </div>
-                    <!-- Ringkasan -->
-                    <div class="border-t pt-3">
-                        <h2 class="text-lg font-semibold text-gray-800 mb-3">Ringkasan</h2>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Subtotal</span>
-                                <span x-text="formatRupiah(calculateSubtotal())"></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Diskon</span>
-                                <input type="number" name="discount_amount" x-model="discount" min="0" class="w-20 text-right border rounded p-1 text-sm">
-                            </div>
-                            <div class="flex justify-between border-t pt-2">
-                                <span class="font-bold">Total</span>
-                                <span class="font-bold text-blue-600" x-text="formatRupiah(calculateTotal())"></span>
                             </div>
                         </div>
-                        <button type="submit" class="w-full mt-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700" :disabled="cart.length === 0">Proses Transaksi</button>
+                    </div>
+
+                    <!-- Pilih Produk -->
+                    <div class="bg-white rounded-xl shadow-md p-5">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg class="h-5 w-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            Daftar Produk
+                        </h2>
+                        
+                        <div class="mb-4 relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" x-model="searchQuery" @input="searchProducts" placeholder="Cari produk, warna, atau ukuran..." class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <!-- Hasil Pencarian -->
+                        <div x-show="searchResults.length > 0" class="bg-white border rounded-lg shadow-sm mb-4 max-h-48 overflow-y-auto" x-cloak>
+                            <ul class="divide-y divide-gray-100">
+                                <template x-for="product in searchResults" :key="product.id">
+                                    <li class="p-3 hover:bg-blue-50 transition-colors cursor-pointer" @click="addToCart(product)">
+                                        <div class="flex justify-between items-center">
+                                            <div>
+                                                <p class="font-medium text-gray-800" x-text="product.name"></p>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="inline-block h-3 w-3 rounded-full mr-1" :style="`background-color: ${getColorCode(product.color)}`"></span>
+                                                    <span class="text-xs text-gray-500" x-text="product.color"></span>
+                                                    <span class="mx-1.5 text-gray-300">|</span>
+                                                    <span class="text-xs text-gray-500" x-text="`Ukuran: ${product.size}`"></span>
+                                                    <span class="mx-1.5 text-gray-300">|</span>
+                                                    <span class="text-xs" :class="product.stock > 5 ? 'text-green-600' : 'text-orange-600'" x-text="`Stok: ${product.stock}`"></span>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="font-bold text-blue-600" x-text="formatRupiah(product.selling_price)"></p>
+                                                <button type="button" class="mt-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-2 rounded-full transition-colors">+ Tambah</button>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        
+                        <!-- Daftar Produk -->
+                        <div class="border rounded-lg max-h-64 overflow-y-auto">
+                            <div x-show="availableProducts.length === 0" class="text-center py-10 text-gray-500">
+                                <svg class="h-10 w-10 mx-auto text-gray-300 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                                <p>Tidak ada produk tersedia</p>
+                            </div>
+                            <ul class="divide-y divide-gray-100">
+                                <template x-for="product in availableProducts" :key="product.id">
+                                    <li class="p-3 hover:bg-blue-50 transition-colors cursor-pointer" @click="addToCart(product)">
+                                        <div class="flex justify-between items-center">
+                                            <div>
+                                                <p class="font-medium text-gray-800" x-text="product.name"></p>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="inline-block h-3 w-3 rounded-full mr-1" :style="`background-color: ${getColorCode(product.color)}`"></span>
+                                                    <span class="text-xs text-gray-500" x-text="product.color"></span>
+                                                    <span class="mx-1.5 text-gray-300">|</span>
+                                                    <span class="text-xs text-gray-500" x-text="`Ukuran: ${product.size}`"></span>
+                                                    <span class="mx-1.5 text-gray-300">|</span>
+                                                    <span class="text-xs" :class="product.stock > 5 ? 'text-green-600' : 'text-orange-600'" x-text="`Stok: ${product.stock}`"></span>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="font-bold text-blue-600" x-text="formatRupiah(product.selling_price)"></p>
+                                                <button type="button" class="mt-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-2 rounded-full transition-colors">+ Tambah</button>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Keranjang dan Checkout -->
+                    <div class="bg-white rounded-xl shadow-md p-5">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg class="h-5 w-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Keranjang Belanja
+                        </h2>
+                        
+                        <div x-show="cart.length === 0" class="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
+                            <svg class="h-12 w-12 mx-auto text-gray-300 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            <p class="mb-1">Keranjang belanja kosong</p>
+                            <p class="text-xs text-gray-400">Tambahkan produk dari daftar atau scan QR</p>
+                        </div>
+                        
+                        <div x-show="cart.length > 0" class="max-h-64 overflow-y-auto mb-4">
+                            <ul class="space-y-3">
+                                <template x-for="(item, index) in cart" :key="index">
+                                    <li class="border rounded-lg p-3 bg-gray-50 relative hover:shadow-sm transition-shadow">
+                                        <button type="button" @click="removeItem(index)" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors">
+                                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                        <p class="font-medium text-gray-800 pr-6" x-text="item.name"></p>
+                                        <div class="flex items-center mt-1">
+                                            <span class="inline-block h-3 w-3 rounded-full mr-1" :style="`background-color: ${getColorCode(item.color)}`"></span>
+                                            <span class="text-xs text-gray-500" x-text="item.color"></span>
+                                            <span class="mx-1.5 text-gray-300">|</span>
+                                            <span class="text-xs text-gray-500" x-text="`Ukuran: ${item.size}`"></span>
+                                        </div>
+                                        <div class="flex justify-between items-center mt-3">
+                                            <div class="flex items-center border rounded overflow-hidden">
+                                                <button type="button" @click="decrementQuantity(index)" class="bg-gray-100 hover:bg-gray-200 px-2 py-1 transition-colors">
+                                                    <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                    </svg>
+                                                </button>
+                                                <input type="number" x-model.number="item.quantity" min="1" :max="item.stock" class="w-10 text-center border-x py-1 text-sm" @change="updateQuantity(index)">
+                                                <button type="button" @click="incrementQuantity(index)" class="bg-gray-100 hover:bg-gray-200 px-2 py-1 transition-colors">
+                                                    <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <p class="font-bold text-blue-600" x-text="formatRupiah(item.selling_price * item.quantity)"></p>
+                                        </div>
+                                        <input type="hidden" :name="'products['+index+'][id]'" x-model="item.id">
+                                        <input type="hidden" :name="'products['+index+'][quantity]'" x-model="item.quantity">
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        
+                        <!-- Ringkasan -->
+                        <div class="border-t pt-4 mt-2">
+                            <h2 class="text-lg font-semibold text-gray-800 mb-3">Ringkasan Pembayaran</h2>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Subtotal</span>
+                                    <span class="font-medium" x-text="formatRupiah(calculateSubtotal())"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Diskon</span>
+                                    <div class="flex items-center">
+                                        <span class="text-gray-500 mr-2">Rp</span>
+                                        <input type="number" name="discount_amount" x-model="discount" min="0" class="w-24 text-right border border-gray-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                                <div class="flex justify-between border-t border-gray-100 pt-3 mt-3">
+                                    <span class="font-bold text-gray-800">Total Bayar</span>
+                                    <span class="font-bold text-lg text-blue-600" x-text="formatRupiah(calculateTotal())"></span>
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full mt-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center" :disabled="cart.length === 0" :class="{'opacity-50 cursor-not-allowed': cart.length === 0}">
+                                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                Proses Transaksi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-6 mt-6">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <div class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            <span class="font-bold">Sepatu by Sovan</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-1">Premium Footwear Collection</p>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        &copy; 2025 Sepatu by Sovan. All rights reserved.
                     </div>
                 </div>
             </div>
-        </form>
+        </footer>
     </div>
 
+    <!-- Import QR Scanner Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js" integrity="sha512-k/KAe4Yff9EUdYI5/IAHlwUswqeipP+Cp5qnrsUjTPCgl51La2/JhyyjNciztD7mWNKLSXci48m7cctATKfLlQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
     <script>
         function transactionApp() {
             return {
@@ -162,9 +354,31 @@
                 cart: [],
                 qrCode: '',
                 discount: 0,
+                showQRScanner: false,
+                scanActive: false,
+                scanner: null,
+                lastScanned: null,
 
                 formatRupiah(amount) {
                     return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
+                },
+
+                getColorCode(color) {
+                    const colorMap = {
+                        'Merah': '#f87171',
+                        'Hitam': '#1f2937',
+                        'Putih': '#f9fafb',
+                        'Biru': '#3b82f6',
+                        'Navy': '#1e3a8a',
+                        'Hijau': '#10b981',
+                        'Kuning': '#fbbf24',
+                        'Abu-abu': '#9ca3af',
+                        'Coklat': '#92400e',
+                        'Pink': '#ec4899',
+                        'Ungu': '#8b5cf6',
+                        'Orange': '#f97316'
+                    };
+                    return colorMap[color] || '#9ca3af';
                 },
 
                 searchProducts() {
@@ -182,7 +396,7 @@
                         if (this.cart[index].quantity < product.stock) {
                             this.cart[index].quantity++;
                         } else {
-                            alert('Stok tidak cukup!');
+                            alert('Stok tidak mencukupi!');
                         }
                     } else {
                         this.cart.push({
@@ -207,7 +421,7 @@
                     if (this.cart[index].quantity < this.cart[index].stock) {
                         this.cart[index].quantity++;
                     } else {
-                        alert('Stok tidak cukup!');
+                        alert('Stok tidak mencukupi!');
                     }
                 },
 
@@ -222,7 +436,7 @@
                     if (qty < 1) this.cart[index].quantity = 1;
                     if (qty > this.cart[index].stock) {
                         this.cart[index].quantity = this.cart[index].stock;
-                        alert('Kuantitas disesuaikan dengan stok');
+                        alert('Kuantitas disesuaikan dengan stok tersedia');
                     }
                 },
 
@@ -253,15 +467,93 @@
                 validateForm(event) {
                     if (this.cart.length === 0) {
                         event.preventDefault();
-                        alert('Keranjang kosong! Tambahkan produk.');
+                        alert('Keranjang masih kosong! Tambahkan produk terlebih dahulu.');
                         return false;
                     }
                     if (!document.getElementById('payment_method').value) {
                         event.preventDefault();
-                        alert('Pilih metode pembayaran!');
+                        alert('Silakan pilih metode pembayaran!');
                         return false;
                     }
                     return true;
+                },
+                
+                // QR Scanner Functions
+                openQRScanner() {
+                    this.showQRScanner = true;
+                },
+                
+                closeQRScanner() {
+                    this.showQRScanner = false;
+                    this.stopScanning();
+                },
+                
+                startScanning() {
+                    this.scanActive = true;
+                    this.lastScanned = null;
+                    
+                    const qrConfig = {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        rememberLastUsedCamera: true
+                    };
+                    
+                    // Initialize the scanner
+                    this.scanner = new Html5Qrcode("qr-video");
+                    
+                    // Start scanning
+                    this.scanner.start(
+                        { facingMode: "environment" }, // Use back camera
+                        qrConfig,
+                        this.onScanSuccess.bind(this),
+                        this.onScanError.bind(this)
+                    ).catch(err => {
+                        console.error("Error starting scanner:", err);
+                        alert("Tidak dapat mengakses kamera. Pastikan izin kamera diaktifkan.");
+                        this.scanActive = false;
+                    });
+                },
+                
+                stopScanning() {
+                    if (this.scanner && this.scanActive) {
+                        this.scanner.stop().then(() => {
+                            this.scanActive = false;
+                            console.log('Scanner stopped');
+                        }).catch(err => {
+                            console.error("Error stopping scanner:", err);
+                        });
+                    }
+                },
+                
+                onScanSuccess(decodedText) {
+                    console.log(`QR Code detected: ${decodedText}`);
+                    this.lastScanned = decodedText;
+                    
+                    // Process the scanned QR code
+                    const parts = decodedText.split('-');
+                    if (parts.length > 0) {
+                        const product = this.availableProducts.find(p => p.id == parts[0]);
+                        if (product) {
+                            this.addToCart(product);
+                            
+                            // Provide visual feedback
+                            this.$nextTick(() => {
+                                setTimeout(() => {
+                                    // Close scanner after successful scan
+                                    this.closeQRScanner();
+                                }, 1500);
+                            });
+                        } else {
+                            alert('Produk tidak ditemukan!');
+                        }
+                    } else {
+                        alert('Format QR tidak valid!');
+                    }
+                },
+                
+                onScanError(error) {
+                    // We can ignore errors as they're usually just frames without QR codes
+                    // console.error("QR scan error: ", error);
                 }
             }
         }
