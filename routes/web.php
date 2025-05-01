@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\VisitorMonitoringController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -50,6 +51,15 @@ Route::middleware(['auth'])->group(function () {
 
     // Transaction Reports - accessible to all authenticated users
     Route::get('/transactions/reports/sales', [TransactionController::class, 'report'])->name('transactions.report');
+    
+    // Visitor Monitoring Routes - accessible to all authenticated users
+    Route::get('/visitor-monitoring', [VisitorMonitoringController::class, 'index'])->name('visitor-monitoring.index');
+});
+
+// API routes for ESP32-CAM integration
+Route::prefix('api')->group(function () {
+    Route::post('/visitor-entry', [VisitorMonitoringController::class, 'storeVisitorEntry'])->name('api.visitor.entry');
+    Route::post('/visitor-exit/{id}', [VisitorMonitoringController::class, 'storeVisitorExit'])->name('api.visitor.exit');
 });
 
 // Route untuk dashboard utama setelah login

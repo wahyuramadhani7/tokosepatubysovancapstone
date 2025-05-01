@@ -44,6 +44,10 @@
                         {{ __('Transaksi') }}
                     </a>
                     
+                    <a href="{{ route('visitor-monitoring.index') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('visitor-monitoring.index') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
+                        {{ __('Monitoring Pengunjung') }}
+                    </a>
+                    
                     @if(Auth::check() && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin'))
                     <a href="{{ route('transactions.report') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('transactions.report') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
                         {{ __('Laporan') }}
@@ -135,6 +139,10 @@
             
             <a href="{{ route('transactions.index') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('transactions.index') || request()->routeIs('transactions.create') || request()->routeIs('transactions.edit') || request()->routeIs('transactions.show') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                 {{ __('Transaksi') }}
+            </a>
+            
+            <a href="{{ route('visitor-monitoring.index') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('visitor-monitoring.index') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
+                {{ __('Monitoring Pengunjung') }}
             </a>
             
             @if(Auth::check() && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin'))
