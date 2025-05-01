@@ -143,25 +143,25 @@ class TransactionController extends Controller
     }
 
     public function report(Request $request)
-    {
-        $dateStart = $request->date_start ?? now()->startOfMonth()->format('Y-m-d');
-        $dateEnd = $request->date_end ?? now()->format('Y-m-d');
+{
+    $dateStart = $request->date_start ?? now()->startOfMonth()->format('Y-m-d');
+    $dateEnd = $request->date_end ?? now()->format('Y-m-d');
 
-        $query = Transaction::with('user')
-            ->whereBetween('created_at', [$dateStart . ' 00:00:00', $dateEnd . ' 23:59:59']);
+    $query = Transaction::with('user')
+        ->whereBetween('created_at', [$dateStart . ' 00:00:00', $dateEnd . ' 23:59:59']);
 
-        // Hanya owner atau admin yang bisa memfilter berdasarkan user_id
-        if ($request->user_id && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')) {
-            $query->where('user_id', $request->user_id);
-        } elseif (Auth::user()->role === 'employee') {
-            // Employee hanya bisa melihat transaksi mereka sendiri
-            $query->where('user_id', Auth::id());
-        }
-
-        $transactions = $query->latest()->get();
-        $totalSales = $transactions->sum('final_amount');
-        $totalTransactions = $transactions->count();
-
-        return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'dateStart', 'dateEnd'));
+    if (Auth::user()->role === 'employee') {
+        // Employee hanya bisa melihat transaksi mereka sendiri
+        $query->where('user_id', Auth::id());
+    } elseif ($request->user_id && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')) {
+        // Owner atau admin yang bisa memfilter berdasarkan user_id
+        $query->where('user_id', $request->user_id);
     }
+
+    $transactions = $query->latest()->get();
+    $totalSales = $transactions->sum('final_amount');
+    $totalTransactions = $transactions->count();
+
+    return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'dateStart', 'dateEnd'));
+}
 }

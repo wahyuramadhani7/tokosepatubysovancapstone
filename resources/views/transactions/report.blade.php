@@ -7,17 +7,23 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            @if(isset($error))
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow" role="alert">
+                    <p>{{ $error }}</p>
+                </div>
+            @endif
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <form method="GET" action="{{ route('transactions.report') }}" class="mb-6">
                         <div class="flex flex-wrap gap-4 items-end">
                             <div>
                                 <x-input-label for="date_start" :value="__('Start Date')" />
-                                <x-text-input id="date_start" class="block mt-1" type="date" name="date_start" :value="$dateStart" required />
+                                <x-text-input id="date_start" class="block mt-1" type="date" name="date_start" :value="$dateStart ?? now()->startOfMonth()->format('Y-m-d')" required />
                             </div>
                             <div>
                                 <x-input-label for="date_end" :value="__('End Date')" />
-                                <x-text-input id="date_end" class="block mt-1" type="date" name="date_end" :value="$dateEnd" required />
+                                <x-text-input id="date_end" class="block mt-1" type="date" name="date_end" :value="$dateEnd ?? now()->format('Y-m-d')" required />
                             </div>
                             @if(Auth::user()->role === 'owner' || Auth::user()->role === 'admin')
                             <div>
@@ -50,15 +56,15 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <h3 class="text-lg font-medium text-gray-900">Report Period</h3>
-                                    <p class="text-gray-600">{{ \Carbon\Carbon::parse($dateStart)->format('d M Y') }} - {{ \Carbon\Carbon::parse($dateEnd)->format('d M Y') }}</p>
+                                    <p class="text-gray-600">{{ isset($dateStart) ? \Carbon\Carbon::parse($dateStart)->format('d M Y') : \Carbon\Carbon::now()->startOfMonth()->format('d M Y') }} - {{ isset($dateEnd) ? \Carbon\Carbon::parse($dateEnd)->format('d M Y') : \Carbon\Carbon::now()->format('d M Y') }}</p>
                                 </div>
                                 <div>
                                     <h3 class="text-lg font-medium text-gray-900">Total Transactions</h3>
-                                    <p class="text-gray-600">{{ $totalTransactions }}</p>
+                                    <p class="text-gray-600">{{ $totalTransactions ?? 0 }}</p>
                                 </div>
                                 <div>
                                     <h3 class="text-lg font-medium text-gray-900">Total Sales</h3>
-                                    <p class="text-gray-600">Rp {{ number_format($totalSales, 0, ',', '.') }}</p>
+                                    <p class="text-gray-600">Rp {{ isset($totalSales) ? number_format($totalSales, 0, ',', '.') : '0' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -72,7 +78,7 @@
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Date
                                         </th>
-                                        <th scope="col" class="px-6Oy-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Invoice
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -90,36 +96,38 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    @forelse ($transactions as $transaction)
-                                        <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ $transaction->created_at->format('d M Y H:i') }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                <a href="{{ route('transactions.show', $transaction) }}" class="text-indigo-600 hover:text-indigo-900">
-                                                    {{ $transaction->invoice_number }}
-                                                </a>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ $transaction->customer_name ?: 'Walk-in Customer' }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ ucfirst($transaction->payment_method) }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ $transaction->user->name }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                                                Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}
-                                            </td>
-                                        </tr>
-                                    @empty
+                                    @if(isset($transactions) && $transactions->count() > 0)
+                                        @foreach($transactions as $transaction)
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $transaction->created_at->format('d M Y H:i') }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    <a href="{{ route('transactions.show', $transaction) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                        {{ $transaction->invoice_number }}
+                                                    </a>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $transaction->customer_name ?: 'Walk-in Customer' }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ ucfirst(str_replace('_', ' ', $transaction->payment_method)) }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $transaction->user->name ?? 'Unknown' }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                                                    Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
                                         <tr>
                                             <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                                                 No transactions found for the selected period.
                                             </td>
                                         </tr>
-                                    @endforelse
+                                    @endif
                                 </tbody>
                                 <tfoot class="bg-gray-50">
                                     <tr>
@@ -127,7 +135,7 @@
                                             Total Sales:
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                                            Rp {{ number_format($totalSales, 0, ',', '.') }}
+                                            Rp {{ isset($totalSales) ? number_format($totalSales, 0, ',', '.') : '0' }}
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -160,8 +168,13 @@
     </style>
 
     <script>
-        document.getElementById('print-report').addEventListener('click', function() {
-            window.print();
+        document.addEventListener('DOMContentLoaded', function() {
+            const printButton = document.getElementById('print-report');
+            if (printButton) {
+                printButton.addEventListener('click', function() {
+                    window.print();
+                });
+            }
         });
     </script>
 </x-app-layout>

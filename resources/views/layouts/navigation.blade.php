@@ -16,36 +16,36 @@
                 <div class="flex space-x-4 lg:space-x-8">
                     @auth
                         @if (Auth::user()->role === 'employee')
-                            <x-nav-link :href="route('employee.dashboard')" :active="request()->routeIs('employee.dashboard')" class="text-white hover:text-gray-300 text-sm lg:text-base">
+                            <a href="{{ route('employee.dashboard') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('employee.dashboard') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
                                 {{ __('Employee') }}
-                            </x-nav-link>
+                            </a>
                         @elseif (Auth::user()->role === 'owner')
-                            <x-nav-link :href="route('owner.dashboard')" :active="request()->routeIs('owner.dashboard')" class="text-white hover:text-gray-300 text-sm lg:text-base">
+                            <a href="{{ route('owner.dashboard') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('owner.dashboard') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
                                 {{ __('Owner') }}
-                            </x-nav-link>
-                            <x-nav-link :href="route('owner.employee-accounts')" :active="request()->routeIs('owner.employee-accounts*')" class="text-white hover:text-gray-300 text-sm lg:text-base">
+                            </a>
+                            <a href="{{ route('owner.employee-accounts') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('owner.employee-accounts*') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
                                 {{ __('Employee Accounts') }}
-                            </x-nav-link>
+                            </a>
                         @elseif (Auth::user()->role === 'admin')
-                            <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" class="text-white hover:text-gray-300 text-sm lg:text-base">
+                            <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('admin.dashboard') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
                                 {{ __('Admin') }}
-                            </x-nav-link>
-                            <x-nav-link :href="route('admin.accounts')" :active="request()->routeIs('admin.accounts*')" class="text-white hover:text-gray-300 text-sm lg:text-base">
+                            </a>
+                            <a href="{{ route('admin.accounts') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('admin.accounts*') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
                                 {{ __('Account Management') }}
-                            </x-nav-link>
+                            </a>
                         @endif
                     @endauth
                     
-                    <a href="{{ route('inventory.index') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('inventory.*') ? 'font-bold' : 'hover:text-gray-300' }}">
+                    <a href="{{ route('inventory.index') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('inventory.*') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
                         {{ __('Inventory') }}
                     </a>
                     
-                    <a href="{{ route('transactions.index') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('transactions.*') ? 'font-bold' : 'hover:text-gray-300' }}">
+                    <a href="{{ route('transactions.index') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('transactions.index') || request()->routeIs('transactions.create') || request()->routeIs('transactions.edit') || request()->routeIs('transactions.show') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
                         {{ __('Transaksi') }}
                     </a>
                     
                     @if(Auth::check() && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin'))
-                    <a href="{{ route('transactions.report') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('transactions.report') ? 'font-bold' : 'hover:text-gray-300' }}">
+                    <a href="{{ route('transactions.report') }}" class="inline-flex items-center px-1 pt-1 text-sm lg:text-base text-white {{ request()->routeIs('transactions.report') ? 'font-bold border-b-2 border-blue-500' : 'hover:text-gray-300' }}">
                         {{ __('Laporan') }}
                     </a>
                     @endif
@@ -84,9 +84,9 @@
                     </x-dropdown>
                 @else
                     <div class="flex space-x-4">
-                        <a href="{{ route('login') }}" class="text-sm text-white hover:text-gray-300 underline">Log in</a>
+                        <a href="{{ route('login') }}" class="text-sm text-white hover:text-gray-300 underline {{ request()->routeIs('login') ? 'font-bold' : '' }}">Log in</a>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="text-sm text-white hover:text-gray-300 underline">Register</a>
+                            <a href="{{ route('register') }}" class="text-sm text-white hover:text-gray-300 underline {{ request()->routeIs('register') ? 'font-bold' : '' }}">Register</a>
                         @endif
                     </div>
                 @endauth
@@ -109,36 +109,36 @@
         <div class="pt-2 pb-3 space-y-1">
             @auth
                 @if (Auth::user()->role === 'employee')
-                    <x-responsive-nav-link :href="route('employee.dashboard')" :active="request()->routeIs('employee.dashboard')" class="text-white hover:text-gray-300 block px-3 py-2 rounded-md text-base font-medium border-l-4">
+                    <a href="{{ route('employee.dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('employee.dashboard') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                         {{ __('Employee Dashboard') }}
-                    </x-responsive-nav-link>
+                    </a>
                 @elseif (Auth::user()->role === 'owner')
-                    <x-responsive-nav-link :href="route('owner.dashboard')" :active="request()->routeIs('owner.dashboard')" class="text-white hover:text-gray-300 block px-3 py-2 rounded-md text-base font-medium border-l-4">
+                    <a href="{{ route('owner.dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('owner.dashboard') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                         {{ __('Owner Dashboard') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('owner.employee-accounts')" :active="request()->routeIs('owner.employee-accounts*')" class="text-white hover:text-gray-300 block px-3 py-2 rounded-md text-base font-medium border-l-4">
+                    </a>
+                    <a href="{{ route('owner.employee-accounts') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('owner.employee-accounts*') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                         {{ __('Employee Accounts') }}
-                    </x-responsive-nav-link>
+                    </a>
                 @elseif (Auth::user()->role === 'admin')
-                    <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" class="text-white hover:text-gray-300 block px-3 py-2 rounded-md text-base font-medium border-l-4">
+                    <a href="{{ route('admin.dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('admin.dashboard') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                         {{ __('Admin Dashboard') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('admin.accounts')" :active="request()->routeIs('admin.accounts*')" class="text-white hover:text-gray-300 block px-3 py-2 rounded-md text-base font-medium border-l-4">
+                    </a>
+                    <a href="{{ route('admin.accounts') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('admin.accounts*') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                         {{ __('Account Management') }}
-                    </x-responsive-nav-link>
+                    </a>
                 @endif
             @endauth
             
-            <a href="{{ route('inventory.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white {{ request()->routeIs('inventory.*') ? 'font-bold border-blue-500' : 'hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
+            <a href="{{ route('inventory.index') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('inventory.*') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                 {{ __('Inventory') }}
             </a>
             
-            <a href="{{ route('transactions.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white {{ request()->routeIs('transactions.*') ? 'font-bold border-blue-500' : 'hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
+            <a href="{{ route('transactions.index') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('transactions.index') || request()->routeIs('transactions.create') || request()->routeIs('transactions.edit') || request()->routeIs('transactions.show') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                 {{ __('Transaksi') }}
             </a>
             
             @if(Auth::check() && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin'))
-            <a href="{{ route('transactions.report') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white {{ request()->routeIs('transactions.report') ? 'font-bold border-blue-500' : 'hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
+            <a href="{{ route('transactions.report') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('transactions.report') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }} transition duration-150 ease-in-out">
                 {{ __('Laporan') }}
             </a>
             @endif
@@ -153,24 +153,23 @@
                 </div>
 
                 <div class="mt-3 space-y-1">
-                    <x-responsive-nav-link :href="route('profile.edit')" class="text-white hover:text-gray-300">
+                    <a href="{{ route('profile.edit') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600 {{ request()->routeIs('profile.edit') ? 'border-blue-500 font-bold bg-gray-800' : '' }}">
                         {{ __('Profile') }}
-                    </x-responsive-nav-link>
+                    </a>
 
                     <!-- Authentication -->
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <x-responsive-nav-link :href="route('logout')"
-                                onclick="event.preventDefault(); this.closest('form').submit();" class="text-white hover:text-gray-300">
+                        <button type="submit" class="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600">
                             {{ __('Log Out') }}
-                        </x-responsive-nav-link>
+                        </button>
                     </form>
                 </div>
             @else
                 <div class="px-4 py-2 space-y-1">
-                    <a href="{{ route('login') }}" class="block text-base font-medium text-white hover:text-gray-300">Log in</a>
+                    <a href="{{ route('login') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('login') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }}">Log in</a>
                     @if (Route::has('register'))
-                        <a href="{{ route('register') }}" class="block text-base font-medium text-white hover:text-gray-300 mt-1">Register</a>
+                        <a href="{{ route('register') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium text-white {{ request()->routeIs('register') ? 'border-blue-500 font-bold bg-gray-800' : 'border-transparent hover:text-gray-300 hover:bg-gray-700 hover:border-gray-600' }}">Register</a>
                     @endif
                 </div>
             @endauth
