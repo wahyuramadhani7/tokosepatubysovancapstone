@@ -56,7 +56,6 @@ class TransactionController extends Controller
 
             $totalAmount = 0;
             $finalAmount = 0;
-            $taxRate = 0.11;
             $transactionItems = [];
 
             foreach ($request->products as $item) {
@@ -100,12 +99,10 @@ class TransactionController extends Controller
             }
 
             $discountAmount = (float)($request->discount_amount ?? 0);
-            $taxAmount = ($totalAmount - $discountAmount) * $taxRate;
-            $finalAmount = $totalAmount - $discountAmount + $taxAmount;
+            $finalAmount = $totalAmount - $discountAmount;
 
             $transaction->total_amount = $totalAmount;
             $transaction->discount_amount = $discountAmount;
-            $transaction->tax_amount = $taxAmount;
             $transaction->final_amount = $finalAmount;
             $transaction->save();
 
@@ -114,8 +111,6 @@ class TransactionController extends Controller
             }
 
             DB::commit();
-
-            $transactions = Transaction::with('user')->latest()->paginate(15);
 
             return redirect()->route('transactions.index')
                 ->with('success', 'Transaksi berhasil diselesaikan.')
@@ -143,25 +138,23 @@ class TransactionController extends Controller
     }
 
     public function report(Request $request)
-{
-    $dateStart = $request->date_start ?? now()->startOfMonth()->format('Y-m-d');
-    $dateEnd = $request->date_end ?? now()->format('Y-m-d');
+    {
+        $dateStart = $request->date_start ?? now()->startOfMonth()->format('Y-m-d');
+        $dateEnd = $request->date_end ?? now()->format('Y-m-d');
 
-    $query = Transaction::with('user')
-        ->whereBetween('created_at', [$dateStart . ' 00:00:00', $dateEnd . ' 23:59:59']);
+        $query = Transaction::with('user')
+            ->whereBetween('created_at', [$dateStart . ' 00:00:00', $dateEnd . ' 23:59:59']);
 
-    if (Auth::user()->role === 'employee') {
-        // Employee hanya bisa melihat transaksi mereka sendiri
-        $query->where('user_id', Auth::id());
-    } elseif ($request->user_id && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')) {
-        // Owner atau admin yang bisa memfilter berdasarkan user_id
-        $query->where('user_id', $request->user_id);
+        if (Auth::user()->role === 'employee') {
+            $query->where('user_id', Auth::id());
+        } elseif ($request->user_id && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        $transactions = $query->latest()->get();
+        $totalSales = $transactions->sum('final_amount');
+        $totalTransactions = $transactions->count();
+
+        return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'dateStart', 'dateEnd'));
     }
-
-    $transactions = $query->latest()->get();
-    $totalSales = $transactions->sum('final_amount');
-    $totalTransactions = $transactions->count();
-
-    return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'dateStart', 'dateEnd'));
-}
 }

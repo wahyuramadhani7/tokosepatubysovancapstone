@@ -135,10 +135,6 @@
                 <span>Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</span>
             </div>
             @endif
-            <div class="invoice-row">
-                <span>Tax (11%):</span>
-                <span>Rp {{ number_format($transaction->tax_amount, 0, ',', '.') }}</span>
-            </div>
             <div class="total-row">
                 <span>TOTAL:</span>
                 <span>Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</span>
