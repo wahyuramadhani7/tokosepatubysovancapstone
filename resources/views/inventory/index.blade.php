@@ -42,8 +42,8 @@
             </div>
         </div>
 
-         <!-- Search Bar and Buttons with dark background -->
-         <div style="background-color: #292929;" class="flex flex-row justify-between items-center p-3 mb-4 rounded-lg">
+        <!-- Search Bar and Buttons with dark background -->
+        <div style="background-color: #292929;" class="flex flex-row justify-between items-center p-3 mb-4 rounded-lg">
             <form action="{{ route('inventory.search') }}" method="GET" class="relative w-full max-w-xs">
                 <div class="relative rounded-lg overflow-hidden border border-orange-300">
                     <input type="text" name="search" placeholder="Search..." class="w-full p-2 pl-10 focus:outline-none">
@@ -94,70 +94,71 @@
                 </button>
             </div>
         @endif
-<!-- Table - Desktop version -->
-<div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
-    <div class="rounded-lg overflow-hidden">
-        <!-- Table Headers as Orange Buttons -->
-        <div class="grid grid-cols-7 gap-1">
-            <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">QR Code</div>
-            <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Produk</div>
-            <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Ukuran</div>
-            <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Warna</div>
-            <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Stok</div>
-            <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Harga Jual</div>
-            <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Actions</div>
-        </div>
-        
-        <!-- Table Body with Alternating Colors -->
-        <div class="mt-1">
-            @forelse ($products ?? [] as $index => $product)
-                <div class="grid grid-cols-7 gap-1 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
-                    <div class="p-3 text-black">
-                        @if($product->qr_code)
-                            <img src="{{ asset('storage/' . $product->qr_code) }}" alt="QR Code" class="h-12 w-12">
-                        @else
-                            <span>-</span>
-                        @endif
-                    </div>
-                    <div class="p-3 text-black">{{ $product->name ?? '-' }}</div>
-                    <div class="p-3 text-black text-center">{{ $product->size ?? '-' }}</div>
-                    <div class="p-3 text-black text-center">{{ $product->color ?? '-' }}</div>
-                    <div class="p-3 font-medium text-center {{ $product->stock < 5 ? 'text-red-600' : 'text-black' }}">{{ $product->stock ?? 0 }}</div>
-                    <div class="p-3 text-black text-right">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</div>
-                    <div class="p-3">
-                        <div class="flex justify-center space-x-3">
-                            <a href="{{ route('inventory.edit', $product->id) }}" class="text-blue-600 hover:text-blue-800 transition-colors">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                            </a>
-                            <form action="{{ route('inventory.destroy', $product->id) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-800 transition-colors">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </form>
+
+        <!-- Table - Desktop version -->
+        <div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
+            <div class="rounded-lg overflow-hidden">
+                <!-- Table Headers as Orange Buttons -->
+                <div class="grid grid-cols-7 gap-1">
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">QR Code</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Produk</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Ukuran</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Warna</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Stok</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Harga Jual</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Actions</div>
+                </div>
+                
+                <!-- Table Body with Alternating Colors -->
+                <div class="mt-1">
+                    @forelse ($products ?? [] as $index => $product)
+                        <div class="grid grid-cols-7 gap-1 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
+                            <div class="p-3 text-black">
+                                @if($product->qr_code)
+                                    <img src="{{ asset('storage/' . $product->qr_code) }}" alt="QR Code" class="h-12 w-12">
+                                @else
+                                    <span>-</span>
+                                @endif
+                            </div>
+                            <div class="p-3 text-black">{{ $product->name ?? '-' }}</div>
+                            <div class="p-3 text-black text-center">{{ $product->size ?? '-' }}</div>
+                            <div class="p-3 text-black text-center">{{ $product->color ?? '-' }}</div>
+                            <div class="p-3 font-medium text-center {{ $product->stock < 5 ? 'text-red-600' : 'text-black' }}">{{ $product->stock ?? 0 }}</div>
+                            <div class="p-3 text-black text-right">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</div>
+                            <div class="p-3">
+                                <div class="flex justify-center space-x-3">
+                                    <a href="{{ route('inventory.print_qr', $product->id) }}" class="text-green-600 hover:text-green-800 transition-colors">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                        </svg>
+                                    </a>
+                                    <form action="{{ route('inventory.destroy', $product->id) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-800 transition-colors">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
+                    @empty
+                        <div class="bg-white p-6 text-center text-gray-500">
+                            Tidak ada produk ditemukan.
+                        </div>
+                    @endforelse
+                </div>
+                
+                <!-- Pagination -->
+                @if(isset($products) && $products->hasPages())
+                    <div class="mt-4 flex justify-center">
+                        {{ $products->links() }}
                     </div>
-                </div>
-            @empty
-                <div class="bg-white p-6 text-center text-gray-500">
-                    Tidak ada produk ditemukan.
-                </div>
-            @endforelse
-        </div>
-        
-        <!-- Pagination -->
-        @if(isset($products) && $products->hasPages())
-            <div class="mt-4 flex justify-center">
-                {{ $products->links() }}
+                @endif
             </div>
-        @endif
-    </div>
-</div>
+        </div>
 
         <!-- Mobile Cards - Mobile version -->
         <div class="md:hidden space-y-4">
@@ -190,6 +191,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Edit
+                        </a>
+                        <a href="{{ route('inventory.print_qr', $product->id) }}" class="text-green-500 hover:text-green-700 transition-colors flex items-center">
+                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            Print QR
                         </a>
                         <form action="{{ route('inventory.destroy', $product->id) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
                             @csrf

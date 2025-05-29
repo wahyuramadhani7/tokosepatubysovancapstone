@@ -8,28 +8,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
     <style>
         [x-cloak] { display: none !important; }
-        .fade-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
     </style>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        gold: {
-                            50: '#FBF8E9',
-                            100: '#F7F1D3',
-                            200: '#F0E4A7',
-                            300: '#E9D77B',
-                            400: '#E3CA4F',
-                            500: '#DCBD23',
-                            600: '#B0971C',
-                            700: '#847115',
-                            800: '#574B0E',
-                            900: '#2B2507',
+                        dark: {
+                            50: '#F5F5F5',
+                            100: '#EBEBEB',
+                            200: '#D6D6D6',
+                            300: '#C2C2C2',
+                            400: '#9E9E9E',
+                            500: '#757575',
+                            600: '#5E5E5E',
+                            700: '#1E1E1E',
+                            800: '#141414',
+                            900: '#0A0A0A',
                         }
                     }
                 }
@@ -40,19 +35,19 @@
 <body class="bg-gray-100 font-sans" x-data="transactionApp()">
     <div class="min-h-screen flex flex-col">
         <!-- Header/Navigation -->
-        <header class="bg-gradient-to-r from-black to-gray-800 text-white shadow-lg">
+        <header class="bg-dark-700 text-white shadow-md">
             <div class="container mx-auto px-4 py-4 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                     <div>
                         <h1 class="font-bold text-xl">Sepatu by Sovan</h1>
-                        <p class="text-xs text-gold-300">Premium Footwear Collection</p>
+                        <p class="text-xs text-gray-400">Premium Footwear Collection</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <a href="{{ url('/transactions') }}" class="text-sm bg-black bg-opacity-40 hover:bg-opacity-60 border border-gold-400 px-3 py-2 rounded-lg transition-all flex items-center">
+                    <a href="{{ url('/transactions') }}" class="text-sm bg-black hover:bg-dark-600 px-3 py-2 rounded-lg transition-all flex items-center">
                         <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
@@ -75,9 +70,9 @@
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Pilih Produk -->
-                    <div class="bg-white rounded-xl shadow-md p-5">
+                    <div class="bg-white rounded-lg shadow-sm p-5">
                         <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-gold-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-5 w-5 mr-2 text-dark-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
                             Daftar Produk
@@ -89,13 +84,13 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
-                            <input type="text" x-model="searchQuery" @input="searchProducts" placeholder="Cari produk, warna, atau ukuran..." class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-gold-500 focus:border-gold-500">
+                            <input type="text" x-model="searchQuery" @input="searchProducts" placeholder="Cari produk, warna, atau ukuran..." class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring focus:border-dark-500">
                         </div>
                         
                         <!-- Scan QR -->
                         <div class="flex gap-2 mb-4">
-                            <input type="text" x-model="qrCode" @keydown.enter.prevent="scanQR" placeholder="Masukkan kode QR" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gold-500 focus:border-gold-500">
-                            <button type="button" @click="scanQR" class="px-4 py-2 bg-black text-gold-400 rounded-lg hover:bg-gray-900 transition-colors">
+                            <input type="text" x-model="qrCode" @keydown.enter.prevent="scanQR" placeholder="Masukkan kode QR" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring focus:border-dark-500">
+                            <button type="button" @click="scanQR" class="px-4 py-2 bg-dark-700 text-white rounded-lg hover:bg-dark-600 transition-colors">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
@@ -104,7 +99,7 @@
                         
                         <!-- QR Scanner Button -->
                         <button type="button" @click="openQRScanner" class="w-full mb-4 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center justify-center">
-                            <svg class="h-5 w-5 mr-2 text-gold-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-5 w-5 mr-2 text-dark-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
@@ -115,7 +110,7 @@
                         <div x-show="searchResults.length > 0" class="bg-white border rounded-lg shadow-sm mb-4 max-h-48 overflow-y-auto" x-cloak>
                             <ul class="divide-y divide-gray-100">
                                 <template x-for="product in searchResults" :key="product.id">
-                                    <li class="p-3 hover:bg-gold-50 transition-colors cursor-pointer" @click="addToCart(product)">
+                                    <li class="p-3 hover:bg-gray-50 transition-colors cursor-pointer" @click="addToCart(product)">
                                         <div class="flex justify-between items-center">
                                             <div>
                                                 <p class="font-medium text-gray-800" x-text="product.name"></p>
@@ -130,7 +125,7 @@
                                             </div>
                                             <div class="text-right">
                                                 <p class="font-bold text-gray-800" x-text="formatRupiah(product.selling_price)"></p>
-                                                <button type="button" class="mt-1 text-xs bg-gold-100 hover:bg-gold-200 text-gold-700 py-1 px-2 rounded-full transition-colors">+ Tambah</button>
+                                                <button type="button" class="mt-1 text-xs bg-gray-100 hover:bg-gray-200 text-dark-700 py-1 px-2 rounded-full transition-colors">+ Tambah</button>
                                             </div>
                                         </div>
                                     </li>
@@ -148,7 +143,7 @@
                             </div>
                             <ul class="divide-y divide-gray-100">
                                 <template x-for="product in availableProducts" :key="product.id">
-                                    <li class="p-3 hover:bg-gold-50 transition-colors cursor-pointer" @click="addToCart(product)">
+                                    <li class="p-3 hover:bg-gray-50 transition-colors cursor-pointer" @click="addToCart(product)">
                                         <div class="flex justify-between items-center">
                                             <div>
                                                 <p class="font-medium text-gray-800" x-text="product.name"></p>
@@ -163,7 +158,7 @@
                                             </div>
                                             <div class="text-right">
                                                 <p class="font-bold text-gray-800" x-text="formatRupiah(product.selling_price)"></p>
-                                                <button type="button" class="mt-1 text-xs bg-gold-100 hover:bg-gold-200 text-gold-700 py-1 px-2 rounded-full transition-colors">+ Tambah</button>
+                                                <button type="button" class="mt-1 text-xs bg-gray-100 hover:bg-gray-200 text-dark-700 py-1 px-2 rounded-full transition-colors">+ Tambah</button>
                                             </div>
                                         </div>
                                     </li>
@@ -173,10 +168,10 @@
                     </div>
 
                     <!-- Informasi Pelanggan & Keranjang (Gabungan) -->
-                    <div class="bg-white rounded-xl shadow-md p-5">
+                    <div class="bg-white rounded-lg shadow-sm p-5">
                         <!-- Informasi Pelanggan -->
                         <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-gold-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-5 w-5 mr-2 text-dark-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             Informasi Pelanggan
@@ -185,19 +180,19 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Nama Pelanggan</label>
-                                <input type="text" name="customer_name" placeholder="Masukkan nama pelanggan" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gold-500 focus:border-gold-500">
+                                <input type="text" name="customer_name" placeholder="Masukkan nama pelanggan" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring focus:border-dark-500">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">No. Telepon</label>
-                                <input type="text" name="customer_phone" placeholder="Contoh: 081234567890" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gold-500 focus:border-gold-500">
+                                <input type="text" name="customer_phone" placeholder="Contoh: 081234567890" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring focus:border-dark-500">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
-                                <input type="email" name="customer_email" placeholder="email@example.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gold-500 focus:border-gold-500">
+                                <input type="email" name="customer_email" placeholder="email@example.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring focus:border-dark-500">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Metode Pembayaran <span class="text-red-500">*</span></label>
-                                <select name="payment_method" id="payment_method" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gold-500 focus:border-gold-500" required>
+                                <select name="payment_method" id="payment_method" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring focus:border-dark-500" required>
                                     <option value="" disabled selected>Pilih metode pembayaran</option>
                                     <option value="cash">Tunai</option>
                                     <option value="credit_card">Kartu Kredit</option>
@@ -206,13 +201,13 @@
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Catatan</label>
-                                <textarea name="notes" rows="2" placeholder="Catatan tambahan untuk transaksi" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gold-500 focus:border-gold-500"></textarea>
+                                <textarea name="notes" rows="2" placeholder="Catatan tambahan untuk transaksi" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring focus:border-dark-500"></textarea>
                             </div>
                         </div>
                         
                         <!-- Keranjang Belanja -->
                         <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center border-t pt-4">
-                            <svg class="h-5 w-5 mr-2 text-gold-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-5 w-5 mr-2 text-dark-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             Keranjang Belanja
@@ -277,15 +272,15 @@
                                     <span class="text-gray-600">Diskon</span>
                                     <div class="flex items-center">
                                         <span class="text-gray-500 mr-2">Rp</span>
-                                        <input type="number" name="discount_amount" x-model="discount" min="0" class="w-24 text-right border border-gray-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-gold-500 focus:border-gold-500">
+                                        <input type="number" name="discount_amount" x-model="discount" min="0" class="w-24 text-right border border-gray-300 rounded-lg px-2 py-1 text-sm focus:ring focus:border-dark-500">
                                     </div>
                                 </div>
                                 <div class="flex justify-between border-t border-gray-100 pt-3 mt-3">
                                     <span class="font-bold text-gray-800">Total Bayar</span>
-                                    <span class="font-bold text-lg text-gold-600" x-text="formatRupiah(calculateTotal())"></span>
+                                    <span class="font-bold text-lg text-dark-700" x-text="formatRupiah(calculateTotal())"></span>
                                 </div>
                             </div>
-                            <button type="submit" class="w-full mt-5 py-3 bg-black hover:bg-gray-900 text-gold-400 rounded-lg font-medium transition-colors flex items-center justify-center" :disabled="cart.length === 0" :class="{'opacity-50 cursor-not-allowed': cart.length === 0}">
+                            <button type="submit" class="w-full mt-5 py-3 bg-dark-700 hover:bg-dark-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center" :disabled="cart.length === 0" :class="{'opacity-50 cursor-not-allowed': cart.length === 0}">
                                 <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
@@ -296,62 +291,42 @@
                 </div>
             </form>
         </main>
+    </div>
 
-        <!-- Footer -->
-        <footer class="bg-black text-white py-6 mt-6">
-            <div class="container mx-auto px-4">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div class="mb-4 md:mb-0">
-                        <div class="flex items-center space-x-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
-                            <span class="font-bold">Sepatu by Sovan</span>
-                        </div>
-                        <p class="text-gray-400 text-sm mt-1">Premium Footwear Collection</p>
-                    </div>
-                    <div class="text-sm text-gray-400">
-                        &copy; 2025 Sepatu by Sovan. All rights reserved.
-                    </div>
+    <!-- QR Scanner Modal -->
+    <div x-show="showQRScanner" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" x-cloak>
+        <div class="bg-white rounded-lg p-5 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">QR Code Scanner</h3>
+                <button @click="closeQRScanner" class="text-gray-500 hover:text-gray-700">
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="bg-gray-100 rounded-lg overflow-hidden relative" style="height: 300px;">
+                <video id="qr-video" class="w-full h-full object-cover"></video>
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="w-2/3 h-2/3 border-2 border-dark-500 rounded-lg opacity-70"></div>
                 </div>
             </div>
-        </footer>
-        
-        <!-- QR Scanner Modal -->
-        <div x-show="showQRScanner" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" x-cloak>
-            <div class="bg-white rounded-xl p-5 w-full max-w-md">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">QR Code Scanner</h3>
-                    <button @click="closeQRScanner" class="text-gray-500 hover:text-gray-700">
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="bg-gray-100 rounded-lg overflow-hidden relative" style="height: 300px;">
-                    <video id="qr-video" class="w-full h-full object-cover"></video>
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div class="w-2/3 h-2/3 border-2 border-gold-500 rounded-lg opacity-70"></div>
-                    </div>
-                </div>
-                
-                <div class="mt-4 text-center text-sm text-gray-600">
-                    <p x-show="!scanActive">Klik tombol di bawah untuk mulai memindai</p>
-                    <p x-show="scanActive">Arahkan kamera ke QR Code produk...</p>
-                    <p x-show="lastScanned" class="text-green-600 font-medium mt-2">
-                        Berhasil memindai produk!
-                    </p>
-                </div>
-                
-                <div class="mt-4 flex justify-center">
-                    <button type="button" @click="startScanning" x-show="!scanActive" class="px-4 py-2 bg-black text-gold-400 rounded-lg hover:bg-gray-900 transition-colors">
-                        Mulai Pemindaian
-                    </button>
-                    <button type="button" @click="stopScanning" x-show="scanActive" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                        Hentikan Pemindaian
-                    </button>
-                </div>
+            
+            <div class="mt-4 text-center text-sm text-gray-600">
+                <p x-show="!scanActive">Klik tombol di bawah untuk mulai memindai</p>
+                <p x-show="scanActive">Arahkan kamera ke QR Code produk...</p>
+                <p x-show="lastScanned" class="text-green-600 font-medium mt-2">
+                    Berhasil memindai produk!
+                </p>
+            </div>
+            
+            <div class="mt-4 flex justify-center">
+                <button type="button" @click="startScanning" x-show="!scanActive" class="px-4 py-2 bg-dark-700 text-white rounded-lg hover:bg-dark-600 transition-colors">
+                    Mulai Pemindaian
+                </button>
+                <button type="button" @click="stopScanning" x-show="scanActive" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Hentikan Pemindaian
+                </button>
             </div>
         </div>
     </div>
