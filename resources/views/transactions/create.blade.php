@@ -320,7 +320,7 @@
                 </p>
             </div>
             
-            <div class="mt-4 flex justify-center">
+            <div class="mt-4 flex justify-center gap-2">
                 <button type="button" @click="startScanning" x-show="!scanActive" class="px-4 py-2 bg-dark-700 text-white rounded-lg hover:bg-dark-600 transition-colors">
                     Mulai Pemindaian
                 </button>
@@ -439,9 +439,11 @@
 
                 scanQR() {
                     if (!this.qrCode) return;
-                    const parts = this.qrCode.split('-');
-                    if (parts.length > 0) {
-                        const product = this.availableProducts.find(p => p.id == parts[0]);
+                    // Ekstrak ID produk dari URL (misalnya, http://example.com/inventory/1)
+                    const match = this.qrCode.match(/\/inventory\/(\d+)/);
+                    if (match && match[1]) {
+                        const productId = match[1];
+                        const product = this.availableProducts.find(p => p.id == productId);
                         if (product) {
                             this.addToCart(product);
                             this.qrCode = '';
@@ -470,34 +472,60 @@
                 // QR Scanner Functions
                 openQRScanner() {
                     this.showQRScanner = true;
+                    // Delay starting the scanner to ensure the modal is rendered
+                    this.$nextTick(() => {
+                        this.startScanning();
+                    });
                 },
                 
                 closeQRScanner() {
-                    this.showQRScanner = false;
                     this.stopScanning();
+                    this.showQRScanner = false;
                 },
                 
                 startScanning() {
+                    if (this.scanActive) return;
                     this.scanActive = true;
                     this.lastScanned = null;
                     
                     const qrConfig = {
                         fps: 10,
                         qrbox: { width: 250, height: 250 },
-                        rememberLastUsedCamera: true
+                        aspectRatio: 1.0,
+                        disableFlip: false
                     };
                     
                     // Initialize the scanner
                     this.scanner = new Html5Qrcode("qr-video");
                     
-                    // Start scanning
-                    this.scanner.start(
-                        { facingMode: "environment" }, // Use back camera
-                        qrConfig,
-                        this.onScanSuccess.bind(this),
-                        this.onScanError.bind(this)
-                    ).catch(err => {
-                        console.error("Error starting scanner:", err);
+                    // Get available cameras
+                    Html5Qrcode.getCameras().then(devices => {
+                        if (devices && devices.length) {
+                            // Prefer back camera (environment)
+                            const backCamera = devices.find(device => 
+                                device.label.toLowerCase().includes('back') || 
+                                device.label.toLowerCase().includes('rear') ||
+                                device.label.toLowerCase().includes('environment')
+                            ) || devices[0]; // Fallback to first camera if no back camera found
+                            
+                            // Start scanning with the selected camera
+                            this.scanner.start(
+                                backCamera.id,
+                                qrConfig,
+                                this.onScanSuccess.bind(this),
+                                this.onScanError.bind(this)
+                            ).catch(err => {
+                                console.error("Error starting scanner:", err);
+                                alert("Gagal memulai kamera. Pastikan izin kamera diaktifkan dan perangkat memiliki kamera.");
+                                this.scanActive = false;
+                            });
+                        } else {
+                            console.error("No cameras found.");
+                            alert("Tidak ada kamera yang ditemukan pada perangkat ini.");
+                            this.scanActive = false;
+                        }
+                    }).catch(err => {
+                        console.error("Error accessing cameras:", err);
                         alert("Tidak dapat mengakses kamera. Pastikan izin kamera diaktifkan.");
                         this.scanActive = false;
                     });
@@ -506,6 +534,7 @@
                 stopScanning() {
                     if (this.scanner && this.scanActive) {
                         this.scanner.stop().then(() => {
+                            this.scanner.clear();
                             this.scanActive = false;
                             console.log('Scanner stopped');
                         }).catch(err => {
@@ -515,20 +544,20 @@
                 },
                 
                 onScanSuccess(decodedText) {
+                    if (decodedText === this.lastScanned) return; // Prevent duplicate scans
                     console.log(`QR Code detected: ${decodedText}`);
                     this.lastScanned = decodedText;
                     
-                    // Process the scanned QR code
-                    const parts = decodedText.split('-');
-                    if (parts.length > 0) {
-                        const product = this.availableProducts.find(p => p.id == parts[0]);
+                    // Ekstrak ID produk dari URL (misalnya, http://example.com/inventory/1)
+                    const match = decodedText.match(/\/inventory\/(\d+)/);
+                    if (match && match[1]) {
+                        const productId = match[1];
+                        const product = this.availableProducts.find(p => p.id == productId);
                         if (product) {
                             this.addToCart(product);
-                            
                             // Provide visual feedback
                             this.$nextTick(() => {
                                 setTimeout(() => {
-                                    // Close scanner after successful scan
                                     this.closeQRScanner();
                                 }, 1500);
                             });
@@ -541,8 +570,8 @@
                 },
                 
                 onScanError(error) {
-                    // We can ignore errors as they're usually just frames without QR codes
-                    // console.error("QR scan error: ", error);
+                    // Ignore errors as they're usually just frames without QR codes
+                    // console.debug("QR scan error:", error);
                 }
             };
         }
