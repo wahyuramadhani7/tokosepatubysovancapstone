@@ -6,8 +6,13 @@
     <title>Buat Transaksi Baru - Sepatu by Sovan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
+        button:focus {
+            outline: 2px solid #1E1E1E;
+            outline-offset: 2px;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -32,7 +37,7 @@
         }
     </script>
 </head>
-<body class="bg-gray-100 font-sans" x-data="transactionApp()">
+<body class="bg-gray-100 font-sans" x-data="transactionApp()" x-init="initialize()">
     <div class="min-h-screen flex flex-col">
         <!-- Header/Navigation -->
         <header class="bg-dark-700 text-white shadow-md">
@@ -98,7 +103,7 @@
                         </div>
                         
                         <!-- QR Scanner Button -->
-                        <button type="button" @click="openQRScanner" class="w-full mb-4 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center justify-center">
+                        <button type="button" @click="openQRScanner" class="w-full mb-4 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center justify-center z-10" :disabled="isButtonDisabled">
                             <svg class="h-5 w-5 mr-2 text-dark-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -167,7 +172,7 @@
                         </div>
                     </div>
 
-                    <!-- Informasi Pelanggan & Keranjang (Gabungan) -->
+                    <!-- Informasi Pelanggan & Keranjang -->
                     <div class="bg-white rounded-lg shadow-sm p-5">
                         <!-- Informasi Pelanggan -->
                         <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -299,21 +304,23 @@
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">QR Code Scanner</h3>
                 <button @click="closeQRScanner" class="text-gray-500 hover:text-gray-700">
-                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
             
             <div class="bg-gray-100 rounded-lg overflow-hidden relative" style="height: 300px;">
-                <video id="qr-video" class="w-full h-full object-cover"></video>
+                <video id="qr-video" class="w-full h-full object-cover" autoplay playsinline></video>
+                <canvas id="qr-canvas" class="hidden"></canvas>
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div class="w-2/3 h-2/3 border-2 border-dark-500 rounded-lg opacity-70"></div>
                 </div>
             </div>
             
             <div class="mt-4 text-center text-sm text-gray-600">
-                <p x-show="!scanActive">Klik tombol di bawah untuk mulai memindai</p>
+                <p x-show="!scanActive && !cameraError">Menyiapkan kamera...</p>
+                <p x-show="cameraError" class="text-red-600" x-text="cameraErrorMessage"></p>
                 <p x-show="scanActive">Arahkan kamera ke QR Code produk...</p>
                 <p x-show="lastScanned" class="text-green-600 font-medium mt-2">
                     Berhasil memindai produk!
@@ -321,260 +328,357 @@
             </div>
             
             <div class="mt-4 flex justify-center gap-2">
-                <button type="button" @click="startScanning" x-show="!scanActive" class="px-4 py-2 bg-dark-700 text-white rounded-lg hover:bg-dark-600 transition-colors">
-                    Mulai Pemindaian
+                <button type="button" @click="startScanning" x-show="cameraError" class="px-4 py-2 bg-dark-700 text-white rounded-lg hover:bg-dark-600 transition-colors">
+                    Coba Lagi
                 </button>
-                <button type="button" @click="stopScanning" x-show="scanActive" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                    Hentikan Pemindaian
+                <button type="button" @click="closeQRScanner" x-show="scanActive" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Tutup Scanner
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Import QR Scanner Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js" integrity="sha512-k/KAe4Yff9EUdYI5/IAHlwUswqeipP+Cp5qnrsUjTPCgl51La2/JhyyjNciztD7mWNKLSXci48m7cctATKfLlQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    
-    <script>
-        function transactionApp() {
-            return {
-                availableProducts: @json($products),
-                searchQuery: '',
-                searchResults: [],
-                cart: [],
-                qrCode: '',
-                discount: 0,
-                showQRScanner: false,
-                scanActive: false,
-                scanner: null,
-                lastScanned: null,
+   <script>
+    function transactionApp() {
+        return {
+            availableProducts: @json($products),
+            searchQuery: '',
+            searchResults: [],
+            cart: [],
+            qrCode: '',
+            discount: 0,
+            showQRScanner: false,
+            scanActive: false,
+            cameraError: false,
+            cameraErrorMessage: '',
+            video: null,
+            canvas: null,
+            ctx: null,
+            lastScanned: null,
+            isButtonDisabled: false,
 
-                formatRupiah(amount) {
-                    return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
-                },
+            formatRupiah(amount) {
+                return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
+            },
 
-                getColorCode(color) {
-                    const colorMap = {
-                        'Merah': '#f87171',
-                        'Hitam': '#1f2937',
-                        'Putih': '#f9fafb',
-                        'Biru': '#3b82f6',
-                        'Navy': '#1e3a8a',
-                        'Hijau': '#10b981',
-                        'Kuning': '#fbbf24',
-                        'Abu-abu': '#9ca3af',
-                        'Coklat': '#92400e',
-                        'Pink': '#ec4899',
-                        'Ungu': '#8b5cf6',
-                        'Orange': '#f97316'
-                    };
-                    return colorMap[color] || '#9ca3af';
-                },
+            getColorCode(color) {
+                const colorMap = {
+                    'Merah': '#f87171',
+                    'Hitam': '#1f2937',
+                    'Putih': '#f9fafb',
+                    'Biru': '#3b82f6',
+                    'Navy': '#1e3a8a',
+                    'Hijau': '#10b981',
+                    'Kuning': '#fbbf24',
+                    'Abu-abu': '#9ca3af',
+                    'Coklat': '#92400e',
+                    'Pink': '#ec4899',
+                    'Ungu': '#8b5cf6',
+                    'Orange': '#f97316'
+                };
+                return colorMap[color] || '#9ca3af';
+            },
 
-                searchProducts() {
-                    this.searchResults = this.searchQuery.trim() ?
-                        this.availableProducts.filter(p =>
-                            p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            p.color.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            p.size.toLowerCase().includes(this.searchQuery.toLowerCase())
-                        ) : [];
-                },
+            searchProducts() {
+                this.searchResults = this.searchQuery.trim() ?
+                    this.availableProducts.filter(p =>
+                        p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                        p.color.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                        p.size.toLowerCase().includes(this.searchQuery.toLowerCase())
+                    ) : [];
+            },
 
-                addToCart(product) {
-                    const index = this.cart.findIndex(item => item.id === product.id);
-                    if (index >= 0) {
-                        if (this.cart[index].quantity < product.stock) {
-                            this.cart[index].quantity++;
-                        } else {
-                            alert('Stok tidak mencukupi!');
-                        }
-                    } else {
-                        this.cart.push({
-                            id: product.id,
-                            name: product.name,
-                            color: product.color,
-                            size: product.size,
-                            selling_price: product.selling_price,
-                            quantity: 1,
-                            stock: product.stock
-                        });
-                    }
-                    this.searchQuery = '';
-                    this.searchResults = [];
-                },
-
-                removeItem(index) {
-                    this.cart.splice(index, 1);
-                },
-
-                incrementQuantity(index) {
-                    if (this.cart[index].quantity < this.cart[index].stock) {
+            addToCart(product) {
+                console.log('Adding to cart:', product);
+                const index = this.cart.findIndex(item => item.id === product.id);
+                if (index >= 0) {
+                    if (this.cart[index].quantity < product.stock) {
                         this.cart[index].quantity++;
+                        console.log('Incremented quantity for:', product.name);
                     } else {
                         alert('Stok tidak mencukupi!');
+                        console.warn('Stock insufficient for:', product.name);
                     }
-                },
-
-                decrementQuantity(index) {
-                    if (this.cart[index].quantity > 1) {
-                        this.cart[index].quantity--;
-                    }
-                },
-
-                updateQuantity(index) {
-                    let qty = this.cart[index].quantity;
-                    if (qty < 1) this.cart[index].quantity = 1;
-                    if (qty > this.cart[index].stock) {
-                        this.cart[index].quantity = this.cart[index].stock;
-                        alert('Kuantitas disesuaikan dengan stok tersedia');
-                    }
-                },
-
-                calculateSubtotal() {
-                    return this.cart.reduce((total, item) => total + (item.selling_price * item.quantity), 0);
-                },
-
-                calculateTotal() {
-                    return Math.max(0, this.calculateSubtotal() - this.discount);
-                },
-
-                scanQR() {
-                    if (!this.qrCode) return;
-                    // Ekstrak ID produk dari URL (misalnya, http://example.com/inventory/1)
-                    const match = this.qrCode.match(/\/inventory\/(\d+)/);
-                    if (match && match[1]) {
-                        const productId = match[1];
-                        const product = this.availableProducts.find(p => p.id == productId);
-                        if (product) {
-                            this.addToCart(product);
-                            this.qrCode = '';
-                        } else {
-                            alert('Produk tidak ditemukan!');
-                        }
-                    } else {
-                        alert('Format QR tidak valid!');
-                    }
-                },
-
-                validateForm(event) {
-                    if (this.cart.length === 0) {
-                        event.preventDefault();
-                        alert('Keranjang masih kosong! Tambahkan produk terlebih dahulu.');
-                        return false;
-                    }
-                    if (!document.getElementById('payment_method').value) {
-                        event.preventDefault();
-                        alert('Silakan pilih metode pembayaran!');
-                        return false;
-                    }
-                    return true;
-                },
-                
-                // QR Scanner Functions
-                openQRScanner() {
-                    this.showQRScanner = true;
-                    // Delay starting the scanner to ensure the modal is rendered
-                    this.$nextTick(() => {
-                        this.startScanning();
+                } else {
+                    this.cart.push({
+                        id: product.id,
+                        name: product.name,
+                        color: product.color,
+                        size: product.size,
+                        selling_price: product.selling_price,
+                        quantity: 1,
+                        stock: product.stock
                     });
-                },
-                
-                closeQRScanner() {
-                    this.stopScanning();
-                    this.showQRScanner = false;
-                },
-                
-                startScanning() {
-                    if (this.scanActive) return;
-                    this.scanActive = true;
-                    this.lastScanned = null;
-                    
-                    const qrConfig = {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0,
-                        disableFlip: false
-                    };
-                    
-                    // Initialize the scanner
-                    this.scanner = new Html5Qrcode("qr-video");
-                    
-                    // Get available cameras
-                    Html5Qrcode.getCameras().then(devices => {
-                        if (devices && devices.length) {
-                            // Prefer back camera (environment)
-                            const backCamera = devices.find(device => 
-                                device.label.toLowerCase().includes('back') || 
-                                device.label.toLowerCase().includes('rear') ||
-                                device.label.toLowerCase().includes('environment')
-                            ) || devices[0]; // Fallback to first camera if no back camera found
-                            
-                            // Start scanning with the selected camera
-                            this.scanner.start(
-                                backCamera.id,
-                                qrConfig,
-                                this.onScanSuccess.bind(this),
-                                this.onScanError.bind(this)
-                            ).catch(err => {
-                                console.error("Error starting scanner:", err);
-                                alert("Gagal memulai kamera. Pastikan izin kamera diaktifkan dan perangkat memiliki kamera.");
-                                this.scanActive = false;
-                            });
-                        } else {
-                            console.error("No cameras found.");
-                            alert("Tidak ada kamera yang ditemukan pada perangkat ini.");
-                            this.scanActive = false;
-                        }
-                    }).catch(err => {
-                        console.error("Error accessing cameras:", err);
-                        alert("Tidak dapat mengakses kamera. Pastikan izin kamera diaktifkan.");
-                        this.scanActive = false;
-                    });
-                },
-                
-                stopScanning() {
-                    if (this.scanner && this.scanActive) {
-                        this.scanner.stop().then(() => {
-                            this.scanner.clear();
-                            this.scanActive = false;
-                            console.log('Scanner stopped');
-                        }).catch(err => {
-                            console.error("Error stopping scanner:", err);
-                        });
-                    }
-                },
-                
-                onScanSuccess(decodedText) {
-                    if (decodedText === this.lastScanned) return; // Prevent duplicate scans
-                    console.log(`QR Code detected: ${decodedText}`);
-                    this.lastScanned = decodedText;
-                    
-                    // Ekstrak ID produk dari URL (misalnya, http://example.com/inventory/1)
-                    const match = decodedText.match(/\/inventory\/(\d+)/);
-                    if (match && match[1]) {
-                        const productId = match[1];
-                        const product = this.availableProducts.find(p => p.id == productId);
-                        if (product) {
-                            this.addToCart(product);
-                            // Provide visual feedback
-                            this.$nextTick(() => {
-                                setTimeout(() => {
-                                    this.closeQRScanner();
-                                }, 1500);
-                            });
-                        } else {
-                            alert('Produk tidak ditemukan!');
-                        }
-                    } else {
-                        alert('Format QR tidak valid!');
-                    }
-                },
-                
-                onScanError(error) {
-                    // Ignore errors as they're usually just frames without QR codes
-                    // console.debug("QR scan error:", error);
+                    console.log('Added new product to cart:', product.name);
                 }
-            };
-        }
-    </script>
+                this.searchQuery = '';
+                this.searchResults = [];
+                this.$forceUpdate();
+            },
+
+            removeItem(index) {
+                console.log('Removing item at index:', index);
+                this.cart.splice(index, 1);
+                this.$forceUpdate();
+            },
+
+            incrementQuantity(index) {
+                if (this.cart[index].quantity < this.cart[index].stock) {
+                    this.cart[index].quantity++;
+                    console.log('Incremented quantity at index:', index);
+                } else {
+                    alert('Stok tidak mencukupi!');
+                    console.warn('Stock insufficient at index:', index);
+                }
+                this.$forceUpdate();
+            },
+
+            decrementQuantity(index) {
+                if (this.cart[index].quantity > 1) {
+                    this.cart[index].quantity--;
+                    console.log('Decremented quantity at index:', index);
+                }
+                this.$forceUpdate();
+            },
+
+            updateQuantity(index) {
+                let qty = this.cart[index].quantity;
+                if (qty < 1) {
+                    this.cart[index].quantity = 1;
+                    console.log('Adjusted quantity to minimum at index:', index);
+                }
+                if (qty > this.cart[index].stock) {
+                    this.cart[index].quantity = this.cart[index].stock;
+                    alert('Kuantitas disesuaikan dengan stok tersedia');
+                    console.warn('Adjusted quantity to stock limit at index:', index);
+                }
+                this.$forceUpdate();
+            },
+
+            calculateSubtotal() {
+                return this.cart.reduce((total, item) => total + (item.selling_price * item.quantity), 0);
+            },
+
+            calculateTotal() {
+                return Math.max(0, this.calculateSubtotal() - this.discount);
+            },
+
+            async scanQR() {
+                if (!this.qrCode) {
+                    console.warn('QR code input is empty');
+                    alert('Masukkan kode QR terlebih dahulu!');
+                    return;
+                }
+                console.log('Scanning QR code:', this.qrCode);
+                const match = this.qrCode.match(/\/inventory\/(\d+)/);
+                if (match && match[1]) {
+                    const productId = match[1];
+                    console.log('Extracted product ID:', productId);
+                    try {
+                        const response = await fetch(`/inventory/${productId}/json`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        console.log('Fetch response status:', response.status);
+                        if (response.ok) {
+                            const product = await response.json();
+                            console.log('Fetched product data:', product);
+                            if (product && product.stock > 0) {
+                                this.addToCart({
+                                    id: product.id,
+                                    name: product.name,
+                                    color: product.color,
+                                    size: product.size,
+                                    selling_price: product.selling_price,
+                                    stock: product.stock
+                                });
+                                this.qrCode = '';
+                                console.log('Product added to cart from manual QR scan');
+                            } else {
+                                alert('Produk tidak ditemukan atau stok habis!');
+                                console.warn('Product not found or out of stock:', product);
+                            }
+                        } else {
+                            alert('Gagal mengambil data produk! Status: ' + response.status);
+                            console.error('Fetch failed with status:', response.status);
+                        }
+                    } catch (error) {
+                        alert('Terjadi kesalahan saat mengambil data produk!');
+                        console.error('Fetch error:', error);
+                    }
+                } else {
+                    alert('Format QR tidak valid!');
+                    console.warn('Invalid QR code format:', this.qrCode);
+                }
+            },
+
+            validateForm(event) {
+                if (this.cart.length === 0) {
+                    event.preventDefault();
+                    alert('Keranjang masih kosong! Tambahkan produk terlebih dahulu.');
+                    console.warn('Form submission blocked: cart is empty');
+                    return false;
+                }
+                if (!document.getElementById('payment_method').value) {
+                    event.preventDefault();
+                    alert('Silakan pilih metode pembayaran!');
+                    console.warn('Form submission blocked: payment method not selected');
+                    return false;
+                }
+                console.log('Form validated successfully');
+                return true;
+            },
+
+            initialize() {
+                console.log('Initializing transaction app');
+                // No HTTPS/localhost check; rely on browser's camera permission prompt
+            },
+
+            // QR Scanner Functions
+            openQRScanner() {
+                console.log('Opening QR scanner');
+                this.isButtonDisabled = true;
+                this.showQRScanner = true;
+                this.$nextTick(() => {
+                    this.startScanning();
+                });
+            },
+
+            closeQRScanner() {
+                console.log('Closing QR scanner');
+                this.stopScanning();
+                this.showQRScanner = false;
+                this.cameraError = false;
+                this.cameraErrorMessage = '';
+                this.isButtonDisabled = false;
+            },
+
+            startScanning() {
+                console.log('Starting QR scanner');
+                this.scanActive = true;
+                this.lastScanned = null;
+                this.cameraError = false;
+                this.cameraErrorMessage = '';
+
+                this.video = document.getElementById('qr-video');
+                this.canvas = document.getElementById('qr-canvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+                }).then(stream => {
+                    console.log('Camera access granted');
+                    this.video.srcObject = stream;
+                    this.video.onloadedmetadata = () => {
+                        this.video.play();
+                        this.scanFrame();
+                        this.isButtonDisabled = false;
+                        console.log('Camera stream started');
+                    };
+                }).catch(err => {
+                    this.scanActive = false;
+                    this.cameraError = true;
+                    this.isButtonDisabled = false;
+                    console.error('Camera access error:', err);
+                    if (err.name === 'NotAllowedError') {
+                        this.cameraErrorMessage = 'Akses kamera ditolak. Harap izinkan akses kamera di pengaturan browser Anda.';
+                    } else if (err.name === 'NotFoundError') {
+                        this.cameraErrorMessage = 'Tidak ada kamera yang ditemukan. Pastikan perangkat Anda memiliki kamera yang aktif.';
+                    } else if (err.name === 'NotReadableError') {
+                        this.cameraErrorMessage = 'Kamera sedang digunakan oleh aplikasi lain. Tutup aplikasi lain dan coba lagi.';
+                    } else {
+                        this.cameraErrorMessage = 'Gagal mengakses kamera: ' + err.message;
+                    }
+                });
+            },
+
+            stopScanning() {
+                if (this.scanActive && this.video && this.video.srcObject) {
+                    const stream = this.video.srcObject;
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    this.video.srcObject = null;
+                    this.scanActive = false;
+                    console.log('Camera stream stopped');
+                }
+            },
+
+            async scanFrame() {
+                if (!this.scanActive || !this.video.videoWidth || !this.video.videoHeight) {
+                    requestAnimationFrame(() => this.scanFrame());
+                    return;
+                }
+
+                this.canvas.width = this.video.videoWidth;
+                this.canvas.height = this.video.videoHeight;
+                this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+
+                const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert'
+                });
+
+                if (code && code.data !== this.lastScanned) {
+                    this.lastScanned = code.data;
+                    console.log('Scanned QR code:', code.data);
+                    const match = code.data.match(/\/inventory\/(\d+)/);
+                    if (match && match[1]) {
+                        const productId = match[1];
+                        console.log('Extracted product ID:', productId);
+                        try {
+                            const response = await fetch(`/inventory/${productId}/json`, {
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                            console.log('Fetch response status:', response.status);
+                            if (response.ok) {
+                                const product = await response.json();
+                                console.log('Fetched product data:', product);
+                                if (product && product.stock > 0) {
+                                    this.addToCart({
+                                        id: product.id,
+                                        name: product.name,
+                                        color: product.color,
+                                        size: product.size,
+                                        selling_price: product.selling_price,
+                                        stock: product.stock
+                                    });
+                                    console.log('Product added to cart from QR scanner');
+                                    this.$nextTick(() => {
+                                        setTimeout(() => {
+                                            this.closeQRScanner();
+                                        }, 1500);
+                                    });
+                                } else {
+                                    alert('Produk tidak ditemukan atau stok habis!');
+                                    console.warn('Product not found or out of stock:', product);
+                                    this.lastScanned = null;
+                                }
+                            } else {
+                                alert('Gagal mengambil data produk! Status: ' + response.status);
+                                console.error('Fetch failed with status:', response.status);
+                                this.lastScanned = null;
+                            }
+                        } catch (error) {
+                            alert('Terjadi kesalahan saat mengambil data produk!');
+                            console.error('Fetch error:', error);
+                            this.lastScanned = null;
+                        }
+                    } else {
+                        alert('Format QR tidak valid!');
+                        console.warn('Invalid QR code format:', code.data);
+                        this.lastScanned = null;
+                    }
+                }
+
+                requestAnimationFrame(() => this.scanFrame());
+            }
+        };
+    }
+</script>
 </body>
 </html>

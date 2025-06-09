@@ -3,10 +3,15 @@
 @section('content')
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
-    #topProductsChart {
+    #topProductsChart, #hourlyTransactionsChart {
         display: block !important;
         width: 100% !important;
         height: 100% !important;
+        max-height: 300px;
+    }
+    .chart-container {
+        position: relative;
+        min-height: 200px;
     }
 </style>
 <div class="w-full">
@@ -90,13 +95,12 @@
                 <!-- Pie Chart for Top Products -->
                 <div class="bg-gray-800 rounded-lg p-5 text-white">
                     <h3 class="text-lg font-semibold mb-3">Produk Terlaris</h3>
-                    <div class="w-full h-64 relative">
+                    <div class="chart-container w-full h-64 relative">
+                        <canvas id="topProductsChart" style="display: block;"></canvas>
                         @if ($topProducts->isEmpty())
                             <div class="absolute inset-0 flex items-center justify-center">
                                 <p class="text-gray-400 text-sm">Tidak ada data produk terlaris untuk ditampilkan.</p>
                             </div>
-                        @else
-                            <canvas id="topProductsChart" style="display: block;"></canvas>
                         @endif
                     </div>
                     <div class="mt-3">
@@ -104,7 +108,7 @@
                             @forelse ($topProducts as $index => $product)
                                 <li class="flex items-center">
                                     <span class="w-3 h-3 rounded-full mr-2" style="background-color: {{ ['#F97316', '#F5F5F4', '#2563EB', '#16A34A', '#EC4899'][$index] }}"></span>
-                                    <span class="text-sm">{{ $product['name'] }} ({{ $product['quantity'] }})</span>
+                                    <span class="text-sm">{{ $product['name'] }} ({{ $product['quantity'] }} unit)</span>
                                 </li>
                             @empty
                                 <li class="text-sm text-gray-400">Tidak ada data produk terlaris.</li>
@@ -117,7 +121,7 @@
                 <div class="bg-gray-800 rounded-lg p-5 text-white">
                     <h3 class="text-lg font-semibold mb-1">Transaksi Harian</h3>
                     <p class="text-xs text-gray-400 mb-4">Laporan Transaksi Per Jam Hari Ini</p>
-                    <div class="w-full h-64">
+                    <div class="chart-container w-full h-64">
                         <canvas id="hourlyTransactionsChart"></canvas>
                     </div>
                 </div>
@@ -160,110 +164,119 @@
 </div>
 
 @push('scripts')
+<!-- Load Chart.js dari file lokal -->
 <script src="{{ asset('js/chart.min.js') }}"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Prepare data for Top Products Chart
-        const topProductsLabels = [@foreach ($topProducts as $product) '{{ $product['name'] }}', @endforeach];
-        const topProductsData = [@foreach ($topProducts as $product) {{ $product['quantity'] ?? 0 }}, @endforeach];
+document.addEventListener('DOMContentLoaded', function() {
+    // Debugging: Periksa apakah Chart.js dimuat
+    console.log('Chart.js loaded:', typeof Chart !== 'undefined');
 
-        // Debugging: Log data to ensure it's correct
-        console.log('Top Products Labels:', topProductsLabels);
-        console.log('Top Products Data:', topProductsData);
+    // Pie Chart untuk Produk Terlaris
+    const topProductsCtx = document.getElementById('topProductsChart');
+    if (!topProductsCtx) {
+        console.error('Canvas element with ID "topProductsChart" not found.');
+        return;
+    }
 
-        // Pie Chart for Top Products
-        const topProductsCtx = document.getElementById('topProductsChart');
-        if (topProductsCtx && topProductsLabels.length > 0 && topProductsData.length > 0) {
-            console.log('Rendering Top Products Chart...');
-            const total = topProductsData.reduce((sum, value) => sum + value, 0);
+    let topProductsLabels = @json($topProducts->pluck('name')->toArray());
+    let topProductsData = @json($topProducts->pluck('quantity')->toArray());
 
-            new Chart(topProductsCtx.getContext('2d'), {
-                type: 'pie',
-                data: {
-                    labels: topProductsLabels,
-                    datasets: [{
-                        label: 'Produk Terlaris',
-                        data: topProductsData,
-                        backgroundColor: ['#F97316', '#F5F5F4', '#2563EB', '#16A34A', '#EC4899'],
-                        borderColor: '#1F2937',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                    return `${context.label}: ${percentage}% (${value} unit)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        } else {
-            console.error('Top Products Chart: No data available or canvas element not found.');
-        }
+    // Fallback jika data kosong
+    if (!topProductsLabels.length || !topProductsData.length) {
+        topProductsLabels = ['Tidak Ada Data'];
+        topProductsData = [1];
+    }
 
-        // Line Chart for Hourly Transactions
-        const hourlyTransactionsCtx = document.getElementById('hourlyTransactionsChart');
-        if (hourlyTransactionsCtx) {
-            console.log('Rendering Hourly Transactions Chart...');
-            new Chart(hourlyTransactionsCtx.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: @json($labels),
-                    datasets: [{
-                        label: 'Transaksi',
-                        data: @json($hourlyData),
-                        fill: true,
-                        backgroundColor: 'rgba(249, 115, 22, 0.8)',
-                        borderColor: '#C05621',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: '#D1D5DB'
-                            },
-                            grid: {
-                                color: '#4B5563'
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: '#D1D5DB'
-                            },
-                            grid: {
-                                color: '#4B5563'
-                            }
-                        }
+    console.log('Top Products Labels:', topProductsLabels);
+    console.log('Top Products Data:', topProductsData);
+
+    try {
+        const total = topProductsData.reduce((sum, value) => sum + value, 0);
+        new Chart(topProductsCtx, {
+            type: 'pie',
+            data: {
+                labels: topProductsLabels,
+                datasets: [{
+                    label: 'Produk Terlaris',
+                    data: topProductsData,
+                    backgroundColor: ['#F97316', '#F5F5F4', '#2563EB', '#16A34A', '#EC4899'],
+                    borderColor: '#1F2937',
+                    borderWidth: 2,
+                    hoverOffset: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
                     },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#D1D5DB'
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            size: 14
+                        },
+                        bodyFont: {
+                            size: 12
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                return `${context.label}: ${percentage}% (${value} unit)`;
                             }
                         }
                     }
                 }
-            });
-        } else {
-            console.error('Hourly Transactions Chart: Canvas element not found.');
-        }
-    });
+            }
+        });
+    } catch (error) {
+        console.error('Error rendering Top Products Chart:', error);
+    }
+
+    // Line Chart untuk Transaksi Harian (tetap seperti aslinya)
+    const hourlyTransactionsCtx = document.getElementById('hourlyTransactionsChart');
+    if (hourlyTransactionsCtx) {
+        console.log('Rendering Hourly Transactions Chart...');
+        new Chart(hourlyTransactionsCtx, {
+            type: 'line',
+            data: {
+                labels: @json($labels),
+                datasets: [{
+                    label: 'Transaksi',
+                    data: @json($hourlyData),
+                    fill: true,
+                    backgroundColor: 'rgba(249, 115, 22, 0.8)',
+                    borderColor: '#C05621',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#D1D5DB' },
+                        grid: { color: '#4B5563' }
+                    },
+                    x: {
+                        ticks: { color: '#D1D5DB' },
+                        grid: { color: '#4B5563' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#D1D5DB' }
+                    }
+                }
+            }
+        });
+    } else {
+        console.error('Hourly Transactions Chart: Canvas element not found.');
+    }
+});
 </script>
 @endpush
 @endsection

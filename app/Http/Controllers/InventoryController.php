@@ -42,7 +42,7 @@ class InventoryController extends Controller
     * Generate and save the QR code for a product.
     *
     * @param string $content
-    * @return string|Illuminate\View\View $qrCodePath
+    * @return string|\Illuminate\View\View $qrCodePath
     */
    public function generateQrCode($content = null)
    {
@@ -131,6 +131,27 @@ class InventoryController extends Controller
    public function show(Product $product)
    {
        return view('inventory.show', compact('product'));
+   }
+
+   /**
+    * Return product data in JSON format.
+    *
+    * @param  \App\Models\Product  $product
+    * @return \Illuminate\Http\JsonResponse
+    */
+   public function json(Product $product)
+   {
+       if (!$product) {
+           return response()->json(['error' => 'Produk tidak ditemukan'], 404);
+       }
+       return response()->json([
+           'id' => $product->id,
+           'name' => $product->name,
+           'color' => $product->color,
+           'size' => $product->size,
+           'selling_price' => $product->selling_price,
+           'stock' => $product->stock
+       ], 200);
    }
 
    /**

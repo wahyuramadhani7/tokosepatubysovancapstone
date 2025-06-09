@@ -39,7 +39,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/history', [InventoryController::class, 'history'])->name('inventory.history');
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}', [InventoryController::class, 'show'])->name('inventory.show');
-        Route::get('inventory/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
+        Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
+        // Route untuk mengambil data produk dalam format JSON
+        Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
     });
 
     // Transactions Routes - accessible to all authenticated users

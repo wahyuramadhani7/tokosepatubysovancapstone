@@ -15,8 +15,9 @@ class DashboardController extends Controller
     // Dashboard untuk Owner
     public function owner()
     {
-        // Ambil data untuk ringkasan transaksi harian
         $today = now()->format('Y-m-d');
+
+        // Ringkasan transaksi harian
         $recentTransactions = Transaction::with('user')
             ->whereDate('created_at', $today)
             ->latest()
@@ -26,8 +27,11 @@ class DashboardController extends Controller
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
         $totalProducts = Product::count();
 
-        // Ambil data untuk produk terlaris (berdasarkan jumlah terjual)
+        // Produk terlaris berdasarkan transaksi hari ini
         $topProducts = TransactionItem::select('product_id')
+            ->whereHas('transaction', function ($query) use ($today) {
+                $query->whereDate('created_at', $today);
+            })
             ->with(['product' => function ($query) {
                 $query->select('id', 'name');
             }])
@@ -35,18 +39,22 @@ class DashboardController extends Controller
             ->orderByRaw('SUM(quantity) DESC')
             ->take(5)
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item) use ($today) {
                 return [
-                    'name' => $item->product ? $item->product->name : 'Unknown',
-                    'quantity' => TransactionItem::where('product_id', $item->product_id)->sum('quantity'),
+                    'name' => $item->product ? $item->product->name : 'Produk Tidak Dikenal',
+                    'quantity' => TransactionItem::where('product_id', $item->product_id)
+                        ->whereHas('transaction', function ($query) use ($today) {
+                            $query->whereDate('created_at', $today);
+                        })
+                        ->sum('quantity'),
                 ];
             });
 
-        // Ambil data untuk transaksi harian (per jam untuk hari ini)
+        // Transaksi harian per jam
         $hourlyTransactions = Transaction::select(
-                DB::raw('HOUR(created_at) as hour'),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw('HOUR(created_at) as hour'),
+            DB::raw('COUNT(*) as count')
+        )
             ->whereDate('created_at', $today)
             ->groupBy('hour')
             ->orderBy('hour')
@@ -55,12 +63,12 @@ class DashboardController extends Controller
                 return [$item->hour => $item->count];
             });
 
-        // Format data untuk grafik (pastikan semua jam dari 00:00 sampai 23:00 ada)
+        // Format data untuk grafik (jam 00:00 sampai 23:00)
         $hourlyData = [];
         $labels = [];
         for ($hour = 0; $hour < 24; $hour++) {
-            $labels[] = sprintf('%02d:00', $hour); // Format: 00:00, 01:00, dst.
-            $hourlyData[] = $hourlyTransactions->get($hour, 0); // Jumlah transaksi, default 0 jika tidak ada
+            $labels[] = sprintf('%02d:00', $hour);
+            $hourlyData[] = $hourlyTransactions->get($hour, 0);
         }
 
         return view('owner.dashboard', compact(
@@ -77,8 +85,9 @@ class DashboardController extends Controller
     // Dashboard untuk Employee
     public function employee()
     {
-        // Ambil data untuk ringkasan transaksi harian
         $today = now()->format('Y-m-d');
+
+        // Ringkasan transaksi harian
         $recentTransactions = Transaction::with('user')
             ->whereDate('created_at', $today)
             ->latest()
@@ -88,8 +97,11 @@ class DashboardController extends Controller
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
         $totalProducts = Product::count();
 
-        // Ambil data untuk produk terlaris (berdasarkan jumlah terjual)
+        // Produk terlaris berdasarkan transaksi hari ini
         $topProducts = TransactionItem::select('product_id')
+            ->whereHas('transaction', function ($query) use ($today) {
+                $query->whereDate('created_at', $today);
+            })
             ->with(['product' => function ($query) {
                 $query->select('id', 'name');
             }])
@@ -97,18 +109,22 @@ class DashboardController extends Controller
             ->orderByRaw('SUM(quantity) DESC')
             ->take(5)
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item) use ($today) {
                 return [
-                    'name' => $item->product ? $item->product->name : 'Unknown',
-                    'quantity' => TransactionItem::where('product_id', $item->product_id)->sum('quantity'),
+                    'name' => $item->product ? $item->product->name : 'Produk Tidak Dikenal',
+                    'quantity' => TransactionItem::where('product_id', $item->product_id)
+                        ->whereHas('transaction', function ($query) use ($today) {
+                            $query->whereDate('created_at', $today);
+                        })
+                        ->sum('quantity'),
                 ];
             });
 
-        // Ambil data untuk transaksi harian (per jam untuk hari ini)
+        // Transaksi harian per jam
         $hourlyTransactions = Transaction::select(
-                DB::raw('HOUR(created_at) as hour'),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw('HOUR(created_at) as hour'),
+            DB::raw('COUNT(*) as count')
+        )
             ->whereDate('created_at', $today)
             ->groupBy('hour')
             ->orderBy('hour')
@@ -117,12 +133,12 @@ class DashboardController extends Controller
                 return [$item->hour => $item->count];
             });
 
-        // Format data untuk grafik (pastikan semua jam dari 00:00 sampai 23:00 ada)
+        // Format data untuk grafik (jam 00:00 sampai 23:00)
         $hourlyData = [];
         $labels = [];
         for ($hour = 0; $hour < 24; $hour++) {
-            $labels[] = sprintf('%02d:00', $hour); // Format: 00:00, 01:00, dst.
-            $hourlyData[] = $hourlyTransactions->get($hour, 0); // Jumlah transaksi, default 0 jika tidak ada
+            $labels[] = sprintf('%02d:00', $hour);
+            $hourlyData[] = $hourlyTransactions->get($hour, 0);
         }
 
         return view('employee.dashboard', compact(
