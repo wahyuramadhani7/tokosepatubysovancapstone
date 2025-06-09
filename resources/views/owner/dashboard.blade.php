@@ -3,15 +3,10 @@
 @section('content')
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
-    #topProductsChart, #hourlyTransactionsChart {
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-        max-height: 300px;
-    }
-    .chart-container {
-        position: relative;
-        min-height: 200px;
+    .no-data-message {
+        text-align: center;
+        color: #D1D5DB;
+        padding: 20px;
     }
 </style>
 <div class="w-full">
@@ -90,40 +85,63 @@
                 </div>
             </div>
 
-            <!-- Charts Section -->
+            <!-- Data Section (Tabel untuk Transaksi Harian dan Produk Terlaris) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- Pie Chart for Top Products -->
-                <div class="bg-gray-800 rounded-lg p-5 text-white">
-                    <h3 class="text-lg font-semibold mb-3">Produk Terlaris</h3>
-                    <div class="chart-container w-full h-64 relative">
-                        <canvas id="topProductsChart" style="display: block;"></canvas>
-                        @if ($topProducts->isEmpty())
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <p class="text-gray-400 text-sm">Tidak ada data produk terlaris untuk ditampilkan.</p>
-                            </div>
-                        @endif
-                    </div>
-                    <div class="mt-3">
-                        <ul class="space-y-1">
-                            @forelse ($topProducts as $index => $product)
-                                <li class="flex items-center">
-                                    <span class="w-3 h-3 rounded-full mr-2" style="background-color: {{ ['#F97316', '#F5F5F4', '#2563EB', '#16A34A', '#EC4899'][$index] }}"></span>
-                                    <span class="text-sm">{{ $product['name'] }} ({{ $product['quantity'] }} unit)</span>
-                                </li>
-                            @empty
-                                <li class="text-sm text-gray-400">Tidak ada data produk terlaris.</li>
-                            @endforelse
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- Line Chart for Hourly Transactions -->
+                <!-- Tabel untuk Transaksi Harian -->
                 <div class="bg-gray-800 rounded-lg p-5 text-white">
                     <h3 class="text-lg font-semibold mb-1">Transaksi Harian</h3>
-                    <p class="text-xs text-gray-400 mb-4">Laporan Transaksi Per Jam Hari Ini</p>
-                    <div class="chart-container w-full h-64">
-                        <canvas id="hourlyTransactionsChart"></canvas>
-                    </div>
+                    <p class="text-xs text-gray-400 mb-4">Laporan Transaksi Per Jam Hari Ini (hingga {{ now()->format('H:i') }} WIB)</p>
+                    @php
+                        $currentHour = now()->hour; // Dapatkan jam saat ini (misalnya, 21 untuk 21:00)
+                    @endphp
+                    @if(empty($hourlyData) || array_sum(array_slice($hourlyData, 0, $currentHour + 1)) == 0)
+                        <div class="no-data-message">Tidak ada transaksi hari ini hingga {{ now()->format('H:i') }} WIB</div>
+                    @else
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-700 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jam</th>
+                                    <th class="px-6 py-3 bg-gray-700 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jumlah Transaksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach(array_slice($labels, 0, $currentHour + 1) as $index => $label)
+                                    @if($hourlyData[$index] > 0) <!-- Hanya tampilkan jam dengan transaksi -->
+                                        <tr>
+                                            <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $label }}</td>
+                                            <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $hourlyData[$index] }} transaksi</td>
+                                        </tr>
+                                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
+                </div>
+
+                <!-- Tabel untuk Produk Terlaris -->
+                <div class="bg-gray-800 rounded-lg p-5 text-white">
+                    <h3 class="text-lg font-semibold mb-1">Produk Terlaris</h3>
+                    <p class="text-xs text-gray-400 mb-4">Laporan Produk Terlaris Hari Ini</p>
+                    @if($topProducts->isEmpty())
+                        <div class="no-data-message">Tidak ada data produk terlaris hari ini</div>
+                    @else
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-700 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Nama Produk</th>
+                                    <th class="px-6 py-3 bg-gray-700 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Kuantitas Terjual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($topProducts as $product)
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $product['name'] }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $product['quantity'] }} unit</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
                 </div>
             </div>
 
@@ -164,119 +182,6 @@
 </div>
 
 @push('scripts')
-<!-- Load Chart.js dari file lokal -->
-<script src="{{ asset('js/chart.min.js') }}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Debugging: Periksa apakah Chart.js dimuat
-    console.log('Chart.js loaded:', typeof Chart !== 'undefined');
-
-    // Pie Chart untuk Produk Terlaris
-    const topProductsCtx = document.getElementById('topProductsChart');
-    if (!topProductsCtx) {
-        console.error('Canvas element with ID "topProductsChart" not found.');
-        return;
-    }
-
-    let topProductsLabels = @json($topProducts->pluck('name')->toArray());
-    let topProductsData = @json($topProducts->pluck('quantity')->toArray());
-
-    // Fallback jika data kosong
-    if (!topProductsLabels.length || !topProductsData.length) {
-        topProductsLabels = ['Tidak Ada Data'];
-        topProductsData = [1];
-    }
-
-    console.log('Top Products Labels:', topProductsLabels);
-    console.log('Top Products Data:', topProductsData);
-
-    try {
-        const total = topProductsData.reduce((sum, value) => sum + value, 0);
-        new Chart(topProductsCtx, {
-            type: 'pie',
-            data: {
-                labels: topProductsLabels,
-                datasets: [{
-                    label: 'Produk Terlaris',
-                    data: topProductsData,
-                    backgroundColor: ['#F97316', '#F5F5F4', '#2563EB', '#16A34A', '#EC4899'],
-                    borderColor: '#1F2937',
-                    borderWidth: 2,
-                    hoverOffset: 20
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleFont: {
-                            size: 14
-                        },
-                        bodyFont: {
-                            size: 12
-                        },
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.raw;
-                                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                return `${context.label}: ${percentage}% (${value} unit)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error rendering Top Products Chart:', error);
-    }
-
-    // Line Chart untuk Transaksi Harian (tetap seperti aslinya)
-    const hourlyTransactionsCtx = document.getElementById('hourlyTransactionsChart');
-    if (hourlyTransactionsCtx) {
-        console.log('Rendering Hourly Transactions Chart...');
-        new Chart(hourlyTransactionsCtx, {
-            type: 'line',
-            data: {
-                labels: @json($labels),
-                datasets: [{
-                    label: 'Transaksi',
-                    data: @json($hourlyData),
-                    fill: true,
-                    backgroundColor: 'rgba(249, 115, 22, 0.8)',
-                    borderColor: '#C05621',
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: '#D1D5DB' },
-                        grid: { color: '#4B5563' }
-                    },
-                    x: {
-                        ticks: { color: '#D1D5DB' },
-                        grid: { color: '#4B5563' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#D1D5DB' }
-                    }
-                }
-            }
-        });
-    } else {
-        console.error('Hourly Transactions Chart: Canvas element not found.');
-    }
-});
-</script>
+<!-- Tidak ada script karena tidak menggunakan Chart.js -->
 @endpush
 @endsection
