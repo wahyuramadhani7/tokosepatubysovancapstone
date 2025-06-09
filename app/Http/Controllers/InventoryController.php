@@ -57,13 +57,13 @@ class InventoryController extends Controller
             mkdir($path, 0755, true);
         }
         
-        // Generate QR code dengan teks mentah berdasarkan data produk
+        // Generate QR code with raw text based on product data
         $svg = QrCode::size(300)
             ->format('svg')
             ->errorCorrection('H')
             ->generate($content);
         
-        file_put_contents($path . '/' . $filename, $svg);
+        Storage::put('public/' . $directory . '/' . $filename, $svg);
         
         return $directory . '/' . $filename;
     }
@@ -97,14 +97,8 @@ class InventoryController extends Controller
                 'color' => $validated['color'],
             ]);
 
-            // Generate QR code dengan teks mentah
-            $qrCodeContent = implode("\n", [
-                $product->name,
-                'Ukuran: ' . $product->size,
-                'Warna: ' . $product->color,
-                'Harga: Rp ' . number_format($product->selling_price, 0, ',', '.'),
-                'Scan untuk detail produk'
-            ]);
+            // Generate QR code with raw text linking to public product detail page
+            $qrCodeContent = url('/inventory/' . $product->id);
             $qrCodePath = $this->generateQrCode($qrCodeContent);
 
             $product->update(['qr_code' => $qrCodePath]);
@@ -124,10 +118,10 @@ class InventoryController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\View\View
      */
-    public function show(Product $product)
-    {
-        return view('inventory.show', compact('product'));
-    }
+   public function show(Product $product)
+{
+    return view('inventory.show', compact('product'));
+}
 
     /**
      * Return product data in JSON format.

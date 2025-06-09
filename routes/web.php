@@ -11,6 +11,12 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Public routes for product details and QR code printing
+Route::prefix('inventory')->group(function () {
+    Route::get('/{product}', [InventoryController::class, 'show'])->name('inventory.show');
+    Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
+});
+
 // Route untuk dashboard employee
 Route::middleware(['auth', 'role:employee'])->group(function () {
     Route::get('/employee/dashboard', [DashboardController::class, 'employee'])->name('employee.dashboard');
@@ -38,9 +44,6 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
         Route::get('/history', [InventoryController::class, 'history'])->name('inventory.history');
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
-        Route::get('/{product}', [InventoryController::class, 'show'])->name('inventory.show');
-        Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
-        // Route untuk mengambil data produk dalam format JSON
         Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
     });
 

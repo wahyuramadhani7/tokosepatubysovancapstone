@@ -1,138 +1,129 @@
-<x-app-layout>
-      <x-slot name="header">
-          <div class="flex justify-between">
-              <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                  {{ __('Transaction Details') }} - {{ $transaction->invoice_number }}
-              </h2>
-              <div>
-                  <a href="{{ route('transactions.print', $transaction) }}" target="_blank" class="ml-4 inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                      {{ __('Print Receipt') }}
-                  </a>
-                  <a href="{{ route('transactions.index') }}" class="ml-4 inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                      {{ __('Back to Transactions') }}
-                  </a>
-              </div>
-          </div>
-      </x-slot>
-  
-      <div class="py-12">
-          <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-              <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                  <div class="p-6 text-gray-900">
-                      @if (session('success'))
-                          <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-                              <p>{{ session('success') }}</p>
-                          </div>
-                      @endif
-  
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <!-- Transaction Information -->
-                          <div>
-                              <h3 class="text-lg font-medium mb-4">Transaction Information</h3>
-                              <div class="bg-gray-50 rounded p-4">
-                                  <div class="grid grid-cols-2 gap-4">
-                                      <div>
-                                          <p class="text-sm text-gray-600">Invoice Number</p>
-                                          <p class="font-medium">{{ $transaction->invoice_number }}</p>
-                                      </div>
-                                      <div>
-                                          <p class="text-sm text-gray-600">Date</p>
-                                          <p class="font-medium">{{ $transaction->created_at->format('d M Y H:i') }}</p>
-                                      </div>
-                                      <div>
-                                          <p class="text-sm text-gray-600">Payment Method</p>
-                                          <p class="font-medium">{{ ucfirst($transaction->payment_method) }}</p>
-                                      </div>
-                                      <div>
-                                          <p class="text-sm text-gray-600">Payment Status</p>
-                                          <p class="font-medium">{{ ucfirst($transaction->payment_status) }}</p>
-                                      </div>
-                                      <div>
-                                          <p class="text-sm text-gray-600">Cashier</p>
-                                          <p class="font-medium">{{ $transaction->user->name }}</p>
-                                      </div>
-                                  </div>
-                              </div>
-  
-                              <!-- Customer Information -->
-                              <h3 class="text-lg font-medium mt-6 mb-4">Customer Information</h3>
-                              <div class="bg-gray-50 rounded p-4">
-                                  <div class="mb-3">
-                                      <p class="text-sm text-gray-600">Name</p>
-                                      <p class="font-medium">{{ $transaction->customer_name ?: 'Walk-in Customer' }}</p>
-                                  </div>
-                                  @if($transaction->customer_phone)
-                                  <div class="mb-3">
-                                      <p class="text-sm text-gray-600">Phone</p>
-                                      <p class="font-medium">{{ $transaction->customer_phone }}</p>
-                                  </div>
-                                  @endif
-                                  @if($transaction->customer_email)
-                                  <div class="mb-3">
-                                      <p class="text-sm text-gray-600">Email</p>
-                                      <p class="font-medium">{{ $transaction->customer_email }}</p>
-                                  </div>
-                                  @endif
-                                  @if($transaction->notes)
-                                  <div>
-                                      <p class="text-sm text-gray-600">Notes</p>
-                                      <p class="font-medium">{{ $transaction->notes }}</p>
-                                  </div>
-                                  @endif
-                              </div>
-                          </div>
-  
-                          <!-- Items & Summary -->
-                          <div>
-                              <h3 class="text-lg font-medium mb-4">Items</h3>
-                              <div class="bg-gray-50 rounded p-4">
-                                  <table class="min-w-full divide-y divide-gray-200">
-                                      <thead>
-                                          <tr>
-                                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                                              <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                              <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                                              <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-                                          </tr>
-                                      </thead>
-                                      <tbody class="divide-y divide-gray-200">
-                                          @foreach ($transaction->items as $item)
-                                              <tr>
-                                                  <td class="px-3 py-3 text-sm">{{ $item->product->name }}</td>
-                                                  <td class="px-3 py-3 text-sm text-right">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
-                                                  <td class="px-3 py-3 text-sm text-right">{{ $item->quantity }}</td>
-                                                  <td class="px-3 py-3 text-sm text-right">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
-                                              </tr>
-                                          @endforeach
-                                      </tbody>
-                                  </table>
-                              </div>
-  
-                              <!-- Summary -->
-                              <div class="mt-6 bg-gray-50 rounded p-4">
-                                  <div class="flex justify-between mb-2">
-                                      <span>Subtotal:</span>
-                                      <span>Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</span>
-                                  </div>
-                                  @if($transaction->discount_amount > 0)
-                                  <div class="flex justify-between mb-2">
-                                      <span>Discount:</span>
-                                      <span>Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</span>
-                                  </div>
-                                  @endif
-                                  <div class="flex justify-between mb-2">
-                                      <span>Tax (11%):</span>
-                                      <span>Rp {{ number_format($transaction->tax_amount, 0, ',', '.') }}</span>
-                                  </div>
-                                  <div class="flex justify-between font-bold text-lg">
-                                      <span>Total:</span>
-                                      <span>Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</span>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div>
-  </x-app-layout>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Produk - Toko Sepatu by Sovan</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #0a0e1a;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Particle background */
+        .particle-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center/cover;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        /* Slide-in animation */
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Neon glow effect */
+        @keyframes neonGlow {
+            0%, 100% { box-shadow: 0 0 10px #f97316, 0 0 20px #06b6d4; }
+            50% { box-shadow: 0 0 20px #f97316, 0 0 30px #06b6d4; }
+        }
+
+        .animate-slide-in-left {
+            animation: slideInLeft 1s ease-out forwards;
+        }
+
+        .animate-slide-in-right {
+            animation: slideInRight 1.2s ease-out forwards;
+        }
+
+        .animate-neon-glow {
+            animation: neonGlow 2s infinite;
+        }
+
+        /* Product card with parallax tilt */
+        .product-card {
+            background: rgba(10, 14, 26, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: perspective(1000px) rotateX(3deg) rotateY(3deg);
+        }
+
+        /* Pulsing badges */
+        .badge {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .text-6xl { font-size: 2.5rem; }
+            .text-2xl { font-size: 1.5rem; }
+            .text-lg { font-size: 1rem; }
+            .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+    <div class="particle-bg"></div>
+
+    <!-- Header -->
+    <div class="w-full py-16 text-center animate-slide-in-left">
+        <div class="inline-flex items-center justify-center w-28 h-28 bg-gradient-to-r from-orange-500 to-cyan-500 rounded-full mb-4 shadow-2xl animate-neon-glow">
+            <svg class="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4m-4 4h16l-2 6H6l-2-6z" />
+            </svg>
+        </div>
+        <h1 class="text-6xl font-extrabold text-white mb-3 tracking-wider">Toko Sepatu by Sovan</h1>
+        <p class="text-2xl text-cyan-400 animate-slide-in-right">Strut Your Style with Sovan’s Swagger!</p>
+    </div>
+
+    <!-- Product Card -->
+    <div class="flex-1 flex items-center justify-center px-4 py-8">
+        <div class="max-w-lg w-full product-card rounded-3xl p-10 animate-slide-in-left">
+            <h2 class="text-3xl font-bold text-white text-center mb-6">{{ $product->name ?? 'Nama Produk' }}</h2>
+            <div class="flex justify-center items-center space-x-8">
+                <span class="badge bg-gradient-to-r from-orange-500 to-cyan-500 text-white px-6 py-3 rounded-full text-lg font-semibold">{{ $product->size ?? 'Size' }}</span>
+                <span class="badge bg-gradient-to-r from-orange-500 to-cyan-500 text-white px-6 py-3 rounded-full text-lg font-semibold">{{ $product->color ?? 'Color' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Restart animations on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const elements = document.querySelectorAll('.animate-slide-in-left, .animate-slide-in-right');
+            elements.forEach(el => {
+                el.style.animation = 'none';
+                setTimeout(() => {
+                    el.style.animation = el.classList.contains('animate-slide-in-left') 
+                        ? 'slideInLeft 1s ease-out forwards' 
+                        : 'slideInRight 1.2s ease-out forwards';
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>

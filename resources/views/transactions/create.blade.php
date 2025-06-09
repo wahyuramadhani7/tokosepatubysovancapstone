@@ -104,7 +104,7 @@
 
         <!-- Main Content -->
         <main class="flex-grow container mx-auto px-4 py-8">
-            <div the="mb-8">
+            <div class="mb-8">
                 <h1 class="text-4xl font-bold text-dark-800 tracking-tight">Buat Transaksi Baru</h1>
                 <p class="text-gray-600 mt-2 text-lg">Pilih produk premium dan selesaikan transaksi dengan mudah</p>
             </div>
@@ -115,7 +115,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Product Selection -->
                     <div class="bg-white rounded-xl shadow-softer p-6 card-hover">
-                        <h2 class="text-xl font-semibold text-dark-missing="mb-5 flex items-center">
+                        <h2 class="text-xl font-semibold text-dark-800 mb-5 flex items-center">
                             <svg class="h-6 w-6 mr-2 text-accent-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
@@ -252,7 +252,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-dark-700 mb-1">Metode Pembayaran <span class="text-red-500">*</span></label>
-                                <select name="payment_method" id="payment_method" class="w-full border border-gray-200 rounded-lg px-4Rag py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all" required>
+                                <select name="payment_method" id="payment_method" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all" required>
                                     <option value="" disabled selected>Pilih metode pembayaran</option>
                                     <option value="cash">Tunai</option>
                                     <option value="credit_card">Kartu Kredit</option>
@@ -419,6 +419,7 @@
                         quantity: 1,
                         stock: product.stock
                     });
+                    this.scannedProductIds.push(product.id);
                     console.log('Added new product to cart:', product.name);
                 }
                 this.searchQuery = '';
@@ -542,35 +543,28 @@
                 console.log('QR code decoded:', decodedText);
                 this.scanError = '';
 
-                const lines = decodedText.split('\n').map(line => line.trim());
-                if (lines.length < 3) {
-                    this.scanError = 'Format QR code tidak valid.';
-                    console.warn('Invalid QR code format:', decodedText);
+                // Validasi bahwa decodedText adalah URL
+                let productId;
+                try {
+                    const url = new URL(decodedText);
+                    // Asumsi URL seperti http://yourdomain.com/inventory/{product_id}
+                    const pathSegments = url.pathname.split('/');
+                    productId = pathSegments[pathSegments.length - 1];
+                    if (!productId || isNaN(productId)) {
+                        throw new Error('ID produk tidak valid');
+                    }
+                } catch (e) {
+                    this.scanError = 'QR code tidak valid. Harus berisi URL produk (contoh: http://yourdomain.com/inventory/1).';
+                    console.warn('Invalid QR code format:', decodedText, e);
                     return;
                 }
 
-                const name = lines[0];
-                const sizeMatch = lines[1].match(/^Ukuran: (.*)$/);
-                const colorMatch = lines[2].match(/^Warna: (.*)$/);
-                
-                if (!sizeMatch || !colorMatch) {
-                    this.scanError = 'Format QR code tidak sesuai. Pastikan QR code berisi nama, ukuran, dan warna.';
-                    console.warn('Invalid QR code structure:', lines);
-                    return;
-                }
-
-                const size = sizeMatch[1];
-                const color = colorMatch[1];
-
-                const product = this.availableProducts.find(p =>
-                    p.name.toLowerCase() === name.toLowerCase() &&
-                    p.size.toLowerCase() === size.toLowerCase() &&
-                    p.color.toLowerCase() === color.toLowerCase()
-                );
+                // Cari produk berdasarkan ID
+                const product = this.availableProducts.find(p => p.id == productId);
 
                 if (!product) {
-                    this.scanError = `Produk "${name} (${color}, Ukuran: ${size})" tidak ditemukan.`;
-                    console.warn('Product not found:', { name, size, color });
+                    this.scanError = `Produk dengan ID ${productId} tidak ditemukan.`;
+                    console.warn('Product not found:', productId);
                     return;
                 }
 
@@ -605,37 +599,29 @@
                 console.log('Hardware QR code input:', this.qrInput);
                 this.scanError = '';
 
-                const lines = this.qrInput.split('\n').map(line => line.trim());
-                if (lines.length < 3) {
-                    this.scanError = 'Format QR code tidak valid.';
-                    console.warn('Invalid QR code format:', this.qrInput);
+                // Validasi bahwa qrInput adalah URL
+                let productId;
+                try {
+                    const url = new URL(this.qrInput);
+                    // Asumsi URL seperti http://yourdomain.com/inventory/{product_id}
+                    const pathSegments = url.pathname.split('/');
+                    productId = pathSegments[pathSegments.length - 1];
+                    if (!productId || isNaN(productId)) {
+                        throw new Error('ID produk tidak valid');
+                    }
+                } catch (e) {
+                    this.scanError = 'QR code tidak valid. Harus berisi URL produk (contoh: http://yourdomain.com/inventory/1).';
+                    console.warn('Invalid QR code format:', this.qrInput, e);
                     this.qrInput = '';
                     return;
                 }
 
-                const name = lines[0];
-                const sizeMatch = lines[1].match(/^Ukuran: (.*)$/);
-                const colorMatch = lines[2].match(/^Warna: (.*)$/);
-
-                if (!sizeMatch || !colorMatch) {
-                    this.scanError = 'Format QR code tidak sesuai. Pastikan QR code berisi nama, ukuran, dan warna.';
-                    console.warn('Invalid QR code structure:', lines);
-                    this.qrInput = '';
-                    return;
-                }
-
-                const size = sizeMatch[1];
-                const color = colorMatch[1];
-
-                const product = this.availableProducts.find(p =>
-                    p.name.toLowerCase() === name.toLowerCase() &&
-                    p.size.toLowerCase() === size.toLowerCase() &&
-                    p.color.toLowerCase() === color.toLowerCase()
-                );
+                // Cari produk berdasarkan ID
+                const product = this.availableProducts.find(p => p.id == productId);
 
                 if (!product) {
-                    this.scanError = `Produk "${name} (${color}, Ukuran: ${size})" tidak ditemukan.`;
-                    console.warn('Product not found:', { name, size, color });
+                    this.scanError = `Produk dengan ID ${productId} tidak ditemukan.`;
+                    console.warn('Product not found:', productId);
                     this.qrInput = '';
                     return;
                 }
