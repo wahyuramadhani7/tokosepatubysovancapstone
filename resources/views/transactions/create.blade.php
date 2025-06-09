@@ -6,7 +6,7 @@
     <title>Buat Transaksi Baru - Sepatu by Sovan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
         button:focus, input:focus, select:focus, textarea:focus {
@@ -27,8 +27,22 @@
             transform: translateY(-4px);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
-        .modal {
-            background: rgba(0, 0, 0, 0.7);
+        #qr-reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
         }
     </style>
     <script>
@@ -108,32 +122,37 @@
                             Pilih Produk
                         </h2>
 
-                        <div class="relative mb-5 flex items-center space-x-2">
-                            <div class="relative flex-1">
+                        <div class="flex items-center space-x-4 mb-5">
+                            <div class="relative flex-grow">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
-                                </div>
+                               Corrupted line:         </div>
                                 <input type="text" x-model="searchQuery" @input="searchProducts" placeholder="Cari nama, warna, atau ukuran produk..." class="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all">
                             </div>
-                            <button type="button" @click="openScanner" class="bg-accent-500 hover:bg-accent-600 text-white px-4 py-3 rounded-lg transition-all flex items-center">
-                                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <button type="button" @click="openScanner" class="bg-accent-500 hover:bg-accent-600 text-white px-4 py-3 rounded-lg flex items-center space-x-2 transition-all">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                 </svg>
-                                Scan QR
+                                <span>Scan QR</span>
                             </button>
                         </div>
 
-                        <!-- QR Code Scanner Modal -->
-                        <div x-show="showScanner" class="fixed inset-0 modal flex items-center justify-center z-50" x-cloak>
-                            <div class="bg-white rounded-xl p-6 w-full max-w-md">
-                                <h2 class="text-xl font-semibold text-dark-800 mb-4">Scan QR Code Produk</h2>
-                                <video id="scannerVideo" class="w-full h-64 bg-gray-200 rounded-lg"></video>
-                                <canvas id="scannerCanvas" class="hidden"></canvas>
-                                <div class="mt-4 flex justify-end space-x-2">
-                                    <button type="button" @click="closeScanner" class="bg-gray-200 hover:bg-gray-300 text-dark-800 px-4 py-2 rounded-lg transition-all">Tutup</button>
+                        <!-- QR Scanner Modal -->
+                        <div x-show="isScannerOpen" class="modal-overlay" x-cloak @click.self="closeScanner">
+                            <div class="bg-white rounded-xl p-6 w-full max-w-lg">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-semibold text-dark-800">Scan QR Code</h3>
+                                    <button type="button" @click="closeScanner" class="text-gray-400 hover:text-gray-600">
+                                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
                                 </div>
+                                <div id="qr-reader"></div>
+                                <p class="text-sm text-gray-500 mt-4 text-center">Arahkan kamera ke kode QR produk</p>
+                                <p class="text-sm text-red-500 mt-2 text-center" x-text="scanError" x-show="scanError"></p>
                             </div>
                         </div>
 
@@ -216,8 +235,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-dark-700 mb-1">No. Telepon</label>
-                                <input type="text" name="customer_phone" placeholder="Contoh: 081234567890" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all">
-                            </div>
+                                <input type="text" name="customer_phone" placeholder=" ως</div>
                             <div>
                                 <label class="block text-sm font-medium text-dark-700 mb-1">Email</label>
                                 <input type="email" name="customer_email" placeholder="email@example.com" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all">
@@ -333,8 +351,9 @@
             searchResults: [],
             cart: [],
             discount: 0,
-            showScanner: false,
-            videoStream: null,
+            isScannerOpen: false,
+            qrScanner: null,
+            scanError: '',
 
             formatRupiah(amount) {
                 return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
@@ -460,78 +479,88 @@
             },
 
             openScanner() {
-                this.showScanner = true;
-                this.startScanner();
+                this.isScannerOpen = true;
+                this.scanError = '';
+                this.$nextTick(() => {
+                    try {
+                        this.qrScanner = new Html5QrcodeScanner(
+                            "qr-reader",
+                            { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+                            false
+                        );
+                        this.qrScanner.render(
+                            (decodedText) => this.handleQrScan(decodedText),
+                            (error) => {
+                                console.warn('QR scan error:', error);
+                                this.scanError = 'Gagal membaca QR code. Coba lagi.';
+                            }
+                        );
+                        console.log('QR scanner initialized');
+                    } catch (err) {
+                        console.error('Scanner initialization failed:', err);
+                        this.scanError = 'Gagal memulai scanner. Periksa izin kamera.';
+                        this.isScannerOpen = false;
+                    }
+                });
             },
 
             closeScanner() {
-                this.showScanner = false;
-                if (this.videoStream) {
-                    this.videoStream.getTracks().forEach(track => track.stop());
-                    this.videoStream = null;
+                if (this.qrScanner) {
+                    this.qrScanner.clear().then(() => {
+                        console.log('QR scanner stopped');
+                        this.qrScanner = null;
+                    }).catch(err => console.error('Error stopping scanner:', err));
                 }
+                this.isScannerOpen = false;
+                this.scanError = '';
             },
 
-            startScanner() {
-                const video = document.getElementById('scannerVideo');
-                const canvasElement = document.getElementById('scannerCanvas');
-                const canvas = canvasElement.getContext('2d');
+            handleQrScan(decodedText) {
+                console.log('QR code decoded:', decodedText);
+                this.scanError = '';
 
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                    .then(stream => {
-                        this.videoStream = stream;
-                        video.srcObject = stream;
-                        video.play();
+                // Split the decoded text into lines
+                const lines = decodedText.split('\n').map(line => line.trim());
+                if (lines.length < 3) {
+                    this.scanError = 'Format QR code tidak valid.';
+                    console.warn('Invalid QR code format:', decodedText);
+                    return;
+                }
 
-                        const scan = () => {
-                            if (!this.showScanner) return;
-                            canvasElement.width = video.videoWidth;
-                            canvasElement.height = video.videoHeight;
-                            canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-                            const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                            const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                                inversionAttempts: 'dontInvert',
-                            });
+                // Extract name, size, and color from the QR code
+                const name = lines[0];
+                const sizeMatch = lines[1].match(/^Ukuran: (.*)$/);
+                const colorMatch = lines[2].match(/^Warna: (.*)$/);
+                
+                if (!sizeMatch || !colorMatch) {
+                    this.scanError = 'Format QR code tidak sesuai. Pastikan QR code berisi nama, ukuran, dan warna.';
+                    console.warn('Invalid QR code structure:', lines);
+                    return;
+                }
 
-                            if (code) {
-                                console.log('QR Code detected:', code.data);
-                                this.handleQRCode(code.data);
-                                this.closeScanner();
-                            } else {
-                                requestAnimationFrame(scan);
-                            }
-                        };
-                        requestAnimationFrame(scan);
-                    })
-                    .catch(err => {
-                        console.error('Error accessing camera:', err);
-                        alert('Gagal mengakses kamera. Pastikan izin kamera diberikan.');
-                        this.showScanner = false;
-                    });
-            },
+                const size = sizeMatch[1];
+                const color = colorMatch[1];
 
-            handleQRCode(data) {
-            // Assuming QR code contains product ID
-            const productId = parseInt(data, 10);
-            const product = this.availableProducts.find(p => p.id === productId);
-            if (product) {
-                // Tampilkan dialog konfirmasi
-                const confirmAdd = window.confirm(`Tambahkan produk "${product.name}" (${product.color}, Ukuran: ${product.size}) ke keranjang?`);
-                if (confirmAdd) {
+                // Find matching product
+                const product = this.availableProducts.find(p =>
+                    p.name.toLowerCase() === name.toLowerCase() &&
+                    p.size.toLowerCase() === size.toLowerCase() &&
+                    p.color.toLowerCase() === color.toLowerCase()
+                );
+
+                if (product) {
                     this.addToCart(product);
-                    console.log('Product added from QR:', product.name);
+                    alert(`Produk ${product.name} ditambahkan ke keranjang!`);
+                    this.closeScanner();
                 } else {
-                    console.log('User cancelled adding product from QR:', product.name);
+                    this.scanError = `Produk "${name} (${color}, Ukuran: ${size})" tidak ditemukan.`;
+                    console.warn('Product not found:', { name, size, color });
                 }
-                this.closeScanner();
-            } else {
-                alert('Produk tidak ditemukan!');
-                console.warn('Product not found for QR code:', data);
-                this.closeScanner();
-            }
-        },
+            },
+
             initialize() {
                 console.log('Initializing transaction app');
+                console.log('Available products:', this.availableProducts);
             }
         };
     }
