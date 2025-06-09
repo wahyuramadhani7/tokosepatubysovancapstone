@@ -104,7 +104,7 @@
 
         <!-- Main Content -->
         <main class="flex-grow container mx-auto px-4 py-8">
-            <div class="mb-8">
+            <div the="mb-8">
                 <h1 class="text-4xl font-bold text-dark-800 tracking-tight">Buat Transaksi Baru</h1>
                 <p class="text-gray-600 mt-2 text-lg">Pilih produk premium dan selesaikan transaksi dengan mudah</p>
             </div>
@@ -115,7 +115,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Product Selection -->
                     <div class="bg-white rounded-xl shadow-softer p-6 card-hover">
-                        <h2 class="text-xl font-semibold text-dark-800 mb-5 flex items-center">
+                        <h2 class="text-xl font-semibold text-dark-missing="mb-5 flex items-center">
                             <svg class="h-6 w-6 mr-2 text-accent-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
@@ -128,15 +128,24 @@
                                     <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
-                               Corrupted line:         </div>
+                                </div>
                                 <input type="text" x-model="searchQuery" @input="searchProducts" placeholder="Cari nama, warna, atau ukuran produk..." class="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all">
                             </div>
-                            <button type="button" @click="openScanner" class="bg-accent-500 hover:bg-accent-600 text-white px-4 py-3 rounded-lg flex items-center space-x-2 transition-all">
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span>Scan QR</span>
-                            </button>
+                            <div class="flex space-x-2">
+                                <button type="button" @click="openScanner" class="bg-accent-500 hover:bg-accent-600 text-white px-4 py-3 rounded-lg flex items-center space-x-2 transition-all">
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    <span>Scan QR</span>
+                                </button>
+                                <button type="button" @click="focusHardwareInput" class="bg-accent-500 hover:bg-accent-600 text-white px-4 py-3 rounded-lg flex items-center space-x-2 transition-all">
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    <span>Scan Hardware</span>
+                                </button>
+                            </div>
+                            <input type="text" x-model="qrInput" @change="handleHardwareQrScan" x-ref="qrInput" class="hidden" placeholder="Pindai dengan perangkat keras">
                         </div>
 
                         <!-- QR Scanner Modal -->
@@ -235,14 +244,15 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-dark-700 mb-1">No. Telepon</label>
-                                <input type="text" name="customer_phone" placeholder=" ως</div>
+                                <input type="text" name="customer_phone" placeholder="Masukkan nomor telepon" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all">
+                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-dark-700 mb-1">Email</label>
                                 <input type="email" name="customer_email" placeholder="email@example.com" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-dark-700 mb-1">Metode Pembayaran <span class="text-red-500">*</span></label>
-                                <select name="payment_method" id="payment_method" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all" required>
+                                <select name="payment_method" id="payment_method" class="w-full border border-gray-200 rounded-lg px-4Rag py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all" required>
                                     <option value="" disabled selected>Pilih metode pembayaran</option>
                                     <option value="cash">Tunai</option>
                                     <option value="credit_card">Kartu Kredit</option>
@@ -354,6 +364,8 @@
             isScannerOpen: false,
             qrScanner: null,
             scanError: '',
+            scannedProductIds: [],
+            qrInput: '',
 
             formatRupiah(amount) {
                 return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
@@ -416,6 +428,8 @@
 
             removeItem(index) {
                 console.log('Removing item at index:', index);
+                const removedProductId = this.cart[index].id;
+                this.scannedProductIds = this.scannedProductIds.filter(id => id !== removedProductId);
                 this.cart.splice(index, 1);
                 this.$forceUpdate();
             },
@@ -481,6 +495,7 @@
             openScanner() {
                 this.isScannerOpen = true;
                 this.scanError = '';
+                this.qrInput = ''; // Reset hardware input when opening webcam scanner
                 this.$nextTick(() => {
                     try {
                         this.qrScanner = new Html5QrcodeScanner(
@@ -515,11 +530,18 @@
                 this.scanError = '';
             },
 
+            focusHardwareInput() {
+                this.closeScanner(); // Close webcam scanner if open
+                this.scanError = '';
+                this.qrInput = '';
+                this.$refs.qrInput.focus();
+                console.log('Focused hardware QR input');
+            },
+
             handleQrScan(decodedText) {
                 console.log('QR code decoded:', decodedText);
                 this.scanError = '';
 
-                // Split the decoded text into lines
                 const lines = decodedText.split('\n').map(line => line.trim());
                 if (lines.length < 3) {
                     this.scanError = 'Format QR code tidak valid.';
@@ -527,7 +549,6 @@
                     return;
                 }
 
-                // Extract name, size, and color from the QR code
                 const name = lines[0];
                 const sizeMatch = lines[1].match(/^Ukuran: (.*)$/);
                 const colorMatch = lines[2].match(/^Warna: (.*)$/);
@@ -541,20 +562,109 @@
                 const size = sizeMatch[1];
                 const color = colorMatch[1];
 
-                // Find matching product
                 const product = this.availableProducts.find(p =>
                     p.name.toLowerCase() === name.toLowerCase() &&
                     p.size.toLowerCase() === size.toLowerCase() &&
                     p.color.toLowerCase() === color.toLowerCase()
                 );
 
-                if (product) {
-                    this.addToCart(product);
-                    alert(`Produk ${product.name} ditambahkan ke keranjang!`);
-                    this.closeScanner();
-                } else {
+                if (!product) {
                     this.scanError = `Produk "${name} (${color}, Ukuran: ${size})" tidak ditemukan.`;
                     console.warn('Product not found:', { name, size, color });
+                    return;
+                }
+
+                if (this.scannedProductIds.includes(product.id)) {
+                    this.scanError = `Produk "${product.name}" sudah discan sebelumnya.`;
+                    console.warn('Duplicate scan detected for product ID:', product.id);
+                    return;
+                }
+
+                if (product.stock > 0) {
+                    this.cart.push({
+                        id: product.id,
+                        name: product.name,
+                        color: product.color,
+                        size: product.size,
+                        selling_price: product.selling_price,
+                        quantity: 1,
+                        stock: product.stock
+                    });
+                    this.scannedProductIds.push(product.id);
+                    alert(`Produk ${product.name} berhasil dimasukkan ke keranjang!`);
+                    console.log('Product added to cart:', product.name);
+                    this.closeScanner();
+                } else {
+                    this.scanError = `Stok produk "${product.name}" habis.`;
+                    console.warn('Product out of stock:', product.name);
+                }
+            },
+
+            handleHardwareQrScan() {
+                if (!this.qrInput) return;
+                console.log('Hardware QR code input:', this.qrInput);
+                this.scanError = '';
+
+                const lines = this.qrInput.split('\n').map(line => line.trim());
+                if (lines.length < 3) {
+                    this.scanError = 'Format QR code tidak valid.';
+                    console.warn('Invalid QR code format:', this.qrInput);
+                    this.qrInput = '';
+                    return;
+                }
+
+                const name = lines[0];
+                const sizeMatch = lines[1].match(/^Ukuran: (.*)$/);
+                const colorMatch = lines[2].match(/^Warna: (.*)$/);
+
+                if (!sizeMatch || !colorMatch) {
+                    this.scanError = 'Format QR code tidak sesuai. Pastikan QR code berisi nama, ukuran, dan warna.';
+                    console.warn('Invalid QR code structure:', lines);
+                    this.qrInput = '';
+                    return;
+                }
+
+                const size = sizeMatch[1];
+                const color = colorMatch[1];
+
+                const product = this.availableProducts.find(p =>
+                    p.name.toLowerCase() === name.toLowerCase() &&
+                    p.size.toLowerCase() === size.toLowerCase() &&
+                    p.color.toLowerCase() === color.toLowerCase()
+                );
+
+                if (!product) {
+                    this.scanError = `Produk "${name} (${color}, Ukuran: ${size})" tidak ditemukan.`;
+                    console.warn('Product not found:', { name, size, color });
+                    this.qrInput = '';
+                    return;
+                }
+
+                if (this.scannedProductIds.includes(product.id)) {
+                    this.scanError = `Produk "${product.name}" sudah discan sebelumnya.`;
+                    console.warn('Duplicate scan detected for product ID:', product.id);
+                    this.qrInput = '';
+                    return;
+                }
+
+                if (product.stock > 0) {
+                    this.cart.push({
+                        id: product.id,
+                        name: product.name,
+                        color: product.color,
+                        size: product.size,
+                        selling_price: product.selling_price,
+                        quantity: 1,
+                        stock: product.stock
+                    });
+                    this.scannedProductIds.push(product.id);
+                    alert(`Produk ${product.name} berhasil dimasukkan ke keranjang!`);
+                    console.log('Product added to cart:', product.name);
+                    this.qrInput = '';
+                } else {
+                    this.scanError = `Stok produk "${product.name}" habis.`;
+                    console.warn('Product out of stock:', product.name);
+                    this.qrInput = '';
                 }
             },
 
