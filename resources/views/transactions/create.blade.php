@@ -6,6 +6,7 @@
     <title>Buat Transaksi Baru - Sepatu by Sovan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
         button:focus, input:focus, select:focus, textarea:focus {
@@ -25,6 +26,9 @@
         .card-hover:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        .modal {
+            background: rgba(0, 0, 0, 0.7);
         }
     </style>
     <script>
@@ -104,13 +108,33 @@
                             Pilih Produk
                         </h2>
 
-                        <div class="relative mb-5">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+                        <div class="relative mb-5 flex items-center space-x-2">
+                            <div class="relative flex-1">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <input type="text" x-model="searchQuery" @input="searchProducts" placeholder="Cari nama, warna, atau ukuran produk..." class="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all">
                             </div>
-                            <input type="text" x-model="searchQuery" @input="searchProducts" placeholder="Cari nama, warna, atau ukuran produk..." class="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all">
+                            <button type="button" @click="openScanner" class="bg-accent-500 hover:bg-accent-600 text-white px-4 py-3 rounded-lg transition-all flex items-center">
+                                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Scan QR
+                            </button>
+                        </div>
+
+                        <!-- QR Code Scanner Modal -->
+                        <div x-show="showScanner" class="fixed inset-0 modal flex items-center justify-center z-50" x-cloak>
+                            <div class="bg-white rounded-xl p-6 w-full max-w-md">
+                                <h2 class="text-xl font-semibold text-dark-800 mb-4">Scan QR Code Produk</h2>
+                                <video id="scannerVideo" class="w-full h-64 bg-gray-200 rounded-lg"></video>
+                                <canvas id="scannerCanvas" class="hidden"></canvas>
+                                <div class="mt-4 flex justify-end space-x-2">
+                                    <button type="button" @click="closeScanner" class="bg-gray-200 hover:bg-gray-300 text-dark-800 px-4 py-2 rounded-lg transition-all">Tutup</button>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Search Results -->
@@ -309,6 +333,8 @@
             searchResults: [],
             cart: [],
             discount: 0,
+            showScanner: false,
+            videoStream: null,
 
             formatRupiah(amount) {
                 return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
@@ -433,6 +459,77 @@
                 return true;
             },
 
+            openScanner() {
+                this.showScanner = true;
+                this.startScanner();
+            },
+
+            closeScanner() {
+                this.showScanner = false;
+                if (this.videoStream) {
+                    this.videoStream.getTracks().forEach(track => track.stop());
+                    this.videoStream = null;
+                }
+            },
+
+            startScanner() {
+                const video = document.getElementById('scannerVideo');
+                const canvasElement = document.getElementById('scannerCanvas');
+                const canvas = canvasElement.getContext('2d');
+
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(stream => {
+                        this.videoStream = stream;
+                        video.srcObject = stream;
+                        video.play();
+
+                        const scan = () => {
+                            if (!this.showScanner) return;
+                            canvasElement.width = video.videoWidth;
+                            canvasElement.height = video.videoHeight;
+                            canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                            const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                                inversionAttempts: 'dontInvert',
+                            });
+
+                            if (code) {
+                                console.log('QR Code detected:', code.data);
+                                this.handleQRCode(code.data);
+                                this.closeScanner();
+                            } else {
+                                requestAnimationFrame(scan);
+                            }
+                        };
+                        requestAnimationFrame(scan);
+                    })
+                    .catch(err => {
+                        console.error('Error accessing camera:', err);
+                        alert('Gagal mengakses kamera. Pastikan izin kamera diberikan.');
+                        this.showScanner = false;
+                    });
+            },
+
+            handleQRCode(data) {
+            // Assuming QR code contains product ID
+            const productId = parseInt(data, 10);
+            const product = this.availableProducts.find(p => p.id === productId);
+            if (product) {
+                // Tampilkan dialog konfirmasi
+                const confirmAdd = window.confirm(`Tambahkan produk "${product.name}" (${product.color}, Ukuran: ${product.size}) ke keranjang?`);
+                if (confirmAdd) {
+                    this.addToCart(product);
+                    console.log('Product added from QR:', product.name);
+                } else {
+                    console.log('User cancelled adding product from QR:', product.name);
+                }
+                this.closeScanner();
+            } else {
+                alert('Produk tidak ditemukan!');
+                console.warn('Product not found for QR code:', data);
+                this.closeScanner();
+            }
+        },
             initialize() {
                 console.log('Initializing transaction app');
             }
