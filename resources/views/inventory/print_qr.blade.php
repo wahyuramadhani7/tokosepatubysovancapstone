@@ -10,7 +10,7 @@
         <!-- QR Code Print Area -->
         <div class="bg-white rounded-lg shadow p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg md:text-xl font-semibold">QR Code untuk {{ $product->name }}</h2>
+                <h2 class="text-lg md:text-xl font-semibold">QR Code untuk {{ $product->name ?? '-' }}</h2>
                 <button onclick="window.print()" class="bg-orange-500 text-black px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -20,13 +20,14 @@
             </div>
 
             <!-- QR Code and Product Info for Printing -->
-            <div class="border border-gray-200 rounded-lg p-6 max-w-sm mx-auto">
+            <div class="border border-gray-200 rounded-lg p-6 max-w-sm mx-auto print-area">
                 <div class="text-center">
-                    <img src="{{ asset('storage/' . $product->qr_code) }}" alt="QR Code" class="h-32 w-32 mx-auto mb-4">
-                    <h3 class="text-lg font-semibold">{{ $product->name }}</h3>
-                    <p class="text-sm text-gray-600">Ukuran: {{ $product->size }}</p>
-                    <p class="text-sm text-gray-600">Warna: {{ $product->color }}</p>
-                    <p class="text-sm text-gray-600">Harga: Rp {{ number_format($product->selling_price, 0, ',', '.') }}</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=128x128&data={{ urlencode(url('/inventory/' . $product->id)) }}" alt="QR Code for {{ $product->name ?? '-' }}" class="h-32 w-32 mx-auto mb-4" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
+                    <div class="text-xs text-red-500 text-center" style="display: none;">QR Code gagal dimuat</div>
+                    <h3 class="text-lg font-semibold">{{ $product->name ?? '-' }}</h3>
+                    <p class="text-sm text-gray-600">Ukuran: {{ $product->size ?? '-' }}</p>
+                    <p class="text-sm text-gray-600">Warna: {{ $product->color ?? '-' }}</p>
+                    <p class="text-sm text-gray-600">Harga: Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</p>
                     <p class="text-xs text-gray-500 mt-2">Scan untuk detail produk</p>
                 </div>
             </div>
@@ -46,27 +47,42 @@
 
 <style>
     @media print {
-        /* Hide elements not needed in print */
+        /* Hide all elements except print area */
         body * {
             visibility: hidden;
         }
-        .border-gray-200, .border-gray-200 * {
+        .print-area, .print-area * {
             visibility: visible;
         }
-        .border-gray-200 {
+        .print-area {
             position: absolute;
             left: 0;
             top: 0;
+            width: 100%;
             border: 1px solid #000 !important;
+            background: #fff !important;
         }
-        /* Ensure black border and text for print */
+        /* Ensure text and image are clear */
         .text-gray-600, .text-gray-500 {
             color: #000 !important;
         }
-        /* Remove shadows and background colors */
+        img {
+            filter: none !important; /* Prevent grayscale or filter issues */
+            width: 128px !important;
+            height: 128px !important;
+        }
+        /* Remove shadows and unnecessary styles */
         .shadow, .bg-white {
             box-shadow: none !important;
             background: none !important;
+        }
+        /* Force print background graphics */
+        @page {
+            margin: 0;
+        }
+        /* Hide error message in print */
+        .text-red-500 {
+            display: none !important;
         }
     }
 </style>

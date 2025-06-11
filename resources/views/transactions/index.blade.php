@@ -40,6 +40,7 @@
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #F7F7F7;
+            padding-top: 5rem; /* Adjust based on the approximate height of the header */
         }
         
         .status-badge {
@@ -105,7 +106,7 @@
 </head>
 <body class="min-h-screen custom-scrollbar" x-data="transactionListApp()">
     <!-- Header/Navigation -->
-    <header class="bg-gradient-header text-white shadow-md">
+    <header class="fixed top-0 w-full bg-gradient-header text-white shadow-md z-50">
         <div class="container mx-auto px-4 py-5 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="bg-white rounded-full p-2.5 shadow-lg">

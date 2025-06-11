@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class InventoryController extends Controller
 {
@@ -21,7 +20,8 @@ class InventoryController extends Controller
         $totalProducts = Product::count();
         $lowStockProducts = Product::where('stock', '<=', 10)->count();
         $totalStock = Product::sum('stock');
-        
+
+        Log::info('Loaded products for inventory index: ' . $products->count());
         return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock'));
     }
 
@@ -33,39 +33,6 @@ class InventoryController extends Controller
     public function create()
     {
         return view('inventory.create');
-    }
-
-    /**
-     * Generate and save the QR code for a product.
-     *
-     * @param string $content
-     * @return string|\Illuminate\View\View $qrCodePath
-     */
-    public function generateQrCode($content = null)
-    {
-        if ($content === null) {
-            $content = 'https://example.com';
-            $qrCode = QrCode::size(300)->generate($content);
-            return view('inventory.qr_code', compact('qrCode'));
-        }
-        
-        $filename = 'qrcode-' . time() . '.svg';
-        $directory = 'qrcodes';
-        $path = storage_path('app/public/' . $directory);
-        
-        if (!file_exists($path)) {
-            mkdir($path, 0755, true);
-        }
-        
-        // Generate QR code with raw text based on product data
-        $svg = QrCode::size(300)
-            ->format('svg')
-            ->errorCorrection('H')
-            ->generate($content);
-        
-        Storage::put('public/' . $directory . '/' . $filename, $svg);
-        
-        return $directory . '/' . $filename;
     }
 
     /**
@@ -97,17 +64,14 @@ class InventoryController extends Controller
                 'color' => $validated['color'],
             ]);
 
-            // Generate QR code with raw text linking to public product detail page
-            $qrCodeContent = url('/inventory/' . $product->id);
-            $qrCodePath = $this->generateQrCode($qrCodeContent);
-
-            $product->update(['qr_code' => $qrCodePath]);
+            Log::info('Product created: ID ' . $product->id);
 
             DB::commit();
 
             return redirect()->route('inventory.index')->with('success', 'Produk berhasil ditambahkan');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error storing product: ' . $e->getMessage());
             return redirect()->route('inventory.index')->with('error', 'Terjadi kesalahan, produk gagal ditambahkan: ' . $e->getMessage());
         }
     }
@@ -118,10 +82,10 @@ class InventoryController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\View\View
      */
-   public function show(Product $product)
-{
-    return view('inventory.show', compact('product'));
-}
+    public function show(Product $product)
+    {
+        return view('inventory.show', compact('product'));
+    }
 
     /**
      * Return product data in JSON format.
@@ -165,15 +129,16 @@ class InventoryController extends Controller
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'qr_code' => 'required|string|max:255|unique:products,qr_code,' . $product->id,
             'name' => 'required|string|max:255',
             'size' => 'required|string|max:50',
             'stock' => 'required|integer|min:0',
             'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
+            'color' => 'required|string|max:255',
         ]);
 
         $product->update($validated);
+        Log::info('Product updated: ID ' . $product->id);
 
         return redirect()->route('inventory.index')->with('success', 'Produk berhasil diperbarui');
     }
@@ -186,11 +151,8 @@ class InventoryController extends Controller
      */
     public function destroy(Product $product)
     {
-        if (Storage::exists('public/' . $product->qr_code)) {
-            Storage::delete('public/' . $product->qr_code);
-        }
-
         $product->delete();
+        Log::info('Product deleted: ID ' . $product->id);
 
         return redirect()->route('inventory.index')->with('success', 'Produk berhasil dihapus');
     }
@@ -204,15 +166,15 @@ class InventoryController extends Controller
     public function search(Request $request)
     {
         $keyword = $request->input('search');
-        
+
         $products = Product::where('name', 'like', "%{$keyword}%")
-            ->orWhere('qr_code', 'like', "%{$keyword}%")
             ->paginate(10);
-        
+
         $totalProducts = Product::count();
         $lowStockProducts = Product::where('stock', '<=', 10)->count();
         $totalStock = Product::sum('stock');
-        
+
+        Log::info('Search performed with keyword: ' . $keyword);
         return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock'));
     }
 

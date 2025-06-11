@@ -37,7 +37,7 @@ Route::middleware(['auth', 'role:owner'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('/create', [InventoryController::class, 'create'])->name('inventory.create');
+       Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
         Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
