@@ -230,15 +230,28 @@ class InventoryController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
+            // Update product stock to match physical stock
+            $product->update(['stock' => $validated['physical_stock']]);
+
             Log::info('Stock verification completed for product ID ' . $product->id . ' by user ID ' . Auth::id());
 
             DB::commit();
 
-            return redirect()->route('inventory.index')->with('success', 'Verifikasi stok untuk produk ' . $product->name . ' berhasil dilakukan. Selisih: ' . $discrepancy);
+            return redirect()->route('inventory.index')->with('success', 'Verifikasi stok untuk produk ' . $product->name . ' berhasil dilakukan. Selisih: ' . $discrepancy . '. Stok sistem telah diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error verifying stock for product ID ' . $product->id . ': ' . $e->getMessage());
             return redirect()->route('inventory.index')->with('error', 'Gagal melakukan verifikasi stok: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Display the QR code scanner page.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function scanQr()
+    {
+        return view('inventory.scan_qr');
     }
 }

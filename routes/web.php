@@ -7,6 +7,18 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VisitorMonitoringController;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
+
+// Redirect root to login
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -17,12 +29,12 @@ Route::prefix('inventory')->group(function () {
     Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
 });
 
-// Route untuk dashboard employee
+// Routes for employee dashboard
 Route::middleware(['auth', 'role:employee'])->group(function () {
     Route::get('/employee/dashboard', [DashboardController::class, 'employee'])->name('employee.dashboard');
 });
 
-// Route untuk dashboard owner
+// Routes for owner dashboard and employee management
 Route::middleware(['auth', 'role:owner'])->group(function () {
     Route::get('/owner/dashboard', [DashboardController::class, 'owner'])->name('owner.dashboard');
     Route::get('/owner/employee-accounts', [DashboardController::class, 'employeeAccounts'])->name('owner.employee-accounts');
@@ -33,8 +45,9 @@ Route::middleware(['auth', 'role:owner'])->group(function () {
     Route::delete('/owner/employee-accounts/{user}', [DashboardController::class, 'deleteEmployee'])->name('owner.employee-accounts.destroy');
 });
 
-// Route untuk inventory (diakses oleh employee dan owner)
+// Routes for inventory, transactions, and visitor monitoring (accessible to all authenticated users)
 Route::middleware(['auth'])->group(function () {
+    // Inventory Routes
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('inventory/create', [InventoryController::class, 'create'])->name('inventory.create'); // Perbaikan: hapus '/inventory' dari path
@@ -45,11 +58,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/history', [InventoryController::class, 'history'])->name('inventory.history');
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
-        Route::get('/{product}/verify', [InventoryController::class, 'verifyStockForm'])->name('inventory.verify'); // Tambahan untuk verifikasi
-        Route::post('/{product}/verify', [InventoryController::class, 'verifyStock'])->name('inventory.verify.store'); // Tambahan untuk verifikasi
+        Route::get('/{product}/verify', [InventoryController::class, 'verifyStockForm'])->name('inventory.verify');
+        Route::post('/{product}/verify', [InventoryController::class, 'verifyStock'])->name('inventory.verify.store');
+        Route::get('inventory/scan-qr', [InventoryController::class, 'scanQr'])->name('inventory.scan_qr'); // Tambahan untuk pemindaian QR code
     });
 
-    // Transactions Routes - accessible to all authenticated users
+    // Transactions Routes
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
@@ -57,11 +71,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
     Route::get('/transactions/{transaction}/print', [TransactionController::class, 'print'])->name('transactions.print');
 
-    // Transaction Reports - accessible to all authenticated users
+    // Transaction Reports
     Route::get('/transactions/reports/sales', [TransactionController::class, 'report'])->name('transactions.report');
 
-    // Visitor Monitoring Routes - accessible to all authenticated users
+    // Visitor Monitoring Routes
     Route::get('/visitor-monitoring', [VisitorMonitoringController::class, 'index'])->name('visitor-monitoring.index');
+
+    // Profile Routes
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 // API routes for ESP32-CAM integration
@@ -70,16 +89,10 @@ Route::prefix('api')->group(function () {
     Route::post('/visitor-exit/{id}', [VisitorMonitoringController::class, 'storeVisitorExit'])->name('api.visitor.exit');
 });
 
-// Route untuk dashboard utama setelah login
+// Main dashboard route after login
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Route untuk profile dengan middleware auth
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-require __DIR__.'/auth.php';
+// Include authentication routes
+require __DIR__ . '/auth.php';

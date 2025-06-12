@@ -58,14 +58,13 @@
                     </svg>
                     Tambah
                 </a>
-                @if(Route::has('inventory.history'))
-                    <a href="{{ route('inventory.history') }}" class="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm md:text-base flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Riwayat
-                    </a>
-                @endif
+                <a href="{{ route('inventory.scan_qr') }}" class="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm md:text-base flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m-6 4H4m6-7V4m6 11v3m-6 0v1" />
+                    </svg>
+                    Scan QR
+                </a>
+                
             </div>
         </div>
 
@@ -111,7 +110,7 @@
                     @forelse ($products ?? [] as $index => $product)
                         <div class="grid grid-cols-7 gap-1 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
                             <div class="p-3 text-black">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(url('/inventory/' . $product->id . '/verify')) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(route('inventory.verify', $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
                                 <div class="text-xs text-red-500 text-center" style="display: none;">QR Code gagal</div>
                             </div>
                             <div class="p-3 text-black">{{ $product->name ?? '-' }}</div>
@@ -128,7 +127,7 @@
                                     </a>
                                     <a href="{{ route('inventory.print_qr', $product->id) }}" class="text-green-600 hover:text-green-800 transition-colors" title="Cetak QR">
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 5 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                         </svg>
                                     </a>
                                     <form action="{{ route('inventory.destroy', $product->id) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
@@ -169,7 +168,7 @@
                             <div class="text-sm text-gray-500">{{ $product->size ?? '-' }} | {{ $product->color ?? '-' }}</div>
                         </div>
                         <div>
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(url('/inventory/' . $product->id . '/verify')) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(route('inventory.verify', $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
                             <div class="text-xs text-red-500 text-center" style="display: none;">QR Code gagal</div>
                         </div>
                     </div>
