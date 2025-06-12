@@ -37,7 +37,7 @@ Route::middleware(['auth', 'role:owner'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
-       Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::get('inventory/create', [InventoryController::class, 'create'])->name('inventory.create'); // Perbaikan: hapus '/inventory' dari path
         Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
@@ -45,6 +45,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/history', [InventoryController::class, 'history'])->name('inventory.history');
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
+        Route::get('/{product}/verify', [InventoryController::class, 'verifyStockForm'])->name('inventory.verify'); // Tambahan untuk verifikasi
+        Route::post('/{product}/verify', [InventoryController::class, 'verifyStock'])->name('inventory.verify.store'); // Tambahan untuk verifikasi
     });
 
     // Transactions Routes - accessible to all authenticated users
@@ -57,7 +59,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Transaction Reports - accessible to all authenticated users
     Route::get('/transactions/reports/sales', [TransactionController::class, 'report'])->name('transactions.report');
-    
+
     // Visitor Monitoring Routes - accessible to all authenticated users
     Route::get('/visitor-monitoring', [VisitorMonitoringController::class, 'index'])->name('visitor-monitoring.index');
 });

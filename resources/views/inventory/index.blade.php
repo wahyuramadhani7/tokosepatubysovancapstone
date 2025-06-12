@@ -111,7 +111,7 @@
                     @forelse ($products ?? [] as $index => $product)
                         <div class="grid grid-cols-7 gap-1 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
                             <div class="p-3 text-black">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(url('/inventory/' . $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(url('/inventory/' . $product->id . '/verify')) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
                                 <div class="text-xs text-red-500 text-center" style="display: none;">QR Code gagal</div>
                             </div>
                             <div class="p-3 text-black">{{ $product->name ?? '-' }}</div>
@@ -121,7 +121,12 @@
                             <div class="p-3 text-black text-right">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</div>
                             <div class="p-3">
                                 <div class="flex justify-center space-x-3">
-                                    <a href="{{ route('inventory.print_qr', $product->id) }}" class="text-green-600 hover:text-green-800 transition-colors">
+                                    <a href="{{ route('inventory.verify', $product->id) }}" class="text-blue-600 hover:text-blue-800 transition-colors" title="Verifikasi Stok">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        </svg>
+                                    </a>
+                                    <a href="{{ route('inventory.print_qr', $product->id) }}" class="text-green-600 hover:text-green-800 transition-colors" title="Cetak QR">
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                         </svg>
@@ -129,7 +134,7 @@
                                     <form action="{{ route('inventory.destroy', $product->id) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-800 transition-colors">
+                                        <button type="submit" class="text-red-600 hover:text-red-800 transition-colors" title="Hapus">
                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
@@ -164,7 +169,7 @@
                             <div class="text-sm text-gray-500">{{ $product->size ?? '-' }} | {{ $product->color ?? '-' }}</div>
                         </div>
                         <div>
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(url('/inventory/' . $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(url('/inventory/' . $product->id . '/verify')) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
                             <div class="text-xs text-red-500 text-center" style="display: none;">QR Code gagal</div>
                         </div>
                     </div>
@@ -186,6 +191,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Edit
+                        </a>
+                        <a href="{{ route('inventory.verify', $product->id) }}" class="text-blue-500 hover:text-blue-700 transition-colors flex items-center">
+                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            Verifikasi
                         </a>
                         <a href="{{ route('inventory.print_qr', $product->id) }}" class="text-green-500 hover:text-green-700 transition-colors flex items-center">
                             <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

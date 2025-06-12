@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\StockVerification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class InventoryController extends Controller
 {
@@ -187,5 +189,56 @@ class InventoryController extends Controller
     public function printQr(Product $product)
     {
         return view('inventory.print_qr', compact('product'));
+    }
+
+    /**
+     * Show the stock verification form for a product.
+     *
+     * @param  \App\Models\Product  $product
+     * @return \Illuminate\View\View
+     */
+    public function verifyStockForm(Product $product)
+    {
+        return view('inventory.verify_stock', compact('product'));
+    }
+
+    /**
+     * Verify physical stock against system stock.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Product  $product
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function verifyStock(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'physical_stock' => 'required|integer|min:0',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $discrepancy = $product->stock - $validated['physical_stock'];
+
+            StockVerification::create([
+                'product_id' => $product->id,
+                'system_stock' => $product->stock,
+                'physical_stock' => $validated['physical_stock'],
+                'discrepancy' => $discrepancy,
+                'notes' => $validated['notes'],
+                'user_id' => Auth::id(),
+            ]);
+
+            Log::info('Stock verification completed for product ID ' . $product->id . ' by user ID ' . Auth::id());
+
+            DB::commit();
+
+            return redirect()->route('inventory.index')->with('success', 'Verifikasi stok untuk produk ' . $product->name . ' berhasil dilakukan. Selisih: ' . $discrepancy);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error verifying stock for product ID ' . $product->id . ': ' . $e->getMessage());
+            return redirect()->route('inventory.index')->with('error', 'Gagal melakukan verifikasi stok: ' . $e->getMessage());
+        }
     }
 }

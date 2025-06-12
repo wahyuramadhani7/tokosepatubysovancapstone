@@ -33,7 +33,7 @@
                         <!-- QR Code Display -->
                         <div class="bg-white rounded-xl p-6 text-center">
                             @if($product->qr_code ?? false)
-                                <img src="{{ asset('storage/' . $product->qr_code) }}" alt="QR Code" class="mx-auto mb-4" style="max-width: 150px; height: auto;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode(url('/inventory/' . $product->id . '/verify')) }}" alt="QR Code" class="mx-auto mb-4" style="max-width: 150px; height: auto;">
                             @else
                                 <div class="w-32 h-32 mx-auto mb-4 bg-gray-200 rounded-lg flex items-center justify-center">
                                     <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
