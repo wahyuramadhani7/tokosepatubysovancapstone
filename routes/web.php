@@ -50,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
     // Inventory Routes
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::get('inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
         Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
@@ -59,8 +59,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
         Route::get('/{product}/verify', [InventoryController::class, 'verifyStockForm'])->name('inventory.verify');
-        Route::post('/{product}/verify', [InventoryController::class, 'verifyStock'])->name('inventory.verify.store');
-        Route::get('/scan-qr', [InventoryController::class, 'scanQr'])->name('inventory.scan_qr');
+        Route::post('/{product}/verify', [InventoryController::class, 'verifyStock'])->name('inventory.verify_stock');
+        Route::get('inven/scan-qr', [InventoryController::class, 'scanQr'])->name('inventory.scan_qr');
+        Route::post('/handle_qr_scan', [InventoryController::class, 'handleQrScan'])->name('inventory.handle_qr_scan');
     });
 
     // Transactions Routes
@@ -96,3 +97,4 @@ Route::get('/dashboard', function () {
 
 // Include authentication routes
 require __DIR__ . '/auth.php';
+?>
