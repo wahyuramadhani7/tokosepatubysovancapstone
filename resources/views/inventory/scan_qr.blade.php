@@ -8,44 +8,46 @@
         </h1>
 
         <div class="bg-white p-4 md:p-6 rounded-lg shadow">
-            <div class="mb-4">
-                <p class="text-gray-600">Gunakan kamera untuk memindai QR code pada produk.</p>
+            <h2 class="text-lg md:text-xl font-semibold mb-4">Pindai QR Code Produk</h2>
+            <p class="text-gray-600 mb-4">Gunakan kamera perangkat atau scanner fisik untuk memindai QR code produk. Pastikan QR code mengarah ke halaman verifikasi produk.</p>
+
+            <!-- QR Scanner Container -->
+            <div id="qr-reader" class="w-full max-w-md mx-auto mb-4 border border-gray-300 rounded-lg"></div>
+            <div id="qr-result" class="text-center text-gray-700 mb-4 hidden">
+                <p class="font-medium">Hasil Pemindaian:</p>
+                <p id="qr-result-text" class="text-sm"></p>
             </div>
 
-            <div class="flex justify-center">
-                <video id="video" width="100%" height="auto" class="max-w-md rounded-lg"></video>
+            <!-- Manual Input for Physical Scanner -->
+            <div class="mt-4">
+                <label for="qr-input" class="block text-sm font-medium text-gray-700">Masukkan Kode QR (Scanner Fisik)</label>
+                <input type="text" id="qr-input" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500" placeholder="Tempel atau ketik URL QR code">
+                <button id="submit-qr" class="mt-2 bg-orange-500 text-black px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">Proses</button>
             </div>
 
-            <div id="result" class="mt-4 text-center text-gray-700"></div>
+            <!-- Session Messages -->
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4 animate-slide-in" role="alert">
+                    <span class="block sm:inline">{{ session('success') }}</span>
+                    <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            @endif
 
-            <div class="flex justify-center mt-4">
-                <button id="startButton" class="bg-orange-500 text-black px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">Mulai Scan</button>
-                <button id="stopButton" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors hidden ml-3">Hentikan Scan</button>
-            </div>
+            @if(session('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 animate-slide-in" role="alert">
+                    <span class="block sm:inline">{{ session('error') }}</span>
+                    <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            @endif
         </div>
-
-        <!-- Session Messages -->
-        @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4 animate-slide-in" role="alert">
-                <span class="block sm:inline font-semibold">{{ session('success') }}</span>
-                <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 animate-slide-in" role="alert">
-                <span class="block sm:inline">{{ session('error') }}</span>
-                <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        @endif
     </div>
 </div>
 
@@ -59,79 +61,92 @@
     }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const video = document.getElementById('video');
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-        const result = document.getElementById('result');
-        let stream = null;
+        const qrReader = new Html5Qrcode("qr-reader");
+        const qrResult = document.getElementById('qr-result');
+        const qrResultText = document.getElementById('qr-result-text');
+        const qrInput = document.getElementById('qr-input');
+        const submitQrButton = document.getElementById('submit-qr');
 
-        startButton.addEventListener('click', async () => {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                video.srcObject = stream;
-                video.play();
-                startButton.classList.add('hidden');
-                stopButton.classList.remove('hidden');
-                scanQRCode();
-            } catch (err) {
-                result.innerHTML = 'Gagal mengakses kamera: ' + err.message;
-                result.classList.add('text-red-600');
+        // Get the expected path pattern
+        const validPathPattern = /\/inventory\/\d+\/verify/;
+
+        // Start QR code scanner
+        qrReader.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+                console.log('QR Code decoded:', decodedText); // Debugging
+                qrResultText.textContent = decodedText;
+                qrResult.classList.remove('hidden');
+                redirectToVerify(decodedText);
+            },
+            (error) => {
+                console.warn('QR scan error:', error);
+                qrResultText.textContent = 'Gagal memindai QR code. Coba lagi atau gunakan scanner fisik.';
+                qrResult.classList.remove('hidden');
+            }
+        ).catch(err => {
+            console.error('Failed to start QR scanner:', err);
+            qrResultText.textContent = 'Gagal memulai pemindai QR. Pastikan izin kamera aktif atau gunakan scanner fisik.';
+            qrResult.classList.remove('hidden');
+        });
+
+        // Handle manual QR input (physical scanner)
+        submitQrButton.addEventListener('click', () => {
+            const qrText = qrInput.value.trim();
+            if (qrText) {
+                console.log('Manual input:', qrText); // Debugging
+                qrResultText.textContent = qrText;
+                qrResult.classList.remove('hidden');
+                redirectToVerify(qrText);
+            } else {
+                qrResultText.textContent = 'Masukkan URL QR code terlebih dahulu.';
+                qrResult.classList.remove('hidden');
             }
         });
 
-        stopButton.addEventListener('click', () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                video.srcObject = null;
-                startButton.classList.remove('hidden');
-                stopButton.classList.add('hidden');
-                result.innerHTML = '';
-            }
-        });
+        // Redirect to verification page
+        function redirectToVerify(url) {
+            // Normalize URL by removing trailing slashes and extra spaces
+            url = url.trim().replace(/\/+$/, '');
 
-        function scanQRCode() {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-
-            function tick() {
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                    canvas.height = video.videoHeight;
-                    canvas.width = video.videoWidth;
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-                    if (code) {
-                        console.log('QR Code detected:', code.data); // Debugging
-                        // Check if the scanned URL matches the expected inventory verify route
-                        const verifyUrlPattern = /\/inventory\/(\d+)\/verify\/?$/;
-                        const match = code.data.match(verifyUrlPattern);
-                        if (match && match[1]) {
-                            result.innerHTML = 'QR Code valid, mengarahkan ke halaman verifikasi...';
-                            result.classList.remove('text-red-600');
-                            result.classList.add('text-green-600');
-                            window.location.href = code.data; // Redirect to the verification page
-                            return;
-                        } else {
-                            result.innerHTML = 'QR Code tidak valid untuk verifikasi stok: ' + code.data;
-                            result.classList.add('text-red-600');
-                        }
-                    } else {
-                        result.innerHTML = 'Memindai QR code...';
-                    }
+            // Check if URL path matches the expected pattern
+            if (validPathPattern.test(url)) {
+                // Extract product ID from URL
+                const match = url.match(/\/inventory\/(\d+)\/verify/);
+                if (match && match[1]) {
+                    // Check if product exists via AJAX
+                    fetch(`{{ url('/inventory') }}/${match[1]}/json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                qrResultText.textContent = 'Produk tidak ditemukan!';
+                                qrResult.classList.remove('hidden');
+                            } else {
+                                // Construct the correct URL using the current domain
+                                const redirectUrl = `{{ url('/inventory') }}/${match[1]}/verify`;
+                                console.log('Redirecting to:', redirectUrl); // Debugging
+                                window.location.href = redirectUrl;
+                            }
+                        })
+                        .catch(() => {
+                            qrResultText.textContent = 'Gagal memvalidasi produk. Coba lagi.';
+                            qrResult.classList.remove('hidden');
+                        });
+                } else {
+                    qrResultText.textContent = 'URL QR code tidak valid!';
+                    qrResult.classList.remove('hidden');
                 }
-                if (video.srcObject) {
-                    requestAnimationFrame(tick);
-                }
+            } else {
+                qrResultText.textContent = 'QR code tidak mengarah ke halaman verifikasi! Pastikan URL mengandung /inventory/{id}/verify';
+                qrResult.classList.remove('hidden');
             }
-
-            requestAnimationFrame(tick);
         }
 
-        // Auto-dismiss alerts
+        // Handle alerts
         setTimeout(() => {
             const alerts = document.querySelectorAll('.bg-green-100, .bg-red-100');
             alerts.forEach(alert => {

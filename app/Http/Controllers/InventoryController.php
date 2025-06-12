@@ -86,6 +86,10 @@ class InventoryController extends Controller
      */
     public function show(Product $product)
     {
+        if (!$product) {
+            Log::warning('Product not found for show: ID ' . request()->segment(2));
+            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
+        }
         return view('inventory.show', compact('product'));
     }
 
@@ -98,6 +102,7 @@ class InventoryController extends Controller
     public function json(Product $product)
     {
         if (!$product) {
+            Log::warning('Product not found for JSON: ID ' . request()->segment(3));
             return response()->json(['error' => 'Produk tidak ditemukan'], 404);
         }
         return response()->json([
@@ -118,6 +123,10 @@ class InventoryController extends Controller
      */
     public function edit(Product $product)
     {
+        if (!$product) {
+            Log::warning('Product not found for edit: ID ' . request()->segment(2));
+            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
+        }
         return view('inventory.edit', compact('product'));
     }
 
@@ -130,6 +139,11 @@ class InventoryController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        if (!$product) {
+            Log::warning('Product not found for update: ID ' . request()->segment(2));
+            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'size' => 'required|string|max:50',
@@ -153,6 +167,11 @@ class InventoryController extends Controller
      */
     public function destroy(Product $product)
     {
+        if (!$product) {
+            Log::warning('Product not found for destroy: ID ' . request()->segment(2));
+            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
+        }
+
         $product->delete();
         Log::info('Product deleted: ID ' . $product->id);
 
@@ -188,6 +207,10 @@ class InventoryController extends Controller
      */
     public function printQr(Product $product)
     {
+        if (!$product) {
+            Log::warning('Product not found for print QR: ID ' . request()->segment(2));
+            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
+        }
         return view('inventory.print_qr', compact('product'));
     }
 
@@ -199,6 +222,10 @@ class InventoryController extends Controller
      */
     public function verifyStockForm(Product $product)
     {
+        if (!$product) {
+            Log::warning('Product not found for verify stock form: ID ' . request()->segment(2));
+            return redirect()->route('inventory.scan_qr')->with('error', 'Produk tidak ditemukan.');
+        }
         return view('inventory.verify_stock', compact('product'));
     }
 
@@ -211,6 +238,11 @@ class InventoryController extends Controller
      */
     public function verifyStock(Request $request, Product $product)
     {
+        if (!$product) {
+            Log::warning('Product not found for verify stock: ID ' . request()->segment(2));
+            return redirect()->route('inventory.scan_qr')->with('error', 'Produk tidak ditemukan.');
+        }
+
         $validated = $request->validate([
             'physical_stock' => 'required|integer|min:0',
             'notes' => 'nullable|string|max:500',
@@ -237,11 +269,11 @@ class InventoryController extends Controller
 
             DB::commit();
 
-            return redirect()->route('inventory.index')->with('success', 'Verifikasi stok untuk produk ' . $product->name . ' berhasil dilakukan. Selisih: ' . $discrepancy . '. Stok sistem telah diperbarui.');
+            return redirect()->route('inventory.scan_qr')->with('success', 'Verifikasi stok untuk produk ' . $product->name . ' berhasil dilakukan. Selisih: ' . $discrepancy . '. Stok sistem telah diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error verifying stock for product ID ' . $product->id . ': ' . $e->getMessage());
-            return redirect()->route('inventory.index')->with('error', 'Gagal melakukan verifikasi stok: ' . $e->getMessage());
+            return redirect()->route('inventory.scan_qr')->with('error', 'Gagal melakukan verifikasi stok: ' . $e->getMessage());
         }
     }
 
@@ -253,5 +285,16 @@ class InventoryController extends Controller
     public function scanQr()
     {
         return view('inventory.scan_qr');
+    }
+
+    /**
+     * Display the inventory history page.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function history()
+    {
+        $verifications = StockVerification::with('product', 'user')->paginate(10);
+        return view('inventory.history', compact('verifications'));
     }
 }

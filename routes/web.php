@@ -50,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
     // Inventory Routes
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('inventory/create', [InventoryController::class, 'create'])->name('inventory.create'); // Perbaikan: hapus '/inventory' dari path
+        Route::get('/create', [InventoryController::class, 'create'])->name('inventory.create');
         Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
@@ -60,7 +60,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
         Route::get('/{product}/verify', [InventoryController::class, 'verifyStockForm'])->name('inventory.verify');
         Route::post('/{product}/verify', [InventoryController::class, 'verifyStock'])->name('inventory.verify.store');
-        Route::get('inventory/scan-qr', [InventoryController::class, 'scanQr'])->name('inventory.scan_qr'); // Tambahan untuk pemindaian QR code
+        Route::get('/scan-qr', [InventoryController::class, 'scanQr'])->name('inventory.scan_qr');
     });
 
     // Transactions Routes
