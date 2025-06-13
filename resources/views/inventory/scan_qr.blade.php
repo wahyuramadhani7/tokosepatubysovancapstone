@@ -9,13 +9,14 @@
 
         <div class="bg-white p-4 md:p-6 rounded-lg shadow">
             <h2 class="text-lg md:text-xl font-semibold mb-4">Pindai QR Code Produk</h2>
-            <p class="text-gray-600 mb-4">Gunakan kamera perangkat atau scanner fisik untuk memindai QR code produk. Pastikan QR code mengarah ke halaman verifikasi produk.</p>
+            <p class="text-gray-600 mb-4">Gunakan kamera perangkat atau scanner fisik untuk memindai QR code. Stok fisik akan diperbarui langsung berdasarkan stok sistem.</p>
 
             <!-- QR Scanner Container -->
             <div id="qr-reader" class="w-full max-w-md mx-auto mb-4 border border-gray-300 rounded-lg"></div>
             <div id="qr-result" class="text-center text-gray-700 mb-4 hidden">
                 <p class="font-medium">Hasil Pemindaian:</p>
                 <p id="qr-result-text" class="text-sm"></p>
+                <p id="qr-status" class="text-sm mt-2"></p>
             </div>
 
             <!-- Manual Input for Physical Scanner -->
@@ -67,83 +68,106 @@
         const qrReader = new Html5Qrcode("qr-reader");
         const qrResult = document.getElementById('qr-result');
         const qrResultText = document.getElementById('qr-result-text');
+        const qrStatus = document.getElementById('qr-status');
         const qrInput = document.getElementById('qr-input');
         const submitQrButton = document.getElementById('submit-qr');
-
-        // Get the expected path pattern
-        const validPathPattern = /\/inventory\/\d+\/verify/;
 
         // Start QR code scanner
         qrReader.start(
             { facingMode: "environment" },
             { fps: 10, qrbox: { width: 250, height: 250 } },
             (decodedText) => {
-                console.log('QR Code decoded:', decodedText); // Debugging
+                console.log('QR Code decoded:', decodedText);
                 qrResultText.textContent = decodedText;
                 qrResult.classList.remove('hidden');
-                redirectToVerify(decodedText);
+                processQrCode(decodedText);
             },
             (error) => {
                 console.warn('QR scan error:', error);
-                qrResultText.textContent = 'Gagal memindai QR code. Coba lagi atau gunakan scanner fisik.';
+                qrResultText.textContent = 'Gagal memindai QR code. Coba lagi.';
+                qrStatus.textContent = '';
                 qrResult.classList.remove('hidden');
             }
         ).catch(err => {
             console.error('Failed to start QR scanner:', err);
-            qrResultText.textContent = 'Gagal memulai pemindai QR. Pastikan izin kamera aktif atau gunakan scanner fisik.';
+            qrResultText.textContent = 'Gagal memulai pemindai QR. Pastikan izin kamera aktif.';
+            qrStatus.textContent = '';
             qrResult.classList.remove('hidden');
         });
 
-        // Handle manual QR input (physical scanner)
+        // Handle manual QR input
         submitQrButton.addEventListener('click', () => {
             const qrText = qrInput.value.trim();
             if (qrText) {
-                console.log('Manual input:', qrText); // Debugging
+                console.log('Manual input:', qrText);
                 qrResultText.textContent = qrText;
                 qrResult.classList.remove('hidden');
-                redirectToVerify(qrText);
+                processQrCode(qrText);
             } else {
-                qrResultText.textContent = 'Masukkan URL QR code terlebih dahulu.';
+                qrResultText.textContent = 'Masukkan detail QR code terlebih dahulu.';
+                qrStatus.textContent = '';
                 qrResult.classList.remove('hidden');
             }
         });
 
-        // Redirect to verification page
-        function redirectToVerify(url) {
-            // Normalize URL by removing trailing slashes and extra spaces
-            url = url.trim().replace(/\/+$/, '');
+        // Process QR code and update physical stock
+        function processQrCode(qrText) {
+            qrText = qrText.trim();
 
-            // Check if URL path matches the expected pattern
-            if (validPathPattern.test(url)) {
-                // Extract product ID from URL
-                const match = url.match(/\/inventory\/(\d+)\/verify/);
-                if (match && match[1]) {
-                    // Check if product exists via AJAX
-                    fetch(`{{ url('/inventory') }}/${match[1]}/json`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.error) {
-                                qrResultText.textContent = 'Produk tidak ditemukan!';
-                                qrResult.classList.remove('hidden');
-                            } else {
-                                // Construct the correct URL using the current domain
-                                const redirectUrl = `{{ url('/inventory') }}/${match[1]}/verify`;
-                                console.log('Redirecting to:', redirectUrl); // Debugging
-                                window.location.href = redirectUrl;
-                            }
-                        })
-                        .catch(() => {
-                            qrResultText.textContent = 'Gagal memvalidasi produk. Coba lagi.';
-                            qrResult.classList.remove('hidden');
-                        });
-                } else {
-                    qrResultText.textContent = 'URL QR code tidak valid!';
-                    qrResult.classList.remove('hidden');
-                }
-            } else {
-                qrResultText.textContent = 'QR code tidak mengarah ke halaman verifikasi! Pastikan URL mengandung /inventory/{id}/verify';
-                qrResult.classList.remove('hidden');
+            // Extract product ID from the correct route
+            const urlMatch = qrText.match(/\/inventory\/(\d+)\/update-physical-stock-direct/);
+            let productId = urlMatch ? urlMatch[1] : null;
+
+            // Fallback to /inventory/{id} if direct route not found (for backward compatibility)
+            if (!productId) {
+                const idMatch = qrText.match(/\/inventory\/(\d+)/);
+                productId = idMatch ? idMatch[1] : null;
             }
+
+            if (productId) {
+                updatePhysicalStockDirect(productId);
+            } else {
+                qrStatus.textContent = 'Format QR code tidak valid. Pastikan menggunakan rute /inventory/{id}/update-physical-stock-direct.';
+                qrStatus.classList.remove('text-green-500');
+                qrStatus.classList.add('text-red-500');
+            }
+        }
+
+        // Update physical stock directly via AJAX
+        function updatePhysicalStockDirect(productId) {
+            fetch(`{{ url('/inventory') }}/${productId}/update-physical-stock-direct`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                credentials: 'same-origin', // Ensure cookies (including CSRF token) are sent
+                body: JSON.stringify({ product_id: productId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    qrStatus.textContent = data.message || 'Stok fisik berhasil diperbarui.';
+                    qrStatus.classList.remove('text-red-500');
+                    qrStatus.classList.add('text-green-500');
+                    setTimeout(() => {
+                        window.location.href = '{{ route('inventory.index') }}';
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || 'Gagal memperbarui stok.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                qrStatus.textContent = 'Terjadi kesalahan saat memperbarui stok: ' + error.message;
+                qrStatus.classList.remove('text-green-500');
+                qrStatus.classList.add('text-red-500');
+            });
         }
 
         // Handle alerts

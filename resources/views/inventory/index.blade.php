@@ -94,34 +94,36 @@
         <div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
             <div class="rounded-lg overflow-hidden">
                 <!-- Table Headers -->
-                <div class="grid grid-cols-7 gap-1">
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">QR Code</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Produk</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Ukuran</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Warna</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Stok</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Harga Jual</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center rounded">Actions</div>
+                <div class="grid grid-cols-8 gap-0">
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">QR Code</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Produk</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Ukuran</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Warna</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok Sistem</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok Fisik</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Harga Jual</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Actions</div>
                 </div>
                 
                 <!-- Table Body -->
                 <div class="mt-1">
                     @forelse ($products ?? [] as $index => $product)
-                        <div class="grid grid-cols-7 gap-1 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
+                        <div class="grid grid-cols-8 gap-0 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
                             <div class="p-3 text-black">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(route('inventory.verify', $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(route('inventory.update-physical-stock-direct', $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
                                 <div class="text-xs text-red-500 text-center" style="display: none;">QR Code gagal</div>
                             </div>
                             <div class="p-3 text-black">{{ $product->name ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->size ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->color ?? '-' }}</div>
                             <div class="p-3 font-medium text-center {{ $product->stock < 5 ? 'text-red-600' : 'text-black' }}">{{ $product->stock ?? 0 }}</div>
+                            <div class="p-3 font-medium text-center {{ is_null($product->physical_stock) ? 'text-gray-500' : ($product->physical_stock < 5 ? 'text-red-600' : 'text-black') }}">{{ $product->physical_stock ?? '-' }}</div>
                             <div class="p-3 text-black text-right">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</div>
                             <div class="p-3">
                                 <div class="flex justify-center space-x-3">
-                                    <a href="{{ route('inventory.verify', $product->id) }}" class="text-blue-600 hover:text-blue-800 transition-colors" title="Verifikasi Stok">
+                                    <a href="{{ route('inventory.edit', $product->id) }}" class="text-blue-600 hover:text-blue-800 transition-colors" title="Edit">
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                     </a>
                                     <a href="{{ route('inventory.print_qr', $product->id) }}" class="text-green-600 hover:text-green-800 transition-colors" title="Cetak QR">
@@ -167,15 +169,19 @@
                             <div class="text-sm text-gray-500">{{ $product->size ?? '-' }} | {{ $product->color ?? '-' }}</div>
                         </div>
                         <div>
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(route('inventory.verify', $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(route('inventory.update-physical-stock-direct', $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
                             <div class="text-xs text-red-500 text-center" style="display: none;">QR Code gagal</div>
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-2 mb-3">
                         <div>
-                            <div class="text-xs text-gray-500">Stok</div>
+                            <div class="text-xs text-gray-500">Stok Sistem</div>
                             <div class="font-medium {{ $product->stock < 5 ? 'text-red-600' : 'text-gray-900' }}">{{ $product->stock ?? 0 }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500">Stok Fisik</div>
+                            <div class="font-medium {{ is_null($product->physical_stock) ? 'text-gray-500' : ($product->physical_stock < 5 ? 'text-red-600' : 'text-gray-900') }}">{{ $product->physical_stock ?? '-' }}</div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-500">Harga Jual</div>
@@ -190,13 +196,7 @@
                             </svg>
                             Edit
                         </a>
-                        <a href="{{ route('inventory.verify', $product->id) }}" class="text-blue-500 hover:text-blue-700 transition-colors flex items-center">
-                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
-                            Verifikasi
-                        </a>
-                        <a href="{{ route('inventory.print_qr', $product->id) }}" class="text-green-500 hover:text-green-700 transition-colors flex items-center">
+                        <a href="{{ route('inventory.print_qr', $product->id) }}" class="text-green-500 hover:text-green-800 transition-colors flex items-center">
                             <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                             </svg>
@@ -238,6 +238,9 @@
     }
     .animate-fade-in {
         animation: fadeIn 0.3s ease-in-out;
+    }
+    .grid-cols-8 {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
     }
 </style>
 

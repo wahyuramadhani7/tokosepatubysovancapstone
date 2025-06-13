@@ -55,13 +55,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
         Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-        Route::get('/history', [InventoryController::class, 'history'])->name('inventory.history');
-        Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
+        Route::get('inventory/history', [InventoryController::class, 'history'])->name('inventory.history');
+        Route::get('inventory/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
         Route::get('/{product}/verify', [InventoryController::class, 'verifyStockForm'])->name('inventory.verify');
         Route::post('/{product}/verify', [InventoryController::class, 'verifyStock'])->name('inventory.verify_stock');
-        Route::get('inven/scan-qr', [InventoryController::class, 'scanQr'])->name('inventory.scan_qr');
-        Route::post('/handle_qr_scan', [InventoryController::class, 'handleQrScan'])->name('inventory.handle_qr_scan');
+        Route::get('inventory/scan-qr', [InventoryController::class, 'scanQr'])->name('inventory.scan_qr');
+        Route::post('/update-physical-stock', [InventoryController::class, 'updatePhysicalStock'])->name('inventory.update-physical-stock');
+        Route::post('/{product}/update-physical-stock-direct', [InventoryController::class, 'updatePhysicalStockDirect'])->name('inventory.update-physical-stock-direct');
     });
 
     // Transactions Routes
@@ -95,6 +96,5 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Include authentication routes
+// Include authentication routes   
 require __DIR__ . '/auth.php';
-?>
