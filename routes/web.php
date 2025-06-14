@@ -23,10 +23,10 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Public routes for product details and QR code printing
+// Public routes for product details
 Route::prefix('inventory')->group(function () {
     Route::get('/{product}', [InventoryController::class, 'show'])->name('inventory.show');
-    Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
+    Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
 });
 
 // Routes for employee dashboard
@@ -50,13 +50,13 @@ Route::middleware(['auth'])->group(function () {
     // Inventory Routes
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::get('inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
         Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
         Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-        Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
-        Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
+        Route::get('inventory/search', [InventoryController::class, 'search'])->name('inventory.search');
+        Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
     });
 
     // Transactions Routes

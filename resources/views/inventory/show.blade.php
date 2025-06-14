@@ -1,221 +1,366 @@
-@extends('layouts.app')
 
-@section('content')
-<div class="min-h-screen py-6 md:py-12" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Produk - Toko Sepatu by Sovan</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 960px;
+            padding: 1.5rem;
+            margin: 2rem auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 4rem;
+            height: 4rem;
+            background: #f97316;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #9ca3af;
+            font-size: 1rem;
+        }
+
+        .product-card {
+            background: #2d2d2d;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .product-header {
+            background: linear-gradient(to right, #f97316, #ea580c);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .product-header h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-header .tags {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .product-header .tag {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            color: #000;
+        }
+
+        .product-content {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .product-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .qr-code {
+            background: #fff;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .qr-code img {
+            max-width: 9rem;
+            height: auto;
+            margin-bottom: 1rem;
+        }
+
+        .qr-code p {
+            color: #4b5563;
+            font-size: 0.875rem;
+        }
+
+        .product-id {
+            background: #3f3f3f;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .product-id .icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: #f97316;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+        }
+
+        .product-id p {
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+
+        .product-id p strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .stock-status, .price-info, .additional-info {
+            background: #3f3f3f;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .stock-status h3, .price-info h2, .additional-info h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+
+        .stock-status .status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stock-status .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+
+        .stock-status .stock-details {
+            font-size: 0.875rem;
+        }
+
+        .stock-status .progress-bar {
+            width: 100%;
+            background: #4b5563;
+            border-radius: 9999px;
+            height: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .price-info .price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price-info .price span {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f97316;
+        }
+
+        .additional-info .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .additional-info .info-item svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #f97316;
+            margin-right: 0.75rem;
+        }
+
+        .additional-info .info-item p {
+            color: #d1d5db;
+            font-size: 0.875rem;
+        }
+
+        .closing-message {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .closing-message p:first-child {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #d1d5db;
+            margin-bottom: 0.5rem;
+        }
+
+        .closing-message p:last-child {
+            color: #9ca3af;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .product-header h2 {
+                font-size: 1.25rem;
+            }
+
+            .qr-code img {
+                max-width: 7.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
         <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-full mb-4">
+        <div class="header">
+            <div class="icon">
                 <svg class="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4m-4 4h16l-2 6H6l-2-6z" />
                 </svg>
             </div>
-            <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">Detail Produk</h1>
-            <p class="text-gray-400">Informasi lengkap produk dari QR scan</p>
+            <h1>Toko Sepatu by Sovan</h1>
+            <p>Detail Produk</p>
         </div>
 
         <!-- Main Product Card -->
-        <div class="bg-gray-800 rounded-2xl shadow-2xl overflow-hidden mb-6">
+        <div class="product-card">
             <!-- Product Header -->
-            <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-center">
-                <h2 class="text-xl md:text-2xl font-bold text-black mb-2">{{ $product->name ?? 'Nama Produk' }}</h2>
-                <div class="flex justify-center items-center space-x-4 text-black/80">
-                    <span class="bg-black/20 px-3 py-1 rounded-full text-sm">{{ $product->size ?? 'Size' }}</span>
-                    <span class="bg-black/20 px-3 py-1 rounded-full text-sm">{{ $product->color ?? 'Color' }}</span>
+            <div class="product-header">
+                <h2>{{ $product->name ?? 'Nama Produk' }}</h2>
+                <div class="tags">
+                    <span class="tag">{{ $product->size ?? 'Size' }}</span>
+                    <span class="tag">{{ $product->color ?? 'Color' }}</span>
                 </div>
             </div>
 
             <!-- Product Content -->
-            <div class="p-6 md:p-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Left Column - QR Code and Basic Info -->
-                    <div class="space-y-6">
-                        <!-- QR Code Display -->
-                        <div class="bg-white rounded-xl p-6 text-center">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode(route('inventory.show', $product->id)) }}" alt="QR Code" class="mx-auto mb-4" style="max-width: 150px; height: auto;">
-                            <p class="text-gray-600 text-sm">QR Code Produk</p>
-                        </div>
+            <div class="product-content">
+                <!-- Left Column - QR Code and Product ID -->
+                <div>
+                    <!-- QR Code Display -->
+                    <div class="qr-code">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode(route('inventory.show', $product->id)) }}" alt="QR Code for {{ $product->name ?? '-' }}" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
+                        <p>QR Code Produk</p>
+                    </div>
 
-                        <!-- Product ID -->
-                        <div class="bg-gray-700 rounded-xl p-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
-                                    <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-gray-400 text-sm">Product ID</p>
-                                    <p class="text-white font-semibold">#{{ str_pad($product->id ?? '001', 3, '0', STR_PAD_LEFT) }}</p>
-                                </div>
-                            </div>
+                    <!-- Product ID -->
+                    <div class="product-id">
+                        <div class="icon">
+                            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p>Product ID</p>
+                            <p><strong>#{{ str_pad($product->id ?? '001', 3, '0', STR_PAD_LEFT) }}</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Product Details -->
+                <div>
+                    
+                    <!-- Price Information -->
+                    <div class="price-info">
+                        <h2>Informasi Harga</h2>
+                        <div class="price">
+                            <span style="color: #d1d5db;">Harga Jual</span>
+                            <span>Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</span>
                         </div>
                     </div>
 
-                    <!-- Right Column - Product Details -->
-                    <div class="space-y-6">
-                        <!-- Stock Status -->
-                        <div class="bg-gray-700 rounded-xl p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-white">Status Stok</h3>
-                                @php
-                                    $stock = $product->stock ?? 0;
-                                    $stockStatus = $stock > 10 ? 'Tersedia' : ($stock > 0 ? 'Stok Terbatas' : 'Habis');
-                                    $stockColor = $stock > 10 ? 'text-green-400' : ($stock > 0 ? 'text-yellow-400' : 'text-red-400');
-                                    $stockBg = $stock > 10 ? 'bg-green-400/20' : ($stock > 0 ? 'bg-yellow-400/20' : 'bg-red-400/20');
-                                @endphp
-                                <span class="px-3 py-1 rounded-full text-sm {{ $stockBg }} {{ $stockColor }}">{{ $stockStatus }}</span>
+                    <!-- Additional Info -->
+                    @if(isset($product->description) || isset($product->category))
+                    <div class="additional-info">
+                        <h3>Informasi Tambahan</h3>
+                        <div>
+                            @if(isset($product->category))
+                            <div class="info-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a8 8 0 01-8 8m8-8a8 8 0 00-8-8m8 8h-4m-4 0H5" />
+                                </svg>
+                                <p>Kategori: {{ $product->category }}</p>
                             </div>
-                            <div class="flex items-center">
-                                <div class="flex-1">
-                                    <div class="flex justify-between text-sm mb-2">
-                                        <span class="text-gray-400">Jumlah Stok</span>
-                                        <span class="text-white font-semibold">{{ $stock }} unit</span>
-                                    </div>
-                                    <div class="w-full bg-gray-600 rounded-full h-2">
-                                        @php
-                                            $maxStock = 50; // Assume max stock for progress bar
-                                            $percentage = min(($stock / $maxStock) * 100, 100);
-                                            $barColor = $stock > 10 ? 'bg-green-400' : ($stock > 0 ? 'bg-yellow-400' : 'bg-red-400');
-                                        @endphp
-                                        <div class="h-2 rounded-full {{ $barColor }}" style="width: {{ $percentage }}%"></div>
-                                    </div>
-                                </div>
+                            @endif
+                            @if(isset($product->description))
+                            <div class="info-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <p>{{ $product->description }}</p>
                             </div>
+                            @endif
                         </div>
-
-                        <!-- Price Information -->
-                        <div class="bg-gradient-to-r from-orange-500/20 to-orange-600/20 rounded-xl p-6 border border-orange-500/30">
-                            <h3 class="text-lg font-semibold text-white mb-4">Informasi Harga</h3>
-                            <div class="space-y-3">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-300">Harga Jual</span>
-                                    <span class="text-2xl font-bold text-orange-400">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</span>
-                                </div>
-                                @if(isset($product->purchase_price))
-                                <div class="flex justify-between items-center text-sm">
-                                    <span class="text-gray-400">Harga Beli</span>
-                                    <span class="text-gray-300">Rp {{ number_format($product->purchase_price, 0, ',', '.') }}</span>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- Additional Info -->
-                        @if(isset($product->description) || isset($product->category))
-                        <div class="bg-gray-700 rounded-xl p-6">
-                            <h3 class="text-lg font-semibold text-white mb-4">Informasi Tambahan</h3>
-                            <div class="space-y-3">
-                                @if(isset($product->category))
-                                <div class="flex items-center">
-                                    <svg class="w-5 h-5 text-orange-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a8 8 0 01-8 8m8-8a8 8 0 00-8-8m8 8h-4m-4 0H5" />
-                                    </svg>
-                                    <span class="text-gray-300">Kategori: {{ $product->category }}</span>
-                                </div>
-                                @endif
-                                @if(isset($product->description))
-                                <div class="flex items-start">
-                                    <svg class="w-5 h-5 text-orange-400 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    <div>
-                                        <p class="text-gray-300">{{ $product->description }}</p>
-                                    </div>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                        @endif
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="{{ route('inventory.index') }}" class="flex items-center justify-center px-6 py-3 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition-all duration-200 font-medium">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Kembali ke Inventory
-            </a>
-            <a href="{{ route('inventory.edit', $product->id) }}" class="flex items-center justify-center px-6 py-3 bg-orange-500 text-black rounded-xl hover:bg-orange-400 transition-all duration-200 font-medium">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit Produk
-            </a>
-            <a href="{{ route('inventory.print_qr', $product->id) }}" class="flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-500 transition-all duration-200 font-medium">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                Print QR Code
-            </a>
-        </div>
-
-        <!-- Scan Info -->
-        <div class="mt-8 text-center">
-            <div class="inline-flex items-center px-4 py-2 bg-gray-800 rounded-full text-gray-400 text-sm">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Terakhir diakses: 14 Jun 2025, 15:35 WIB
-            </div>
+        <!-- Closing Message -->
+        <div class="closing-message">
+            <p>Terima kasih telah berkunjung ke Toko Sepatu by Sovan!</p>
+            <p>Jangan lupa untuk kembali dan temukan koleksi sepatu terbaik kami.</p>
         </div>
     </div>
-</div>
 
-<style>
-    /* Custom animations */
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .bg-gray-800, .bg-gray-700 {
-        animation: slideUp 0.5s ease-out;
-    }
-    
-    /* Hover effects */
-    .bg-gray-700:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        transition: all 0.3s ease;
-    }
-    
-    /* Mobile responsive adjustments */
-    @media (max-width: 768px) {
-        .grid-cols-1.md\\:grid-cols-2 {
-            gap: 1.5rem;
-        }
-    }
-</style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const stockElement = document.querySelector('.bg-red-400');
+            if (stockElement) {
+                stockElement.parentElement.style.animation = 'pulse 2s infinite';
+            }
+        });
 
-<script>
-    // Add some interactive elements
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add pulse animation to stock status if low
-        const stockElement = document.querySelector('.text-red-400, .text-yellow-400');
-        if (stockElement && stockElement.classList.contains('text-red-400')) {
-            stockElement.parentElement.style.animation = 'pulse 2s infinite';
-        }
-    });
-    
-    // Add CSS for pulse animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-    `;
-    document.head.appendChild(style);
-</script>
-@endsection
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
