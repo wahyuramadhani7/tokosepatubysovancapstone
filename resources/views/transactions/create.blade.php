@@ -178,6 +178,15 @@
             z-index: 50;
         }
 
+        /* Popup animation */
+        .popup-enter {
+            animation: popupIn 0.3s ease-out;
+        }
+        @keyframes popupIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
         /* Print styles */
         @media print {
             body * { visibility: hidden; }
@@ -251,6 +260,29 @@
                 <p class="text-sm text-gray-400">Tambahkan produk dan lengkapi detail transaksi dengan gaya dan kemudahan</p>
             </div>
 
+            <!-- Success/Error Popup Modal -->
+            <div x-show="showPopup" class="modal-overlay" x-cloak x-transition:enter="popup-enter" @click.self="closePopup">
+                <div class="card-futuristic rounded-xl p-6 w-full max-w-md border">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-base font-semibold text-white font-['Orbitron']" x-text="popupTitle"></h3>
+                        <button type="button" @click="closePopup" class="text-gray-400 hover:text-brand-neon-teal p-1 rounded-full hover:bg-brand-dark-700 transition-colors">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 22" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="text-center">
+                        <svg class="h-12 w-12 mx-auto mb-3" :class="popupType === 'success' ? 'text-brand-neon-teal' : 'text-red-300'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="popupType === 'success' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'" />
+                        </svg>
+                        <p class="text-sm text-white" x-text="popupMessage"></p>
+                        <button type="button" @click="closePopup" class="mt-4 btn-futuristic px-4 py-2 rounded-lg text-xs font-semibold hover-glow">
+                            OK
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Form -->
             <form action="{{ route('transactions.store') }}" method="POST" @submit="validateForm($event)">
                 @csrf
@@ -275,7 +307,7 @@
                             </div>
                             <div class="flex space-x-2">
                                 <button type="button" @click="openScanner" class="btn-futuristic px-3 py-2 rounded-lg flex items-center text-xs font-semibold hover-glow">
-                                    <svg class="h-4 w-4 mr-1 text-brand-dark-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg class="h-4 w-4 mr-1 text-brand-dark-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 22" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8h4" />
                                     </svg>
                                     Scan QR
@@ -506,8 +538,12 @@
                 isScannerOpen: false,
                 qrScanner: null,
                 scanError: '',
-                scannedProductIds: [],
                 qrInput: '',
+                showPopup: false,
+                popupTitle: '',
+                popupMessage: '',
+                popupType: 'success',
+                scannedProductIds: [],
 
                 formatRupiah(amount) {
                     return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
@@ -543,31 +579,34 @@
                 addToCart(product) {
                     const index = this.cart.findIndex(item => item.id === product.id);
                     if (index >= 0) {
-                        if (this.cart[index].quantity < product.stock) {
-                            this.cart[index].quantity++;
-                        } else {
-                            alert('Stok tidak mencukupi!');
-                        }
-                    } else {
-                        this.cart.push({
-                            id: product.id,
-                            name: product.name,
-                            color: product.color,
-                            size: product.size,
-                            selling_price: product.selling_price,
-                            quantity: 1,
-                            stock: product.stock
-                        });
-                        this.scannedProductIds.push(product.id);
+                        this.popupTitle = 'Produk Sudah Ada';
+                        this.popupMessage = `Produk "${product.name}" sudah ada di keranjang.`;
+                        this.popupType = 'error';
+                        this.showPopup = true;
+                        return;
                     }
+                    this.cart.push({
+                        id: product.id,
+                        name: product.name,
+                        color: product.color,
+                        size: product.size,
+                        selling_price: product.selling_price,
+                        quantity: 1,
+                        stock: product.stock
+                    });
+                    this.scannedProductIds.push(product.id);
+                    this.popupTitle = 'Produk Ditambahkan';
+                    this.popupMessage = `Produk "${product.name}" berhasil ditambahkan ke keranjang!`;
+                    this.popupType = 'success';
+                    this.showPopup = true;
                     this.searchQuery = '';
                     this.searchResults = [];
                     this.$forceUpdate();
                 },
 
                 removeItem(index) {
-                    const removedProductId = this.cart[index].id;
-                    this.scannedProductIds = this.scannedProductIds.filter(id => id !== removedProductId);
+                    const productId = this.cart[index].id;
+                    this.scannedProductIds = this.scannedProductIds.filter(id => id !== productId);
                     this.cart.splice(index, 1);
                     this.$forceUpdate();
                 },
@@ -657,6 +696,13 @@
                     this.scanError = '';
                 },
 
+                closePopup() {
+                    this.showPopup = false;
+                    this.popupTitle = '';
+                    this.popupMessage = '';
+                    this.popupType = 'success';
+                },
+
                 focusHardwareInput() {
                     this.closeScanner();
                     this.scanError = '';
@@ -664,7 +710,7 @@
                     this.$refs.qrInput.focus();
                 },
 
-                handleQrScan(decodedText) {
+                async handleQrScan(decodedText) {
                     this.scanError = '';
                     let productId;
                     try {
@@ -675,40 +721,31 @@
                             throw new Error('Invalid product ID');
                         }
                     } catch (e) {
-                        this.scanError = 'QR code tidak valid. Harus berisi URL produk (contoh: http://example.com/inventory/123).';
+                        this.scanError = 'QR code tidak valid. Harus berisi URL produk.';
                         return;
                     }
 
-                    const product = this.availableProducts.find(p => p.id == productId);
-                    if (!product) {
-                        this.scanError = `Produk dengan ID ${productId} tidak ditemukan.`;
+                    if (this.scannedProductIds.includes(parseInt(productId))) {
+                        this.scanError = 'Produk ini sudah discan sebelumnya.';
                         return;
                     }
 
-                    if (this.scannedProductIds.includes(product.id)) {
-                        this.scanError = `Produk "${product.name}" sudah discan sebelumnya.`;
-                        return;
-                    }
-
-                    if (product.stock > 0) {
-                        this.cart.push({
-                            id: product.id,
-                            name: product.name,
-                            color: product.color,
-                            size: product.size,
-                            selling_price: product.selling_price,
-                            quantity: 1,
-                            stock: product.stock
-                        });
-                        this.scannedProductIds.push(product.id);
-                        alert(`Produk ${product.name} berhasil ditambahkan ke keranjang!`);
+                    try {
+                        const response = await fetch(`/transactions/add-product/${productId}`);
+                        const data = await response.json();
+                        if (!data.success) {
+                            this.scanError = data.message;
+                            return;
+                        }
+                        this.addToCart(data.product);
                         this.closeScanner();
-                    } else {
-                        this.scanError = `Stok produk "${product.name}" habis.`;
+                    } catch (err) {
+                        this.scanError = 'Gagal memuat produk. Coba lagi.';
+                        console.error('Fetch error:', err);
                     }
                 },
 
-                handleHardwareQrScan() {
+                async handleHardwareQrScan() {
                     if (!this.qrInput) return;
                     this.scanError = '';
                     let productId;
@@ -720,39 +757,30 @@
                             throw new Error('Invalid product ID');
                         }
                     } catch (e) {
-                        this.scanError = 'QR code tidak valid. Harus berisi URL produk (contoh: http://example.com/inventory/123).';
+                        this.scanError = 'QR code tidak valid. Harus berisi URL produk.';
                         this.qrInput = '';
                         return;
                     }
 
-                    const product = this.availableProducts.find(p => p.id == productId);
-                    if (!product) {
-                        this.scanError = `Produk dengan ID ${productId} tidak ditemukan.`;
+                    if (this.scannedProductIds.includes(parseInt(productId))) {
+                        this.scanError = 'Produk ini sudah discan sebelumnya.';
                         this.qrInput = '';
                         return;
                     }
 
-                    if (this.scannedProductIds.includes(product.id)) {
-                        this.scanError = `Produk "${product.name}" sudah discan sebelumnya.`;
+                    try {
+                        const response = await fetch(`/transactions/add-product/${productId}`);
+                        const data = await response.json();
+                        if (!data.success) {
+                            this.scanError = data.message;
+                            this.qrInput = '';
+                            return;
+                        }
+                        this.addToCart(data.product);
                         this.qrInput = '';
-                        return;
-                    }
-
-                    if (product.stock > 0) {
-                        this.cart.push({
-                            id: product.id,
-                            name: product.name,
-                            color: product.color,
-                            size: product.size,
-                            selling_price: product.selling_price,
-                            quantity: 1,
-                            stock: product.stock
-                        });
-                        this.scannedProductIds.push(product.id);
-                        alert(`Produk ${product.name} berhasil ditambahkan ke keranjang!`);
-                        this.qrInput = '';
-                    } else {
-                        this.scanError = `Stok produk "${product.name}" habis.`;
+                    } catch (err) {
+                        this.scanError = 'Gagal memuat produk. Coba lagi.';
+                        console.error('Fetch error:', err);
                         this.qrInput = '';
                     }
                 },

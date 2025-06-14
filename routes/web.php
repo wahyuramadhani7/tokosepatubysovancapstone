@@ -50,28 +50,25 @@ Route::middleware(['auth'])->group(function () {
     // Inventory Routes
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::get('/create', [InventoryController::class, 'create'])->name('inventory.create');
         Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
         Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-        Route::get('inventory/history', [InventoryController::class, 'history'])->name('inventory.history');
-        Route::get('inventory/search', [InventoryController::class, 'search'])->name('inventory.search');
+        Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
-        Route::get('/{product}/verify', [InventoryController::class, 'verifyStockForm'])->name('inventory.verify');
-        Route::post('/{product}/verify', [InventoryController::class, 'verifyStock'])->name('inventory.verify_stock');
-        Route::get('inventory/scan-qr', [InventoryController::class, 'scanQr'])->name('inventory.scan_qr');
-        Route::post('/update-physical-stock', [InventoryController::class, 'updatePhysicalStock'])->name('inventory.update-physical-stock');
-        Route::post('/{product}/update-physical-stock-direct', [InventoryController::class, 'updatePhysicalStockDirect'])->name('inventory.update-physical-stock-direct');
     });
 
     // Transactions Routes
-    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
-    Route::get('/transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
-    Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
-    Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
-    Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
-    Route::get('/transactions/{transaction}/print', [TransactionController::class, 'print'])->name('transactions.print');
+    Route::prefix('transactions')->group(function () {
+        Route::get('/', [TransactionController::class, 'index'])->name('transactions.index');
+        Route::get('/create', [TransactionController::class, 'create'])->name('transactions.create');
+        Route::post('/', [TransactionController::class, 'store'])->name('transactions.store');
+        Route::delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+        Route::get('/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+        Route::get('/{transaction}/print', [TransactionController::class, 'print'])->name('transactions.print');
+        Route::get('/add-product/{product}', [TransactionController::class, 'addProductByQr'])->name('transactions.add-product-by-qr');
+    });
 
     // Transaction Reports
     Route::get('/transactions/reports/sales', [TransactionController::class, 'report'])->name('transactions.report');
@@ -96,5 +93,5 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Include authentication routes   
+// Include authentication routes
 require __DIR__ . '/auth.php';

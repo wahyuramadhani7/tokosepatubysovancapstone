@@ -58,12 +58,6 @@
                     </svg>
                     Tambah
                 </a>
-                <a href="{{ route('inventory.scan_qr') }}" class="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm md:text-base flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m-6 4H4m6-7V4m6 11v3m-6 0v1" />
-                    </svg>
-                    Scan QR
-                </a>
             </div>
         </div>
 
@@ -94,13 +88,11 @@
         <div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
             <div class="rounded-lg overflow-hidden">
                 <!-- Table Headers -->
-                <div class="grid grid-cols-8 gap-0">
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">QR Code</div>
+                <div class="grid grid-cols-6 gap-0">
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Produk</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Ukuran</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Warna</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok Sistem</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok Fisik</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Harga Jual</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Actions</div>
                 </div>
@@ -108,16 +100,11 @@
                 <!-- Table Body -->
                 <div class="mt-1">
                     @forelse ($products ?? [] as $index => $product)
-                        <div class="grid grid-cols-8 gap-0 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
-                            <div class="p-3 text-black">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(route('inventory.update-physical-stock-direct', $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
-                                <div class="text-xs text-red-500 text-center" style="display: none;">QR Code gagal</div>
-                            </div>
+                        <div class="grid grid-cols-6 gap-0 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
                             <div class="p-3 text-black">{{ $product->name ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->size ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->color ?? '-' }}</div>
                             <div class="p-3 font-medium text-center {{ $product->stock < 5 ? 'text-red-600' : 'text-black' }}">{{ $product->stock ?? 0 }}</div>
-                            <div class="p-3 font-medium text-center {{ is_null($product->physical_stock) ? 'text-gray-500' : ($product->physical_stock < 5 ? 'text-red-600' : 'text-black') }}">{{ $product->physical_stock ?? '-' }}</div>
                             <div class="p-3 text-black text-right">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</div>
                             <div class="p-3">
                                 <div class="flex justify-center space-x-3">
@@ -163,25 +150,15 @@
         <div class="md:hidden space-y-4">
             @forelse ($products ?? [] as $product)
                 <div class="bg-white rounded-lg shadow p-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="font-medium text-gray-900">{{ $product->name ?? '-' }}</h3>
-                            <div class="text-sm text-gray-500">{{ $product->size ?? '-' }} | {{ $product->color ?? '-' }}</div>
-                        </div>
-                        <div>
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data={{ urlencode(route('inventory.update-physical-stock-direct', $product->id)) }}" alt="QR Code for {{ $product->name }}" class="h-12 w-12 object-contain" onerror="this.src='{{ asset('images/qr-placeholder.png') }}'; this.nextElementSibling.style.display='block';">
-                            <div class="text-xs text-red-500 text-center" style="display: none;">QR Code gagal</div>
-                        </div>
+                    <div class="mb-2">
+                        <h3 class="font-medium text-gray-900">{{ $product->name ?? '-' }}</h3>
+                        <div class="text-sm text-gray-500">{{ $product->size ?? '-' }} | {{ $product->color ?? '-' }}</div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-2 mb-3">
                         <div>
-                            <div class="text-xs text-gray-500">Stok Sistem</div>
+                            <div class="text-xs text-gray-500">Stok</div>
                             <div class="font-medium {{ $product->stock < 5 ? 'text-red-600' : 'text-gray-900' }}">{{ $product->stock ?? 0 }}</div>
-                        </div>
-                        <div>
-                            <div class="text-xs text-gray-500">Stok Fisik</div>
-                            <div class="font-medium {{ is_null($product->physical_stock) ? 'text-gray-500' : ($product->physical_stock < 5 ? 'text-red-600' : 'text-gray-900') }}">{{ $product->physical_stock ?? '-' }}</div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-500">Harga Jual</div>
@@ -239,8 +216,8 @@
     .animate-fade-in {
         animation: fadeIn 0.3s ease-in-out;
     }
-    .grid-cols-8 {
-        grid-template-columns: repeat(8, minmax(0, 1fr));
+    .grid-cols-6 {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
     }
 </style>
 

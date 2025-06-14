@@ -157,4 +157,33 @@ class TransactionController extends Controller
 
         return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'dateStart', 'dateEnd'));
     }
+
+    /**
+     * Add product to cart via QR code scan
+     *
+     * @param  \App\Models\Product  $product
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addProductByQr(Product $product)
+    {
+        if (!$product) {
+            return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
+        }
+
+        if ($product->stock <= 0) {
+            return response()->json(['success' => false, 'message' => 'Stok produk habis.'], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'color' => $product->color,
+                'size' => $product->size,
+                'selling_price' => $product->selling_price,
+                'stock' => $product->stock,
+            ],
+        ], 200);
+    }
 }

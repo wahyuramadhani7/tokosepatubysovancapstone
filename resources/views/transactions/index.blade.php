@@ -215,7 +215,9 @@
             <div class="flex items-center space-x-3">
                 <div class="bg-brand-neon-teal rounded-full p-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M
+
+System: 5 9h14l1 12H4L5 9z" />
                     </svg>
                 </div>
                 <div>
@@ -247,12 +249,12 @@
                 <p class="font-medium text-sm">{{ session('success') }}</p>
             </div>
             @if(session('transaction_id'))
-            <a href="{{ route('transactions.print', session('transaction_id')) }}" target="_blank" class="text-sm text-brand-dark-900 bg-brand-neon-teal hover:bg-brand-neon-light px-4 py-1.5 rounded-lg flex items-center font-medium hover-glow">
+            <button @click="printReceipt({ id: newTransactionId }, connectionType)" class="text-sm text-brand-dark-900 bg-brand-neon-teal hover:bg-brand-neon-light px-4 py-1.5 rounded-lg flex items-center font-medium hover-glow">
                 <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
                 Cetak Invoice
-            </a>
+            </button>
             @endif
             <button @click="dismissAlert" class="text-brand-neon-light hover:text-brand-neon-teal p-1.5 rounded-full hover:bg-brand-dark-700">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -304,7 +306,7 @@
                 </button>
             </div>
             <div x-show="showFilters" class="p-5 bg-brand-dark-800/30" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-400 mb-1">Tanggal</label>
                         <input type="date" x-model="filterDate" @change="filterTransactions" class="w-full rounded-lg px-3 py-1.5 text-sm">
@@ -325,6 +327,13 @@
                             <option value="paid">Lunas</option>
                             <option value="pending">Pending</option>
                             <option value="cancelled">Dibatalkan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Tipe Koneksi Printer</label>
+                        <select x-model="connectionType" class="w-full rounded-lg px-3 py-1.5 text-sm">
+                            <option value="bluetooth">Bluetooth</option>
+                            <option value="usb">USB</option>
                         </select>
                     </div>
                 </div>
@@ -400,11 +409,11 @@
                                     }" x-text="translateStatus(transaction.payment_status || transaction.status || 'paid')"></span>
                                 </td>
                                 <td class="px-5 py-3 text-right space-x-1 whitespace-nowrap">
-                                    <a :href="'{{ url('/transactions') }}/' + transaction.id + '/print'" target="_blank" class="inline-flex items-center p-1.5 bg-brand-dark-600 text-gray-400 rounded-lg hover:bg-brand-dark-500 hover-glow">
+                                    <button @click="printReceipt(transaction, connectionType)" class="inline-flex items-center p-1.5 bg-brand-dark-600 text-gray-400 rounded-lg hover:bg-brand-dark-500 hover-glow">
                                         <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                         </svg>
-                                    </a>
+                                    </button>
                                     <button @click="confirmDelete(transaction)" class="inline-flex items-center p-1.5 bg-red-900/30 text-red-400 rounded-lg hover:bg-red-800/30 hover-glow">
                                         <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -504,11 +513,11 @@
 
     <!-- Floating Print Button -->
     <div x-show="newTransactionId" class="fixed bottom-6 right-6" x-cloak>
-        <a :href="'{{ url('/transactions') }}/' + newTransactionId + '/print'" target="_blank" class="flex items-center justify-center h-12 w-12 bg-brand-neon-teal text-brand-dark-900 rounded-full hover:bg-brand-neon-light hover-glow">
+        <button @click="printReceipt({ id: newTransactionId }, connectionType)" class="flex items-center justify-center h-12 w-12 bg-brand-neon-teal text-brand-dark-900 rounded-full hover:bg-brand-neon-light hover-glow">
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
-        </a>
+        </button>
     </div>
 
     <script>
@@ -519,6 +528,7 @@
                 filterDate: '',
                 paymentMethodFilter: '',
                 statusFilter: '',
+                connectionType: 'bluetooth', // Default ke Bluetooth
                 currentPage: 1,
                 perPage: 10,
                 sortColumn: 'id',
@@ -535,6 +545,93 @@
                     this.filterTransactions();
                     if (this.newTransactionId) {
                         this.$nextTick(() => this.highlightNewTransaction());
+                    }
+                },
+
+                async printReceipt(transaction, connectionType) {
+                    try {
+                        // Ambil data transaksi lengkap jika hanya ID yang tersedia
+                        let fullTransaction = transaction;
+                        if (!transaction.created_at) {
+                            const response = await fetch(`{{ url('/transactions') }}/${transaction.id}`);
+                            if (!response.ok) throw new Error('Gagal mengambil data transaksi');
+                            fullTransaction = await response.json();
+                        }
+
+                        // Format struk
+                        const receipt = `
+Sepatu by Sovan
+----------------
+ID: TRX-${fullTransaction.id.toString().padStart(6, '0')}
+Tanggal: ${new Date(fullTransaction.created_at).toLocaleDateString('id-ID')}
+Pelanggan: ${fullTransaction.customer_name || 'Tanpa Nama'}
+Total: Rp ${new Intl.NumberFormat('id-ID').format(fullTransaction.final_amount || fullTransaction.total)}
+----------------
+Terima Kasih!
+                        `.replace(/\n/g, '\r\n') + '\x1B\x69'; // Perintah potong kertas (ESC/POS)
+
+                        // Pilih metode koneksi
+                        if (connectionType === 'bluetooth') {
+                            await this.printToBluetoothPrinter(receipt);
+                        } else if (connectionType === 'usb') {
+                            await this.printToUSBPrinter(receipt);
+                        } else {
+                            alert('Tipe koneksi tidak valid. Pilih "Bluetooth" atau "USB".');
+                        }
+                    } catch (error) {
+                        console.error('Gagal mencetak:', error);
+                        alert('Gagal mencetak struk. Pastikan printer terhubung dan dikonfigurasi dengan benar.');
+                    }
+                },
+
+                async printToBluetoothPrinter(receipt) {
+                    try {
+                        // Minta akses ke perangkat Bluetooth
+                        const device = await navigator.bluetooth.requestDevice({
+                            filters: [{ services: ['00001101-0000-1000-8000-00805f9b34fb'] }], // UUID untuk Serial Port (SPP)
+                            optionalServices: ['00001101-0000-1000-8000-00805f9b34fb']
+                        });
+
+                        // Hubungkan ke perangkat
+                        const server = await device.gatt.connect();
+                        const service = await server.getPrimaryService('00001101-0000-1000-8000-00805f9b34fb');
+                        const characteristic = await service.getCharacteristic('00001101-0000-1000-8000-00805f9b34fb');
+
+                        // Encode data
+                        const encoder = new TextEncoder();
+                        const data = encoder.encode(receipt);
+
+                        // Kirim data ke printer
+                        await characteristic.writeValue(data);
+                        console.log('Struk berhasil dicetak via Bluetooth');
+
+                        // Putuskan koneksi
+                        server.disconnect();
+                    } catch (error) {
+                        throw new Error('Gagal mencetak via Bluetooth: ' + error.message);
+                    }
+                },
+
+                async printToUSBPrinter(receipt) {
+                    try {
+                        // Minta akses ke perangkat USB
+                        const device = await navigator.usb.requestDevice({ filters: [] }); // Sesuaikan filter dengan vendorId printer Anda
+                        await device.open();
+                        await device.selectConfiguration(1);
+                        await device.claimInterface(0);
+
+                        // Encode data
+                        const encoder = new TextEncoder();
+                        const data = encoder.encode(receipt);
+
+                        // Kirim data ke printer (sesuaikan endpoint dengan printer Anda)
+                        await device.transferOut(1, data);
+                        console.log('Struk berhasil dicetak via USB');
+
+                        // Tutup koneksi
+                        await device.close();
+                    } catch (error) {
+                        throw new Error('Gagal mencetak via USB: ' + error.message);
                     }
                 },
 
@@ -578,6 +675,7 @@
 
                 resetFilters() {
                     this.filterDate = this.paymentMethodFilter = this.statusFilter = '';
+                    this.connectionType = 'bluetooth'; // Reset ke default
                     this.filterTransactions();
                 },
 

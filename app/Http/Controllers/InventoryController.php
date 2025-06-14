@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\StockVerification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 
 class InventoryController extends Controller
 {
@@ -64,7 +62,6 @@ class InventoryController extends Controller
                 'purchase_price' => 0,
                 'selling_price' => $validated['selling_price'],
                 'color' => $validated['color'],
-                'physical_stock' => null,
             ]);
 
             Log::info('Product created: ID ' . $product->id);
@@ -113,7 +110,6 @@ class InventoryController extends Controller
             'size' => $product->size,
             'selling_price' => $product->selling_price,
             'stock' => $product->stock,
-            'physical_stock' => $product->physical_stock,
         ], 200);
     }
 
@@ -191,7 +187,7 @@ class InventoryController extends Controller
         $keyword = $request->input('search');
 
         $products = Product::where('name', 'like', "%{$keyword}%")
-            ->select('id', 'name', 'size', 'color', 'stock', 'physical_stock', 'selling_price')
+            ->select('id', 'name', 'size', 'color', 'stock', 'selling_price')
             ->take(1)
             ->get();
 
@@ -210,191 +206,9 @@ class InventoryController extends Controller
             Log::warning('Product not found for print QR: ID ' . request()->segment(2));
             return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
         }
+
+        Log::info('Preparing to print QR codes for product ID ' . $product->id . ' with stock: ' . $product->stock);
+
         return view('inventory.print_qr', compact('product'));
-    }
-
-    /**
-     * Show the stock verification form for a product.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\View\View
-     */
-    public function verifyStockForm(Product $product)
-    {
-        if (!$product) {
-            Log::warning('Product not found for verify stock form: ID ' . request()->segment(2));
-            return redirect()->route('inventory.scan_qr')->with('error', 'Produk tidak ditemukan.');
-        }
-        return view('inventory.verify_stock', compact('product'));
-    }
-
-    /**
-     * Verify physical stock against system stock.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function verifyStock(Request $request, Product $product)
-    {
-        if (!$product) {
-            Log::warning('Product not found for verify stock: ID ' . request()->segment(2));
-            return redirect()->route('inventory.scan_qr')->with('error', 'Produk tidak ditemukan.');
-        }
-
-        $validated = $request->validate([
-            'physical_stock' => 'required|integer|min:0',
-            'notes' => 'nullable|string|max:500',
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            $discrepancy = $product->stock - $validated['physical_stock'];
-
-            StockVerification::create([
-                'product_id' => $product->id,
-                'system_stock' => $product->stock,
-                'physical_stock' => $validated['physical_stock'],
-                'discrepancy' => $discrepancy,
-                'notes' => $validated['notes'],
-                'user_id' => Auth::id(),
-            ]);
-
-            $product->update([
-                'stock' => $validated['physical_stock'],
-                'physical_stock' => $validated['physical_stock'],
-            ]);
-
-            Log::info('Stock verification completed for product ID ' . $product->id . ' by user ID ' . Auth::id());
-
-            DB::commit();
-
-            return redirect()->route('inventory.scan_qr')->with('success', 'Verifikasi stok untuk produk ' . $product->name . ' berhasil dilakukan. Selisih: ' . $discrepancy . '. Stok sistem dan fisik telah diperbarui.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error verifying stock for product ID ' . $product->id . ': ' . $e->getMessage());
-            return redirect()->route('inventory.scan_qr')->with('error', 'Gagal melakukan verifikasi stok: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Display the QR code scanner page.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function scanQr()
-    {
-        return view('inventory.scan_qr');
-    }
-
-    /**
-     * Display the inventory history page.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function history()
-    {
-        $verifications = StockVerification::with('product', 'user')->paginate(10);
-        return view('inventory.history', compact('verifications'));
-    }
-
-    /**
-     * Update physical stock via AJAX after QR scan.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function updatePhysicalStock(Request $request)
-    {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'physical_stock' => 'required|integer|min:0',
-        ]);
-
-        $product = Product::findOrFail($validated['product_id']);
-
-        DB::beginTransaction();
-
-        try {
-            $discrepancy = $product->stock - $validated['physical_stock'];
-
-            $product->update([
-                'stock' => $validated['physical_stock'],
-                'physical_stock' => $validated['physical_stock'],
-            ]);
-
-            StockVerification::create([
-                'product_id' => $product->id,
-                'system_stock' => $product->stock,
-                'physical_stock' => $validated['physical_stock'],
-                'discrepancy' => $discrepancy,
-                'notes' => 'Updated via QR scan at ' . now(),
-                'user_id' => Auth::id(),
-            ]);
-
-            Log::info('Physical stock updated via QR scan for product ID ' . $product->id . ' by user ID ' . Auth::id());
-
-            DB::commit();
-
-            return response()->json(['success' => true, 'message' => 'Stok fisik diperbarui untuk ' . $product->name]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error updating physical stock for product ID ' . $product->id . ': ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Gagal memperbarui stok fisik: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Update physical stock directly via QR scan.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function updatePhysicalStockDirect(Request $request, Product $product)
-    {
-        if (!$product) {
-            Log::warning('Product not found for direct physical stock update: ID ' . ($request->route('product') ?? 'unknown'));
-            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
-        }
-
-        // Verifikasi CSRF token secara manual jika diperlukan
-        if (!$request->hasValidSignature()) {
-            Log::warning('CSRF token validation failed for product ID ' . $product->id);
-            return redirect()->route('inventory.index')->with('error', 'Permintaan tidak valid. Silakan coba lagi.');
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $physicalStock = $product->stock; // Menggunakan stok sistem saat ini sebagai default
-
-            $discrepancy = $product->stock - $physicalStock;
-
-            $product->update([
-                'stock' => $physicalStock,
-                'physical_stock' => $physicalStock,
-            ]);
-
-            StockVerification::create([
-                'product_id' => $product->id,
-                'system_stock' => $product->stock,
-                'physical_stock' => $physicalStock,
-                'discrepancy' => $discrepancy,
-                'notes' => 'Updated directly via QR scan at ' . now(),
-                'user_id' => Auth::id(),
-            ]);
-
-            Log::info('Physical stock updated directly via QR scan for product ID ' . $product->id . ' by user ID ' . Auth::id());
-
-            DB::commit();
-
-            return redirect()->route('inventory.index')->with('success', 'Stok fisik untuk ' . $product->name . ' telah diperbarui.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error updating physical stock directly for product ID ' . $product->id . ': ' . $e->getMessage() . ' - Trace: ' . $e->getTraceAsString());
-            return redirect()->route('inventory.index')->with('error', 'Gagal memperbarui stok fisik: ' . $e->getMessage());
-        }
     }
 }
