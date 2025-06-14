@@ -23,7 +23,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Public routes for product details
+// Public routes for product details without rate limiting
 Route::prefix('inventory')->group(function () {
     Route::get('/{product}', [InventoryController::class, 'show'])->name('inventory.show');
     Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
@@ -57,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
         Route::get('inventory/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
+        Route::post('/inventory/{product}/physical-stock', [InventoryController::class, 'updatePhysicalStock'])->name('inventory.updatePhysicalStock');
     });
 
     // Transactions Routes
@@ -95,3 +96,8 @@ Route::get('/dashboard', function () {
 
 // Include authentication routes
 require __DIR__ . '/auth.php';
+
+// Catch-all route for invalid URLs
+Route::get('/{any}', function () {
+    return redirect()->route('login');
+})->where('any', '.*')->middleware('guest');

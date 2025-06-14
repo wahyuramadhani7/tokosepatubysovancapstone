@@ -59,6 +59,7 @@ class InventoryController extends Controller
                 'name' => $validated['brand'] . ' ' . $validated['model'],
                 'size' => $validated['size'],
                 'stock' => $validated['stock'],
+                'physical_stock' => 0,
                 'purchase_price' => 0,
                 'selling_price' => $validated['selling_price'],
                 'color' => $validated['color'],
@@ -93,6 +94,51 @@ class InventoryController extends Controller
     }
 
     /**
+     * Update physical stock after scanning QR code.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Product  $product
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updatePhysicalStock(Request $request, Product $product)
+    {
+        if (!$product) {
+            Log::warning('Product not found for updating physical stock: ID ' . request()->segment(2));
+            return response()->json(['error' => 'Produk tidak ditemukan'], 404);
+        }
+
+        $validated = $request->validate([
+            'physical_stock' => 'required|integer|min:0',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $product->update([
+                'physical_stock' => $validated['physical_stock'],
+            ]);
+
+            Log::info('Physical stock updated for product ID ' . $product->id . ': ' . $validated['physical_stock']);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => 'Stok fisik berhasil diperbarui',
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'stock' => $product->stock,
+                    'physical_stock' => $product->physical_stock,
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating physical stock: ' . $e->getMessage());
+            return response()->json(['error' => 'Gagal memperbarui stok fisik: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Return product data in JSON format (only for explicit JSON requests).
      *
      * @param  \App\Models\Product  $product
@@ -111,6 +157,7 @@ class InventoryController extends Controller
             'size' => $product->size,
             'selling_price' => $product->selling_price,
             'stock' => $product->stock,
+            'physical_stock' => $product->physical_stock,
         ], 200);
     }
 
@@ -136,46 +183,48 @@ class InventoryController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\Http\RedirectResponse
      */
-   public function update(Request $request, Product $product)
-{
-    if (!$product) {
-        Log::warning('Product not found for update: ID ' . request()->segment(2));
-        return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
-    }
+    public function update(Request $request, Product $product)
+    {
+        if (!$product) {
+            Log::warning('Product not found for update: ID ' . request()->segment(2));
+            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
+        }
 
-    $validated = $request->validate([
-        'brand' => 'required|string|max:255',
-        'model' => 'required|string|max:255',
-        'size' => 'required|string|max:50',
-        'stock' => 'required|integer|min:0',
-        'purchase_price' => 'required|numeric|min:0',
-        'selling_price' => 'required|numeric|min:0',
-        'color' => 'required|string|max:255',
-    ]);
-
-    DB::beginTransaction();
-
-    try {
-        $product->update([
-            'name' => $validated['brand'] . ' ' . $validated['model'],
-            'size' => $validated['size'],
-            'stock' => $validated['stock'],
-            'purchase_price' => $validated['purchase_price'],
-            'selling_price' => $validated['selling_price'],
-            'color' => $validated['color'],
+        $validated = $request->validate([
+            'brand' => 'required|string|max:255',
+            'model' => 'required|string|max:255',
+            'size' => 'required|string|max:50',
+            'stock' => 'required|integer|min:0',
+            'purchase_price' => 'required|numeric|min:0',
+            'selling_price' => 'required|numeric|min:0',
+            'color' => 'required|string|max:255',
         ]);
 
-        Log::info('Product updated: ID ' . $product->id);
+        DB::beginTransaction();
 
-        DB::commit();
+        try {
+            $product->update([
+                'name' => $validated['brand'] . ' ' . $validated['model'],
+                'size' => $validated['size'],
+                'stock' => $validated['stock'],
+                'purchase_price' => $validated['purchase_price'],
+                'selling_price' => $validated['selling_price'],
+                'color' => $validated['color'],
+                'physical_stock' => $product->physical_stock,
+            ]);
 
-        return redirect()->route('inventory.index')->with('success', 'Produk berhasil diperbarui');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Error updating product: ' . $e->getMessage());
-        return redirect()->route('inventory.index')->with('error', 'Terjadi kesalahan, produk gagal diperbarui: ' . $e->getMessage());
+            Log::info('Product updated: ID ' . $product->id);
+
+            DB::commit();
+
+            return redirect()->route('inventory.index')->with('success', 'Produk berhasil diperbarui');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating product: ' . $e->getMessage());
+            return redirect()->route('inventory.index')->with('error', 'Terjadi kesalahan, produk gagal diperbarui: ' . $e->getMessage());
+        }
     }
-}
+
     /**
      * Remove the specified product from storage.
      *
@@ -201,36 +250,37 @@ class InventoryController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-   public function search(Request $request)
-{
-    $keyword = $request->input('search');
+    public function search(Request $request)
+    {
+        $keyword = $request->input('search');
 
-    // Validasi input
-    if (empty($keyword)) {
-        return response()->json(['products' => []], 200);
+        // Validasi input
+        if (empty($keyword)) {
+            return response()->json(['products' => []], 200);
+        }
+
+        // Pencarian berdasarkan name, color, atau size
+        $products = Product::where('name', 'like', "%{$keyword}%")
+            ->orWhere('color', 'like', "%{$keyword}%")
+            ->orWhere('size', 'like', "%{$keyword}%")
+            ->select('id', 'name', 'size', 'color', 'stock', 'selling_price', 'physical_stock')
+            ->paginate(10);
+
+        Log::info('Search performed with keyword: ' . $keyword . ', found: ' . $products->count());
+
+        return response()->json([
+            'products' => $products->items(),
+            'pagination' => [
+                'total' => $products->total(),
+                'per_page' => $products->perPage(),
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'from' => $products->firstItem(),
+                'to' => $products->lastItem(),
+            ]
+        ], 200);
     }
 
-    // Pencarian berdasarkan name, color, atau size
-    $products = Product::where('name', 'like', "%{$keyword}%")
-        ->orWhere('color', 'like', "%{$keyword}%")
-        ->orWhere('size', 'like', "%{$keyword}%")
-        ->select('id', 'name', 'size', 'color', 'stock', 'selling_price')
-        ->paginate(10); // Sesuaikan dengan paginasi di index
-
-    Log::info('Search performed with keyword: ' . $keyword . ', found: ' . $products->count());
-
-    return response()->json([
-        'products' => $products->items(),
-        'pagination' => [
-            'total' => $products->total(),
-            'per_page' => $products->perPage(),
-            'current_page' => $products->currentPage(),
-            'last_page' => $products->lastPage(),
-            'from' => $products->firstItem(),
-            'to' => $products->lastItem(),
-        ]
-    ], 200);
-}
     /**
      * Display the QR code print page for a product.
      *
