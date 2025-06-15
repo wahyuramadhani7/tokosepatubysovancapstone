@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <!-- Search Bar and Buttons -->
+        <!-- Search Bar, QR Scanner Button, and Add Product Button -->
         <div style="background-color: #292929;" class="flex flex-col md:flex-row justify-between items-center p-3 mb-4 rounded-lg gap-3">
             <div class="flex flex-col md:flex-row gap-3 w-full max-w-xs">
                 <form id="search-form" class="relative w-full">
@@ -52,12 +52,38 @@
                         </button>
                     </div>
                 </form>
+                <button id="start-scanner" class="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm md:text-base flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Scan QR
+                </button>
                 <a href="{{ route('inventory.create') }}" class="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm md:text-base flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
                     Tambah
                 </a>
+            </div>
+        </div>
+
+        <!-- QR Scanner Modal -->
+        <div id="scanner-modal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <h2 class="text-lg font-semibold mb-4">Scan QR Code</h2>
+                <div class="relative">
+                    <video id="scanner-video" class="w-full h-64 bg-black rounded-lg"></video>
+                    <canvas id="scanner-canvas" class="hidden"></canvas>
+                </div>
+                <div class="mt-4">
+                    <label for="physical-stock" class="block text-sm font-medium text-gray-700">Stok Fisik</label>
+                    <input type="number" id="physical-stock" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500" min="0" value="0">
+                </div>
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button id="submit-stock" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">Submit</button>
+                    <button id="close-scanner" class="bg-gray-300 text-black px-4 py-2 rounded-lg hover:bg-gray-400">Tutup</button>
+                </div>
+                <div id="scan-result" class="mt-2 text-green-600"></div>
             </div>
         </div>
 
@@ -77,7 +103,7 @@
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 animate-fade-in" role="alert">
                 <span class="block sm:inline">{{ session('error') }}</span>
                 <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 0033">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -88,11 +114,12 @@
         <div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
             <div class="rounded-lg overflow-hidden">
                 <!-- Table Headers -->
-                <div class="grid grid-cols-7 gap-0">
+                <div class="grid grid-cols-8 gap-0">
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Produk</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Ukuran</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Warna</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok Sistem</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok Fisik</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Harga Jual</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">QR Code</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Actions</div>
@@ -101,11 +128,12 @@
                 <!-- Table Body -->
                 <div class="mt-1" id="desktop-table-body">
                     @forelse ($products ?? [] as $index => $product)
-                        <div class="grid grid-cols-7 gap-0 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
+                        <div class="grid grid-cols-8 gap-0 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
                             <div class="p-3 text-black">{{ $product->name ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->size ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->color ?? '-' }}</div>
                             <div class="p-3 font-medium text-center {{ $product->stock < 5 ? 'text-red-600' : 'text-black' }}">{{ $product->stock ?? 0 }}</div>
+                            <div class="p-3 font-medium text-center text-black" data-product-id="{{ $product->id }}">{{ $product->physical_stock ?? 0 }}</div>
                             <div class="p-3 text-black text-right">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</div>
                             <div class="p-3 text-center">
                                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data={{ urlencode(route('inventory.show', $product->id)) }}" alt="QR Code for {{ $product->name ?? '-' }}" class="h-12 w-12 mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
@@ -164,8 +192,12 @@
                     
                     <div class="grid grid-cols-2 gap-2 mb-3">
                         <div>
-                            <div class="text-xs text-gray-500">Stok</div>
+                            <div class="text-xs text-gray-500">Stok Sistem</div>
                             <div class="font-medium {{ $product->stock < 5 ? 'text-red-600' : 'text-gray-900' }}">{{ $product->stock ?? 0 }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500">Stok Fisik</div>
+                            <div class="font-medium text-gray-900" data-product-id="{{ $product->id }}">{{ $product->physical_stock ?? 0 }}</div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-500">Harga Jual</div>
@@ -215,7 +247,6 @@
 </div>
 
 <style>
-    /* Animation for alerts */
     @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
@@ -223,14 +254,14 @@
     .animate-fade-in {
         animation: fadeIn 0.3s ease-in-out;
     }
-    .grid-cols-7 {
-        grid-template-columns: repeat(7, minmax(0, 1fr));
+    .grid-cols-8 {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
     }
 </style>
 
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Search functionality
         const searchForm = document.getElementById('search-form');
         const searchInput = document.getElementById('search-input');
         if (searchForm) {
@@ -248,9 +279,166 @@
             });
         }
 
+        const scannerModal = document.getElementById('scanner-modal');
+        const startScannerButton = document.getElementById('start-scanner');
+        const closeScannerButton = document.getElementById('close-scanner');
+        const submitStockButton = document.getElementById('submit-stock');
+        const video = document.getElementById('scanner-video');
+        const canvas = document.getElementById('scanner-canvas');
+        const canvasContext = canvas.getContext('2d');
+        const physicalStockInput = document.getElementById('physical-stock');
+        const scanResultDiv = document.getElementById('scan-result');
+        let stream = null;
+        let productId = null;
+
+        startScannerButton.addEventListener('click', async () => {
+            scannerModal.classList.remove('hidden');
+            scannerModal.classList.add('flex');
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+                video.play();
+                requestAnimationFrame(tick);
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                showAlert('error', 'Gagal mengakses kamera: ' + err.message);
+                scannerModal.classList.add('hidden');
+                scannerModal.classList.remove('flex');
+            }
+        });
+
+        closeScannerButton.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            scannerModal.classList.add('hidden');
+            scannerModal.classList.remove('flex');
+            productId = null;
+            physicalStockInput.value = '0';
+            scanResultDiv.innerHTML = '';
+        });
+
+        submitStockButton.addEventListener('click', () => {
+            const physicalStock = physicalStockInput.value;
+            if (!productId || !physicalStock || physicalStock < 0) {
+                showAlert('error', 'Silakan pindai QR code dan masukkan stok fisik yang valid.');
+                return;
+            }
+
+            fetch(`/inventory/${productId}/physical-stock`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: JSON.stringify({ physical_stock: parseInt(physicalStock) }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', 'Stok fisik berhasil diperbarui.');
+                    updateTableRow(productId, parseInt(physicalStock));
+                    closeScannerButton.click();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert('error', data.error || 'Gagal memperbarui stok fisik.');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating stock:', error);
+                showAlert('error', 'Terjadi kesalahan saat memperbarui stok fisik.');
+            });
+        });
+
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth;
+                canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                if (code) {
+                    const url = new URL(code.data);
+                    const pathSegments = url.pathname.split('/');
+                    productId = pathSegments[pathSegments.length - 1];
+                    console.log('Extracted productId:', productId);
+                    fetch(`/inventory/${productId}/json`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        },
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('API response:', data);
+                        if (data.error) {
+                            showAlert('error', data.error);
+                            scanResultDiv.innerHTML = '';
+                            physicalStockInput.value = '0';
+                        } else {
+                            scanResultDiv.innerHTML = `<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-2">Produk ditemukan: ${data.name}</div>`;
+                            physicalStockInput.value = data.physical_stock !== null && data.physical_stock !== undefined ? String(data.physical_stock) : '0';
+                            console.log('Set physical stock to:', physicalStockInput.value);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching product:', error);
+                        showAlert('error', 'Gagal memverifikasi produk: ' + error.message);
+                        scanResultDiv.innerHTML = '';
+                        physicalStockInput.value = '0';
+                    });
+                }
+            }
+            if (!scannerModal.classList.contains('hidden')) {
+                requestAnimationFrame(tick);
+            }
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `border px-4 py-3 rounded relative mb-4 animate-fade-in ${type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
+            alertDiv.innerHTML = `
+                <span class="block sm:inline">${message}</span>
+                <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>`;
+            document.querySelector('.max-w-7xl').insertAdjacentElement('afterbegin', alertDiv);
+            setTimeout(() => {
+                alertDiv.style.opacity = '0';
+                alertDiv.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => alertDiv.remove(), 500);
+            }, 5000);
+        }
+
+        function updateTableRow(productId, physicalStock) {
+            const rows = document.querySelectorAll('#desktop-table-body .grid-cols-8');
+            rows.forEach(row => {
+                const physicalStockCell = row.querySelector(`div[data-product-id="${productId}"]`);
+                if (physicalStockCell) {
+                    physicalStockCell.textContent = physicalStock;
+                    physicalStockCell.className = 'p-3 font-medium text-center text-black';
+                }
+            });
+
+            const cards = document.querySelectorAll('#mobile-cards > div');
+            cards.forEach(card => {
+                const physicalStockDiv = card.querySelector(`div[data-product-id="${productId}"]`);
+                if (physicalStockDiv) {
+                    physicalStockDiv.textContent = physicalStock;
+                    physicalStockDiv.className = 'font-medium text-gray-900';
+                }
+            });
+        }
+
         function performSearch(keyword, page) {
             if (!keyword) {
-                window.location.reload();
+                location.reload();
                 return;
             }
 
@@ -262,6 +450,7 @@
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 },
             })
             .then(response => response.json())
@@ -273,11 +462,12 @@
                 } else {
                     data.products.forEach((product, index) => {
                         const row = `
-                            <div class="grid grid-cols-7 gap-0 items-center ${index % 2 === 0 ? 'bg-white' : 'bg-gray-200'}">
+                            <div class="grid grid-cols-8 gap-0 items-center ${index % 2 === 0 ? 'bg-white' : 'bg-gray-200'}">
                                 <div class="p-3 text-black">${product.name || '-'}</div>
                                 <div class="p-3 text-black text-center">${product.size || '-'}</div>
                                 <div class="p-3 text-black text-center">${product.color || '-'}</div>
                                 <div class="p-3 font-medium text-center ${product.stock < 5 ? 'text-red-600' : 'text-black'}">${product.stock || 0}</div>
+                                <div class="p-3 font-medium text-center text-black" data-product-id="${product.id}">${product.physical_stock || 0}</div>
                                 <div class="p-3 text-black text-right">Rp ${new Intl.NumberFormat('id-ID').format(product.selling_price || 0)}</div>
                                 <div class="p-3 text-center">
                                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${encodeURIComponent('{{ route('inventory.show', ':id') }}'.replace(':id', product.id))}" alt="QR Code for ${product.name || '-'}" class="h-12 w-12 mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
@@ -327,8 +517,12 @@
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 mb-3">
                                     <div>
-                                        <div class="text-xs text-gray-500">Stok</div>
+                                        <div class="text-xs text-gray-500">Stok Sistem</div>
                                         <div class="font-medium ${product.stock < 5 ? 'text-red-600' : 'text-gray-900'}">${product.stock || 0}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-gray-500">Stok Fisik</div>
+                                        <div class="font-medium text-gray-900" data-product-id="${product.id}">${product.physical_stock || 0}</div>
                                     </div>
                                     <div>
                                         <div class="text-xs text-gray-500">Harga Jual</div>
@@ -401,7 +595,6 @@
             return html;
         }
 
-        // Close alerts after 5 seconds
         setTimeout(() => {
             const alerts = document.querySelectorAll('.bg-green-100, .bg-red-100');
             alerts.forEach(alert => {
