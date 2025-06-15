@@ -18,7 +18,7 @@ class InventoryController extends Controller
      */
     public function index()
     {
-        $products = Product::paginate(10);
+        $products = Product::with('stockVerifications')->paginate(10);
         $totalProducts = Product::count();
         $lowStockProducts = Product::where('stock', '<=', 10)->count();
         $totalStock = Product::sum('stock');
@@ -58,12 +58,13 @@ class InventoryController extends Controller
 
         try {
             $product = Product::create([
-                'name' => $validated['brand'] . ' ' . $validated['model'],
+                'name' => trim($validated['brand'] . ' ' . $validated['model']),
                 'size' => $validated['size'],
                 'stock' => $validated['stock'],
                 'purchase_price' => 0,
                 'selling_price' => $validated['selling_price'],
                 'color' => $validated['color'],
+                'physical_stock' => $validated['stock'],
             ]);
 
             Log::info('Product created: ID ' . $product->id);
@@ -103,9 +104,12 @@ class InventoryController extends Controller
     public function json(Product $product)
     {
         if (!$product) {
-            Log::warning('Product not found for JSON: ID ' . request()->segment(3));
+            Log::warning('Product not found for JSON: ID ' . request()->segment(2));
             return response()->json(['error' => 'Produk tidak ditemukan'], 404);
         }
+
+        Log::debug('JSON response for product ID ' . $product->id . ': ', (array) $product);
+
         return response()->json([
             'id' => $product->id,
             'name' => $product->name,
@@ -113,7 +117,7 @@ class InventoryController extends Controller
             'size' => $product->size,
             'selling_price' => $product->selling_price,
             'stock' => $product->stock,
-            'physical_stock' => $product->physical_stock,
+            'physical_stock' => $product->physical_stock ?? 0,
         ], 200);
     }
 
@@ -160,12 +164,13 @@ class InventoryController extends Controller
 
         try {
             $product->update([
-                'name' => $validated['brand'] . ' ' . $validated['model'],
+                'name' => trim($validated['brand'] . ' ' . $validated['model']),
                 'size' => $validated['size'],
                 'stock' => $validated['stock'],
                 'purchase_price' => $validated['purchase_price'],
                 'selling_price' => $validated['selling_price'],
                 'color' => $validated['color'],
+                'physical_stock' => $product->physical_stock ?? $validated['stock'],
             ]);
 
             Log::info('Product updated: ID ' . $product->id);
@@ -201,10 +206,22 @@ class InventoryController extends Controller
         DB::beginTransaction();
 
         try {
-            $product->update([
+            // Explicitly update physical_stock
+            $updated = $product->update([
                 'physical_stock' => $validated['physical_stock'],
             ]);
 
+            if (!$updated) {
+                throw new \Exception('Failed to update physical_stock in the database');
+            }
+
+            // Reload the model to ensure the updated value is reflected
+            $product->refresh();
+
+            // Verify the update
+            Log::info('Physical stock updated for product ID ' . $product->id . ' to: ' . $product->physical_stock);
+
+            // Create stock verification record
             StockVerification::create([
                 'product_id' => $product->id,
                 'system_stock' => $product->stock,
@@ -214,11 +231,14 @@ class InventoryController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
-            Log::info('Physical stock updated for product ID ' . $product->id . ': ' . $validated['physical_stock']);
-
             DB::commit();
 
-            return response()->json(['success' => true, 'message' => 'Stok fisik berhasil diperbarui'], 200);
+            return response()->json([
+                'success' => true,
+                'message' => 'Stok fisik berhasil diperbarui',
+                'physical_stock' => $product->physical_stock,
+                'product_id' => $product->id
+            ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating physical stock for product ID ' . $product->id . ': ' . $e->getMessage());
@@ -255,12 +275,10 @@ class InventoryController extends Controller
     {
         $keyword = $request->input('search');
 
-        // Validasi input
         if (empty($keyword)) {
             return response()->json(['products' => []], 200);
         }
 
-        // Pencarian berdasarkan name, color, atau size
         $products = Product::where('name', 'like', "%{$keyword}%")
             ->orWhere('color', 'like', "%{$keyword}%")
             ->orWhere('size', 'like', "%{$keyword}%")

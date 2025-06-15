@@ -23,4 +23,8 @@ class Product extends Model
     {
         return $this->hasMany(TransactionItem::class);
     }
+    public function stockVerifications()
+    {
+        return $this->hasMany(StockVerification::class, 'product_id');
+    }
 }

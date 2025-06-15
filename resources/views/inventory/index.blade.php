@@ -220,7 +220,7 @@
                         </a>
                         <form action="{{ route('inventory.destroy', $product->id) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
                             @csrf
-                            @method('delete')
+                            @method('DELETE')
                             <button type="submit" class="text-red-500 hover:text-red-700 transition-colors flex items-center">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -338,9 +338,8 @@
             .then(data => {
                 if (data.success) {
                     showAlert('success', 'Stok fisik berhasil diperbarui.');
-                    updateTableRow(productId, parseInt(physicalStock));
+                    updateTableRow(productId, data.physical_stock); // Use the returned physical_stock
                     closeScannerButton.click();
-                    setTimeout(() => location.reload(), 1000);
                 } else {
                     showAlert('error', data.error || 'Gagal memperbarui stok fisik.');
                 }
@@ -362,7 +361,6 @@
                     const url = new URL(code.data);
                     const pathSegments = url.pathname.split('/');
                     productId = pathSegments[pathSegments.length - 1];
-                    console.log('Extracted productId:', productId);
                     fetch(`/inventory/${productId}/json`, {
                         headers: {
                             'Accept': 'application/json',
@@ -374,15 +372,16 @@
                         return response.json();
                     })
                     .then(data => {
-                        console.log('API response:', data);
                         if (data.error) {
                             showAlert('error', data.error);
                             scanResultDiv.innerHTML = '';
                             physicalStockInput.value = '0';
                         } else {
                             scanResultDiv.innerHTML = `<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-2">Produk ditemukan: ${data.name}</div>`;
-                            physicalStockInput.value = data.physical_stock !== null && data.physical_stock !== undefined ? String(data.physical_stock) : '0';
-                            console.log('Set physical stock to:', physicalStockInput.value);
+                            const fetchedPhysicalStock = data.physical_stock !== null && data.physical_stock !== undefined ? parseInt(data.physical_stock) : 0;
+                            physicalStockInput.value = String(fetchedPhysicalStock);
+                            console.log('Fetched product data:', data);
+                            console.log('Set physical stock to:', fetchedPhysicalStock);
                         }
                     })
                     .catch(error => {
@@ -544,7 +543,7 @@
                                     </a>
                                     <form action="{{ route('inventory.destroy', ':id') }}".replace(':id', product.id) method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
                                         @csrf
-                                        @method('delete')
+                                        @method('DELETE')
                                         <button type="submit" class="text-red-500 hover:text-red-700 transition-colors flex items-center">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
