@@ -59,7 +59,6 @@ class InventoryController extends Controller
                 'name' => $validated['brand'] . ' ' . $validated['model'],
                 'size' => $validated['size'],
                 'stock' => $validated['stock'],
-                'physical_stock' => 0,
                 'purchase_price' => 0,
                 'selling_price' => $validated['selling_price'],
                 'color' => $validated['color'],
@@ -94,51 +93,6 @@ class InventoryController extends Controller
     }
 
     /**
-     * Update physical stock after scanning QR code.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function updatePhysicalStock(Request $request, Product $product)
-    {
-        if (!$product) {
-            Log::warning('Product not found for updating physical stock: ID ' . request()->segment(2));
-            return response()->json(['error' => 'Produk tidak ditemukan'], 404);
-        }
-
-        $validated = $request->validate([
-            'physical_stock' => 'required|integer|min:0',
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            $product->update([
-                'physical_stock' => $validated['physical_stock'],
-            ]);
-
-            Log::info('Physical stock updated for product ID ' . $product->id . ': ' . $validated['physical_stock']);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => 'Stok fisik berhasil diperbarui',
-                'product' => [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'stock' => $product->stock,
-                    'physical_stock' => $product->physical_stock,
-                ]
-            ], 200);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error updating physical stock: ' . $e->getMessage());
-            return response()->json(['error' => 'Gagal memperbarui stok fisik: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
      * Return product data in JSON format (only for explicit JSON requests).
      *
      * @param  \App\Models\Product  $product
@@ -157,7 +111,6 @@ class InventoryController extends Controller
             'size' => $product->size,
             'selling_price' => $product->selling_price,
             'stock' => $product->stock,
-            'physical_stock' => $product->physical_stock,
         ], 200);
     }
 
@@ -210,7 +163,6 @@ class InventoryController extends Controller
                 'purchase_price' => $validated['purchase_price'],
                 'selling_price' => $validated['selling_price'],
                 'color' => $validated['color'],
-                'physical_stock' => $product->physical_stock,
             ]);
 
             Log::info('Product updated: ID ' . $product->id);
@@ -263,7 +215,7 @@ class InventoryController extends Controller
         $products = Product::where('name', 'like', "%{$keyword}%")
             ->orWhere('color', 'like', "%{$keyword}%")
             ->orWhere('size', 'like', "%{$keyword}%")
-            ->select('id', 'name', 'size', 'color', 'stock', 'selling_price', 'physical_stock')
+            ->select('id', 'name', 'size', 'color', 'stock', 'selling_price')
             ->paginate(10);
 
         Log::info('Search performed with keyword: ' . $keyword . ', found: ' . $products->count());

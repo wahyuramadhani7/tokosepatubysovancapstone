@@ -13,7 +13,7 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $transactions = Transaction::with('user')->latest()->paginate(15);
+        $transactions = Transaction::with(['items.product', 'user'])->latest()->paginate(10); // Mengurangi perpage untuk konsistensi
         return view('transactions.index', compact('transactions'));
     }
 
@@ -33,7 +33,7 @@ class TransactionController extends Controller
             return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('transactions.index')->with('error', 'Gagal menghapus transaksi: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghapus transaksi: ' . $e->getMessage());
         }
     }
 
@@ -55,9 +55,9 @@ class TransactionController extends Controller
             DB::beginTransaction();
 
             $totalAmount = 0;
-            $finalAmount = 0;
             $transactionItems = [];
 
+            // Validasi stok
             foreach ($request->products as $item) {
                 $product = Product::findOrFail($item['id']);
                 if ($product->stock < $item['quantity']) {
@@ -115,7 +115,7 @@ class TransactionController extends Controller
             return redirect()->route('transactions.index')
                 ->with('success', 'Transaksi berhasil diselesaikan.')
                 ->with('transaction_id', $transaction->id)
-                ->with('new_transaction', $transaction);
+                ->with('new_transaction', $transaction->load(['items.product', 'user']));
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Transaksi gagal: ' . $e->getMessage()]);
@@ -131,9 +131,6 @@ class TransactionController extends Controller
     public function print(Transaction $transaction)
     {
         $transaction->load(['items.product', 'user']);
-        if (request('format') === 'html') {
-            return view('transactions.print', compact('transaction'))->render();
-        }
         return view('transactions.print', compact('transaction'));
     }
 
@@ -158,12 +155,6 @@ class TransactionController extends Controller
         return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'dateStart', 'dateEnd'));
     }
 
-    /**
-     * Add product to cart via QR code scan
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function addProductByQr(Product $product)
     {
         if (!$product) {

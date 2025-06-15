@@ -6,7 +6,7 @@
     <title>Daftar Transaksi - Sepatu by Sovan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700" rel="stylesheet">
     <style>
         [x-cloak] { display: none !important; }
 
@@ -215,9 +215,7 @@
             <div class="flex items-center space-x-3">
                 <div class="bg-brand-neon-teal rounded-full p-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M
-
-System: 5 9h14l1 12H4L5 9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                 </div>
                 <div>
@@ -249,11 +247,11 @@ System: 5 9h14l1 12H4L5 9z" />
                 <p class="font-medium text-sm">{{ session('success') }}</p>
             </div>
             @if(session('transaction_id'))
-            <button @click="printReceipt({ id: newTransactionId }, connectionType)" class="text-sm text-brand-dark-900 bg-brand-neon-teal hover:bg-brand-neon-light px-4 py-1.5 rounded-lg flex items-center font-medium hover-glow">
+            <button @click="printReceipt({ id: newTransactionId })" class="text-sm text-brand-dark-900 bg-brand-neon-teal hover:bg-brand-neon-light px-4 py-1.5 rounded-lg flex items-center font-medium hover-glow">
                 <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
-                Cetak Invoice
+                Cetak Struk
             </button>
             @endif
             <button @click="dismissAlert" class="text-brand-neon-light hover:text-brand-neon-teal p-1.5 rounded-full hover:bg-brand-dark-700">
@@ -306,7 +304,7 @@ System: 5 9h14l1 12H4L5 9z" />
                 </button>
             </div>
             <div x-show="showFilters" class="p-5 bg-brand-dark-800/30" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-400 mb-1">Tanggal</label>
                         <input type="date" x-model="filterDate" @change="filterTransactions" class="w-full rounded-lg px-3 py-1.5 text-sm">
@@ -329,17 +327,10 @@ System: 5 9h14l1 12H4L5 9z" />
                             <option value="cancelled">Dibatalkan</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-1">Tipe Koneksi Printer</label>
-                        <select x-model="connectionType" class="w-full rounded-lg px-3 py-1.5 text-sm">
-                            <option value="bluetooth">Bluetooth</option>
-                            <option value="usb">USB</option>
-                        </select>
-                    </div>
                 </div>
                 <div class="mt-4 flex justify-end">
                     <button @click="resetFilters" class="px-4 py-1.5 bg-brand-dark-700 border border-brand-neon-teal/20 rounded-lg text-gray-400 hover:bg-brand-dark-600 text-sm flex items-center hover-glow">
-                        <svg class="h-3 w-3 mr-1 text-brand-neon-teal" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="h-3 w-3 mr-1 text-brand-neon-teal" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24  sonor:currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                         Reset Filter
@@ -409,14 +400,14 @@ System: 5 9h14l1 12H4L5 9z" />
                                     }" x-text="translateStatus(transaction.payment_status || transaction.status || 'paid')"></span>
                                 </td>
                                 <td class="px-5 py-3 text-right space-x-1 whitespace-nowrap">
-                                    <button @click="printReceipt(transaction, connectionType)" class="inline-flex items-center p-1.5 bg-brand-dark-600 text-gray-400 rounded-lg hover:bg-brand-dark-500 hover-glow">
+                                    <button @click="printReceipt(transaction)" class="inline-flex items-center p-1.5 bg-brand-dark-600 text-gray-400 rounded-lg hover:bg-brand-dark-500 hover-glow">
                                         <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                         </svg>
                                     </button>
                                     <button @click="confirmDelete(transaction)" class="inline-flex items-center p-1.5 bg-red-900/30 text-red-400 rounded-lg hover:bg-red-800/30 hover-glow">
                                         <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 0 00-1 1v3M4 7h16" />
                                         </svg>
                                     </button>
                                 </td>
@@ -427,21 +418,20 @@ System: 5 9h14l1 12H4L5 9z" />
 
                 <!-- Empty State -->
                 <div x-show="filteredTransactions.length === 0" class="text-center py-16">
-                    <div class="bg-brand-dark-700 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4 border border-brand-neon-teal/20">
+                    <div class="bg-brand-dark-700 rounded-full h-3 p-2 border-white border-radius-10">
                         <svg class="h-10 w-10 text-brand-neon-teal" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
                     <h3 class="font-['Orbitron'] text-xl font-bold text-white mb-2">Tidak Ada Transaksi</h3>
-                    <p class="text-gray-400 max-w-sm mx-auto text-sm">Belum ada transaksi yang tersedia atau sesuai dengan filter yang Anda tentukan.</p>
+                    <p class="text-gray-400 max-w-sm mx-auto text-sm">Belum ada transaksi yang tersedia atau sesuai dengan filter yang Anda tetapkan.</p>
                     <div class="mt-4">
-                        <button @click="resetFilters" class="btn-futuristic text-brand-dark-900 px-4 py-1.5 rounded-lg text-sm flex items-center mx-auto hover-glow">
+                        <button @click="resetFilters" class="btn-futuristic text-blue-900-dark-900 px-4 py-1.5 rounded-lg text-sm flex items-center mx-auto hover-glow">
                             <svg class="h-3 w-3 mr-1 text-brand-dark-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Reset Filter
-                        </button>
-                    </div>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Reset Filter
+                    </button>
                 </div>
             </div>
 
@@ -481,7 +471,7 @@ System: 5 9h14l1 12H4L5 9z" />
 
     <!-- Delete Confirmation Modal -->
     <div x-show="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50" x-cloak>
-        <div @click.away="showDeleteModal = false" class="card-futuristic rounded-lg max-w-sm w-full p-5 border slide-in">
+        <div @click.away="showDeleteModal = false" class="card-futuristic rounded-lg max-w-md w-full p-5 border slide-in">
             <div class="flex items-center mb-4">
                 <div class="bg-red-900/30 rounded-full p-2 mr-2">
                     <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -490,10 +480,10 @@ System: 5 9h14l1 12H4L5 9z" />
                 </div>
                 <div>
                     <h3 class="font-['Orbitron'] text-lg font-bold text-white">Konfirmasi Hapus</h3>
-                    <p class="text-gray-400 text-xs">Yakin ingin menghapus transaksi <span class="font-medium text-brand-neon-teal" x-text="transactionToDelete ? (transactionToDelete.invoice_number || ('TRX-' + transactionToDelete.id.toString().padStart(6, '0'))) : ''"></span>?</p>
+                    <p class="text-gray-400 text-sm">Yakin ingin menghapus transaksi <span class="font-medium text-brand-neon-teal" x-text="transactionToDelete ? (transactionToDelete.invoice_number || ('TRX-' + transactionToDelete.id.toString().padStart(6, '0'))) : ''"></span>?</p>
                 </div>
             </div>
-            <p class="text-gray-500 text-xs p-2 bg-brand-dark-700/30 rounded-lg mb-4 border border-brand-neon-teal/10">
+            <p class="text-gray-500 text-sm p-2 bg-brand-dark-700/30 rounded-lg mb-4 border border-brand-neon-teal/10">
                 Tindakan ini tidak dapat dibatalkan dan semua data terkait transaksi ini akan dihapus permanen.
             </p>
             <div class="flex justify-end space-x-2">
@@ -513,7 +503,7 @@ System: 5 9h14l1 12H4L5 9z" />
 
     <!-- Floating Print Button -->
     <div x-show="newTransactionId" class="fixed bottom-6 right-6" x-cloak>
-        <button @click="printReceipt({ id: newTransactionId }, connectionType)" class="flex items-center justify-center h-12 w-12 bg-brand-neon-teal text-brand-dark-900 rounded-full hover:bg-brand-neon-light hover-glow">
+        <button @click="printReceipt({ id: newTransactionId })" class="flex items-center justify-center h-12 w-12 bg-brand-neon-teal text-brand-dark-900 rounded-full hover:bg-brand-neon-light hover-glow">
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
@@ -528,7 +518,6 @@ System: 5 9h14l1 12H4L5 9z" />
                 filterDate: '',
                 paymentMethodFilter: '',
                 statusFilter: '',
-                connectionType: 'bluetooth', // Default ke Bluetooth
                 currentPage: 1,
                 perPage: 10,
                 sortColumn: 'id',
@@ -548,90 +537,16 @@ System: 5 9h14l1 12H4L5 9z" />
                     }
                 },
 
-                async printReceipt(transaction, connectionType) {
+                printReceipt(transaction) {
                     try {
-                        // Ambil data transaksi lengkap jika hanya ID yang tersedia
-                        let fullTransaction = transaction;
-                        if (!transaction.created_at) {
-                            const response = await fetch(`{{ url('/transactions') }}/${transaction.id}`);
-                            if (!response.ok) throw new Error('Gagal mengambil data transaksi');
-                            fullTransaction = await response.json();
+                        const printUrl = `{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id);
+                        const printWindow = window.open(printUrl, '_blank');
+                        if (!printWindow) {
+                            alert('Gagal membuka halaman cetak. Pastikan popup tidak diblokir oleh browser.');
                         }
-
-                        // Format struk
-                        const receipt = `
-Sepatu by Sovan
-----------------
-ID: TRX-${fullTransaction.id.toString().padStart(6, '0')}
-Tanggal: ${new Date(fullTransaction.created_at).toLocaleDateString('id-ID')}
-Pelanggan: ${fullTransaction.customer_name || 'Tanpa Nama'}
-Total: Rp ${new Intl.NumberFormat('id-ID').format(fullTransaction.final_amount || fullTransaction.total)}
-----------------
-Terima Kasih!
-                        `.replace(/\n/g, '\r\n') + '\x1B\x69'; // Perintah potong kertas (ESC/POS)
-
-                        // Pilih metode koneksi
-                        if (connectionType === 'bluetooth') {
-                            await this.printToBluetoothPrinter(receipt);
-                        } else if (connectionType === 'usb') {
-                            await this.printToUSBPrinter(receipt);
-                        } else {
-                            alert('Tipe koneksi tidak valid. Pilih "Bluetooth" atau "USB".');
-                        }
-                    } catch (error) {
-                        console.error('Gagal mencetak:', error);
-                        alert('Gagal mencetak struk. Pastikan printer terhubung dan dikonfigurasi dengan benar.');
-                    }
-                },
-
-                async printToBluetoothPrinter(receipt) {
-                    try {
-                        // Minta akses ke perangkat Bluetooth
-                        const device = await navigator.bluetooth.requestDevice({
-                            filters: [{ services: ['00001101-0000-1000-8000-00805f9b34fb'] }], // UUID untuk Serial Port (SPP)
-                            optionalServices: ['00001101-0000-1000-8000-00805f9b34fb']
-                        });
-
-                        // Hubungkan ke perangkat
-                        const server = await device.gatt.connect();
-                        const service = await server.getPrimaryService('00001101-0000-1000-8000-00805f9b34fb');
-                        const characteristic = await service.getCharacteristic('00001101-0000-1000-8000-00805f9b34fb');
-
-                        // Encode data
-                        const encoder = new TextEncoder();
-                        const data = encoder.encode(receipt);
-
-                        // Kirim data ke printer
-                        await characteristic.writeValue(data);
-                        console.log('Struk berhasil dicetak via Bluetooth');
-
-                        // Putuskan koneksi
-                        server.disconnect();
-                    } catch (error) {
-                        throw new Error('Gagal mencetak via Bluetooth: ' + error.message);
-                    }
-                },
-
-                async printToUSBPrinter(receipt) {
-                    try {
-                        // Minta akses ke perangkat USB
-                        const device = await navigator.usb.requestDevice({ filters: [] }); // Sesuaikan filter dengan vendorId printer Anda
-                        await device.open();
-                        await device.selectConfiguration(1);
-                        await device.claimInterface(0);
-
-                        // Encode data
-                        const encoder = new TextEncoder();
-                        const data = encoder.encode(receipt);
-
-                        // Kirim data ke printer (sesuaikan endpoint dengan printer Anda)
-                        await device.transferOut(1, data);
-                        console.log('Struk berhasil dicetak via USB');
-
-                        // Tutup koneksi
-                        await device.close();
-                    } catch (error) {
-                        throw new Error('Gagal mencetak via USB: ' + error.message);
+                    } catch (e) {
+                        console.error('Error membuka halaman cetak:', e);
+                        alert('Terjadi kesalahan saat mencoba mencetak struk.');
                     }
                 },
 
@@ -675,7 +590,6 @@ Terima Kasih!
 
                 resetFilters() {
                     this.filterDate = this.paymentMethodFilter = this.statusFilter = '';
-                    this.connectionType = 'bluetooth'; // Reset ke default
                     this.filterTransactions();
                 },
 
