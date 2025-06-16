@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -188,6 +187,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 0.5rem;
         }
 
         .price-info .price span {
@@ -300,13 +300,16 @@
 
                 <!-- Right Column - Product Details -->
                 <div>
-                    
                     <!-- Price Information -->
                     <div class="price-info">
                         <h2>Informasi Harga</h2>
                         <div class="price">
                             <span style="color: #d1d5db;">Harga Jual</span>
                             <span>Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="price">
+                            <span style="color: #d1d5db;">Harga Diskon</span>
+                            <span>{{ $product->discount_price ? 'Rp ' . number_format($product->discount_price, 0, ',', '.') : '-' }}</span>
                         </div>
                     </div>
 

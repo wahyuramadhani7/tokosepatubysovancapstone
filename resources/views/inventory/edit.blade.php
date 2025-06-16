@@ -14,7 +14,7 @@
                 <h1 class="text-2xl font-bold text-white">EDIT PRODUK</h1>
             </div>
 
-            <form action="{{ route('inventory.update', $product->id) }}" method="POST">
+            <form action="{{ route('inventory.update', $product->id) }}" method="POST" id="edit-product-form">
                 @csrf
                 @method('PUT')
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -72,6 +72,16 @@
                         @enderror
                     </div>
 
+                    <!-- Harga Diskon -->
+                    <div>
+                        <label for="discount_price" class="block text-sm font-medium text-white mb-1">Harga Diskon (Opsional)</label>
+                        <input type="number" step="0.01" name="discount_price" id="discount_price" class="block w-full p-3 border-0 rounded-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('discount_price') border-red-500 @enderror" value="{{ old('discount_price', $product->discount_price) }}">
+                        @error('discount_price')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                        <p class="text-gray-400 text-sm mt-1">Harga diskon harus lebih kecil atau sama dengan harga jual.</p>
+                    </div>
+
                     <!-- Harga Beli (Purchase Price) -->
                     <div>
                         <label for="purchase_price" class="block text-sm font-medium text-white mb-1">Harga Beli</label>
@@ -91,4 +101,46 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('edit-product-form');
+        const sellingPriceInput = document.getElementById('selling_price');
+        const discountPriceInput = document.getElementById('discount_price');
+
+        form.addEventListener('submit', function(e) {
+            const sellingPrice = parseFloat(sellingPriceInput.value) || 0;
+            const discountPrice = parseFloat(discountPriceInput.value) || 0;
+
+            if (discountPrice > sellingPrice) {
+                e.preventDefault();
+                discountPriceInput.classList.add('border-red-500');
+                const errorMessage = document.createElement('p');
+                errorMessage.className = 'text-red-500 text-sm mt-1';
+                errorMessage.textContent = 'Harga diskon tidak boleh lebih besar dari harga jual.';
+                const existingError = discountPriceInput.nextElementSibling;
+                if (existingError && existingError.tagName === 'P') {
+                    existingError.remove();
+                }
+                discountPriceInput.parentElement.appendChild(errorMessage);
+            }
+        });
+
+        discountPriceInput.addEventListener('input', function() {
+            const sellingPrice = parseFloat(sellingPriceInput.value) || 0;
+            const discountPrice = parseFloat(this.value) || 0;
+            const errorElement = this.nextElementSibling;
+
+            if (errorElement && errorElement.tagName === 'P' && errorElement.className.includes('text-red-500')) {
+                errorElement.remove();
+            }
+
+            if (discountPrice > sellingPrice) {
+                this.classList.add('border-red-500');
+            } else {
+                this.classList.remove('border-red-500');
+            }
+        });
+    });
+</script>
 @endsection

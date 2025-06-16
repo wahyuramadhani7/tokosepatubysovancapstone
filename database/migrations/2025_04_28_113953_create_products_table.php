@@ -23,6 +23,7 @@ return new class extends Migration
                 $table->integer('physical_stock')->default(0); // Set default 0
                 $table->decimal('purchase_price', 10, 2);
                 $table->decimal('selling_price', 10, 2);
+                $table->decimal('discount_price', 10, 2)->nullable()->after('selling_price'); // Added discount_price
                 $table->string('color');
                 $table->timestamps();
             });
@@ -43,6 +44,14 @@ return new class extends Migration
                     $table->integer('physical_stock')->default(0);
                 });
             }
+
+            // Check if discount_price column exists, if not, add it
+            if (!Schema::hasColumn('products', 'discount_price')) {
+                Schema::table('products', function (Blueprint $table) {
+                    $table->decimal('discount_price', 10, 2)->nullable()->after('selling_price');
+                });
+                Log::info('Added discount_price column to products table.');
+            }
         }
 
         // Update existing records to ensure physical_stock is set to stock or 0
@@ -62,7 +71,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('physical_stock');
+            $table->dropColumn(['physical_stock', 'discount_price']);
         });
     }
 };

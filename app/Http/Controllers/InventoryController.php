@@ -52,6 +52,7 @@ class InventoryController extends Controller
             'size' => 'required|string|max:50',
             'stock' => 'required|integer|min:0',
             'selling_price' => 'required|numeric|min:0',
+            'discount_price' => 'nullable|numeric|min:0|lte:selling_price', // Optional, must be <= selling_price
         ]);
 
         DB::beginTransaction();
@@ -63,8 +64,9 @@ class InventoryController extends Controller
                 'stock' => $validated['stock'],
                 'purchase_price' => 0,
                 'selling_price' => $validated['selling_price'],
+                'discount_price' => $validated['discount_price'] ?? null,
                 'color' => $validated['color'],
-                'physical_stock' => $validated['stock'],
+                'physical_stock' => $validated['stock'], // Initial physical stock matches stock
             ]);
 
             Log::info('Product created: ID ' . $product->id);
@@ -116,8 +118,9 @@ class InventoryController extends Controller
             'color' => $product->color,
             'size' => $product->size,
             'selling_price' => $product->selling_price,
+            'discount_price' => $product->discount_price,
             'stock' => $product->stock,
-            'physical_stock' => $product->physical_stock ?? 0,
+            'physical_stock' => $product->physical_stock ?? 0, // Ensure default to 0 if null
         ], 200);
     }
 
@@ -157,6 +160,7 @@ class InventoryController extends Controller
             'stock' => 'required|integer|min:0',
             'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
+            'discount_price' => 'nullable|numeric|min:0|lte:selling_price', // Optional, must be <= selling_price
             'color' => 'required|string|max:255',
         ]);
 
@@ -169,8 +173,9 @@ class InventoryController extends Controller
                 'stock' => $validated['stock'],
                 'purchase_price' => $validated['purchase_price'],
                 'selling_price' => $validated['selling_price'],
+                'discount_price' => $validated['discount_price'] ?? null,
                 'color' => $validated['color'],
-                'physical_stock' => $product->physical_stock ?? $validated['stock'],
+                'physical_stock' => $product->physical_stock ?? $validated['stock'], // Preserve or initialize physical_stock
             ]);
 
             Log::info('Product updated: ID ' . $product->id);
@@ -186,7 +191,7 @@ class InventoryController extends Controller
     }
 
     /**
-     * Update the physical stock of a product.
+     * Update the physical stock of a product based on stock verification.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\Product  $product
@@ -201,43 +206,42 @@ class InventoryController extends Controller
 
         $validated = $request->validate([
             'physical_stock' => 'required|integer|min:0',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         DB::beginTransaction();
 
         try {
-            // Explicitly update physical_stock
-            $updated = $product->update([
-                'physical_stock' => $validated['physical_stock'],
-            ]);
-
-            if (!$updated) {
-                throw new \Exception('Failed to update physical_stock in the database');
-            }
-
-            // Reload the model to ensure the updated value is reflected
-            $product->refresh();
+            // Update physical_stock in the products table
+            Log::debug('Attempting to update physical_stock for product ID ' . $product->id . ' with value: ' . $validated['physical_stock']);
+            $product->update(['physical_stock' => $validated['physical_stock']]);
+            $product->refresh(); // Ensure the updated value is loaded
 
             // Verify the update
-            Log::info('Physical stock updated for product ID ' . $product->id . ' to: ' . $product->physical_stock);
+            $updatedProduct = Product::find($product->id);
+            $discrepancy = $product->stock - $validated['physical_stock'];
 
-            // Create stock verification record
-            StockVerification::create([
+            // Create a stock verification record
+            $stockVerification = StockVerification::create([
                 'product_id' => $product->id,
                 'system_stock' => $product->stock,
                 'physical_stock' => $validated['physical_stock'],
-                'discrepancy' => $product->stock - $validated['physical_stock'],
-                'notes' => $request->input('notes', 'Stock verification via QR scan'),
-                'user_id' => Auth::id(),
+                'discrepancy' => $discrepancy,
+                'notes' => $validated['notes'] ?? 'Stock verification via QR scan',
+                'user_id' => Auth::id() ?? 1, // Default to 1 if no authenticated user
             ]);
+
+            Log::info('Physical stock updated for product ID ' . $product->id . ' to: ' . $updatedProduct->physical_stock);
+            Log::info('Stock verification record created for product ID ' . $product->id . ' with physical_stock: ' . $stockVerification->physical_stock);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Stok fisik berhasil diperbarui',
-                'physical_stock' => $product->physical_stock,
-                'product_id' => $product->id
+                'physical_stock' => $updatedProduct->physical_stock,
+                'product_id' => $product->id,
+                'discrepancy' => $discrepancy,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -259,10 +263,20 @@ class InventoryController extends Controller
             return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
         }
 
-        $product->delete();
-        Log::info('Product deleted: ID ' . $product->id);
+        DB::beginTransaction();
 
-        return redirect()->route('inventory.index')->with('success', 'Produk berhasil dihapus');
+        try {
+            $product->delete();
+            Log::info('Product deleted: ID ' . $product->id);
+
+            DB::commit();
+
+            return redirect()->route('inventory.index')->with('success', 'Produk berhasil dihapus');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting product: ' . $e->getMessage());
+            return redirect()->route('inventory.index')->with('error', 'Terjadi kesalahan, produk gagal dihapus: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -282,7 +296,7 @@ class InventoryController extends Controller
         $products = Product::where('name', 'like', "%{$keyword}%")
             ->orWhere('color', 'like', "%{$keyword}%")
             ->orWhere('size', 'like', "%{$keyword}%")
-            ->select('id', 'name', 'size', 'color', 'stock', 'selling_price', 'physical_stock')
+            ->select('id', 'name', 'size', 'color', 'stock', 'selling_price', 'discount_price', 'physical_stock')
             ->paginate(10);
 
         Log::info('Search performed with keyword: ' . $keyword . ', found: ' . $products->count());

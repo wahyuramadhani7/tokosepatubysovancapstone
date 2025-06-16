@@ -17,12 +17,14 @@ class Product extends Model
         'stock',
         'purchase_price',
         'selling_price',
+        'discount_price',
     ];
 
     public function transactionItems()
     {
         return $this->hasMany(TransactionItem::class);
     }
+
     public function stockVerifications()
     {
         return $this->hasMany(StockVerification::class, 'product_id');
