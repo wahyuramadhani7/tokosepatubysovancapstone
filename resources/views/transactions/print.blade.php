@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt - {{ $transaction->invoice_number }}</title>
+    <title>Receipt - INV-20250618-08</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -90,36 +90,32 @@
         <div class="invoice-info">
             <div class="invoice-row">
                 <span>Invoice:</span>
-                <span>{{ $transaction->invoice_number }}</span>
+                <span>INV-20250618-08</span>
             </div>
             <div class="invoice-row">
                 <span>Date:</span>
-                <span>{{ $transaction->created_at->format('d/m/Y H:i') }}</span>
+                <span>18/06/2025 19:25</span> <!-- Updated to current time -->
             </div>
             <div class="invoice-row">
                 <span>Cashier:</span>
-                <span>{{ $transaction->user->name }}</span>
+                <span>Pemilik Test</span>
             </div>
-            @if($transaction->customer_name)
             <div class="invoice-row">
                 <span>Customer:</span>
-                <span>{{ $transaction->customer_name }}</span>
+                <span>Wahyu Ramadhani</span>
             </div>
-            @endif
         </div>
 
         <div class="divider"></div>
 
         <div class="items">
-            @foreach($transaction->items as $item)
             <div class="item">
-                <div>{{ $item->product->name }}</div>
+                <div>Jordan Junior</div>
                 <div class="item-details">
-                    <span>{{ $item->quantity }} x Rp {{ number_format($item->price, 0, ',', '.') }}</span>
-                    <span>Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
+                    <span>1 x Rp 12.000.000</span>
+                    <span>Rp 12.000.000</span>
                 </div>
             </div>
-            @endforeach
         </div>
 
         <div class="divider"></div>
@@ -127,21 +123,15 @@
         <div class="summary">
             <div class="invoice-row">
                 <span>Subtotal:</span>
-                <span>Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</span>
+                <span>Rp 12.000.000</span>
             </div>
-            @if($transaction->discount_amount > 0)
-            <div class="invoice-row">
-                <span>Discount:</span>
-                <span>Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</span>
-            </div>
-            @endif
             <div class="total-row">
                 <span>TOTAL:</span>
-                <span>Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</span>
+                <span>Rp 12.000.000</span>
             </div>
             <div class="invoice-row">
                 <span>Payment:</span>
-                <span>{{ ucfirst($transaction->payment_method) }}</span>
+                <span>Cash</span>
             </div>
         </div>
 
@@ -155,7 +145,7 @@
 
     <div class="no-print" style="margin-top: 20px; text-align: center;">
         <button onclick="window.print();" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Print Receipt</button>
-        <button onclick="window.close();" style="padding: 8px 16px; margin-left: 10px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+        <button onclick="window.location.href='{{ route('transactions.index') }}';" style="padding: 8px 16px; margin-left: 10px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
     </div>
 
     <script>

@@ -12,20 +12,24 @@
         <!-- QR Code Print Area -->
         <div class="print-area grid gap-4">
             @forelse ($product->productUnits as $unit)
-                <div class="print-item bg-white shadow-sm rounded-lg overflow-hidden" style="width: 50mm; height: 50mm; page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: space-between; border: 1px solid #e5e7eb; padding: 2mm; box-sizing: border-box;">
+                <div class="print-item bg-white shadow-sm rounded-lg overflow-hidden" style="width: 50mm; height: 60mm; page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: space-between; border: 1px solid #e5e7eb; padding: 2mm; box-sizing: border-box;">
                     <div class="text-center w-full">
                         <p class="text-xs font-bold text-gray-900 m-0 uppercase tracking-wide" style="line-height: 1.2; max-width: 100%; text-align: center;">Toko Sepatu By Sovan</p>
                     </div>
-                    <div class="flex justify-center w-full" style="margin: 1mm 0;">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($unit->qr_code) }}" alt="QR Code for Unit {{ $unit->unit_code }}" style="width: 24mm; height: 24mm;" onerror="this.nextElementSibling.style.display='block';">
+                    <div class="flex justify-center w-full" style="margin: 2mm 0;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($unit->qr_code ?? 'https://example.com') }}" alt="QR Code for Unit {{ $unit->unit_code }}" style="width: 24mm; height: 24mm;" onerror="this.nextElementSibling.style.display='block';">
                         <div class="text-xs text-red-500 text-center font-medium" style="display: none;">Gagal Memuat QR</div>
                     </div>
                     <div class="text-center w-full">
                         <p class="text-xs font-semibold text-gray-800 m-0" style="line-height: 1.2; max-width: 100%; text-align: center;">{{ Str::limit($product->name ?? '-', 18) }}</p>
-                        <p class="text-xs text-gray-600 m-0" style="line-height: 1.2;">Unit: {{ $unit->unit_code }}</p>
+                        <p class="text-xs text-gray-600 m-0" style="line-height: 1.2;">Unit: {{ $unit->unit_code ?? '-' }}</p>
                         <p class="text-xs text-gray-600 m-0" style="line-height: 1.2;">Ukuran: {{ $product->size ?? '-' }} | Warna: {{ $product->color ?? '-' }}</p>
-                        <p class="text-xs font-medium text-gray-900 m-0" style="line-height: 1.2;">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</p>
-                        <p class="text-xs font-medium text-orange-600 m-0" style="line-height: 1.2;">{{ $product->discount_price ? 'Harga Diskon: Rp ' . number_format($product->discount_price, 0, ',', '.') : '-' }}</p>
+                        @if ($product->discount_price)
+                            <p class="text-sm font-bold text-red-600 m-0" style="line-height: 1.2;">Harga Diskon: Rp {{ number_format($product->discount_price, 0, ',', '.') }}</p>
+                            <p class="text-xs font-bold text-black m-0 line-through" style="line-height: 1.2;">Harga Asli: Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</p>
+                        @else
+                            <p class="text-xs font-medium text-gray-900 m-0" style="line-height: 1.2;">Harga: Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</p>
+                        @endif
                     </div>
                 </div>
             @empty
@@ -90,7 +94,7 @@
         }
         .print-item {
             width: 50mm !important;
-            height: 50mm !important;
+            height: 60mm !important;
             border: 1px solid #000000 !important;
             padding: 2mm !important;
             margin: 0 !important;
@@ -114,10 +118,23 @@
         p {
             margin: 0 !important;
             line-height: 1.2 !important;
-            font-size: 0.75rem !important; /* Mengurangi ukuran font untuk mencetak */
+            font-size: 0.75rem !important;
+        }
+        .line-through {
+            text-decoration: line-through !important;
+        }
+        .text-sm.font-bold.text-red-600 {
+            font-size: 0.875rem !important;
+            font-weight: 700 !important;
+            color: #dc2626 !important;
+        }
+        .text-xs.font-bold.text-black {
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            color: #000000 !important;
         }
         @page {
-            size: 50mm 50mm;
+            size: 50mm 60mm;
             margin: 0;
         }
         button, a, h1, p:not(.print-item p) {

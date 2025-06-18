@@ -9,8 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700" rel="stylesheet">
     <style>
         [x-cloak] { display: none !important; }
-
-        /* Futuristic background with dynamic gradient */
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #1a202c 100%), url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
@@ -21,8 +19,6 @@
             padding-top: 5rem;
             position: relative;
         }
-
-        /* Dark overlay for contrast */
         body::before {
             content: '';
             position: absolute;
@@ -33,15 +29,11 @@
             background: rgba(26, 32, 44, 0.7);
             z-index: -1;
         }
-
-        /* Smooth hover animation */
         .hover-glow:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(79, 209, 197, 0.3);
             transition: all 0.3s ease;
         }
-
-        /* Futuristic button style */
         .btn-futuristic {
             background: linear-gradient(90deg, #4fd1c5, #81e6d9);
             color: #1a202c;
@@ -72,14 +64,10 @@
         .btn-futuristic:hover::after {
             left: 100%;
         }
-
-        /* Header with sleek gradient */
         .bg-futuristic-header {
             background: linear-gradient(180deg, rgba(26, 32, 44, 0.95), rgba(79, 209, 197, 0.1));
             border-bottom: 1px solid #4fd1c5;
         }
-
-        /* Card with neon accent */
         .card-futuristic {
             background: rgba(45, 55, 72, 0.8);
             backdrop-filter: blur(10px);
@@ -91,8 +79,6 @@
             transform: translateY(-3px);
             border-color: rgba(79, 209, 197, 0.4);
         }
-
-        /* Status badges with neon colors */
         .status-badge {
             padding: 0.4rem 1.2rem;
             border-radius: 9999px;
@@ -127,8 +113,6 @@
             color: #bee3f8;
             border-color: rgba(66, 153, 225, 0.2);
         }
-
-        /* Custom scrollbar with neon theme */
         .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
         }
@@ -143,8 +127,6 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #81e6d9;
         }
-
-        /* Inputs with sleek design */
         input, select {
             background: rgba(45, 55, 72, 0.8);
             border: 1px solid rgba(79, 209, 197, 0.3);
@@ -156,13 +138,9 @@
             border-color: #4fd1c5;
             box-shadow: 0 0 5px rgba(79, 209, 197, 0.5);
         }
-
-        /* Table row hover effect */
         tbody tr:hover {
             background: rgba(79, 209, 197, 0.1) !important;
         }
-
-        /* Slide-in animation */
         .slide-in {
             animation: slideIn 0.5s ease-out;
         }
@@ -170,8 +148,6 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Print styles */
         @media print {
             body * { visibility: hidden; }
             .print-section, .print-section * { visibility: visible; }
@@ -208,7 +184,7 @@
         }
     </script>
 </head>
-<body class="min-h-screen custom-scrollbar" x-data="transactionListApp()">
+<body class="min-h-screen custom-scrollbar" x-data="transactionListApp()" x-init="init()">
     <!-- Header/Navigation -->
     <header class="fixed top-0 w-full bg-futuristic-header text-white z-50">
         <div class="container mx-auto px-6 py-3 flex justify-between items-center">
@@ -237,7 +213,7 @@
     <main class="container mx-auto px-6 py-12 max-w-7xl">
         <!-- Success Alert -->
         @if(session('success'))
-        <div class="mb-6 bg-brand-dark-800 border border-brand-neon-teal/20 text-white p-4 rounded-lg slide-in flex items-center justify-between" role="alert">
+        <div class="mb-6 bg-brand-dark-800 border border-brand-neon-teal/20 text-white p-4 rounded-lg slide-in flex items-center justify-between" role="alert" x-ref="successAlert">
             <div class="flex items-center">
                 <div class="bg-brand-neon-teal rounded-full p-1.5 mr-2">
                     <svg class="h-5 w-5 text-brand-dark-900" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -247,14 +223,33 @@
                 <p class="font-medium text-sm">{{ session('success') }}</p>
             </div>
             @if(session('transaction_id'))
-            <button @click="printReceipt({ id: newTransactionId })" class="text-sm text-brand-dark-900 bg-brand-neon-teal hover:bg-brand-neon-light px-4 py-1.5 rounded-lg flex items-center font-medium hover-glow">
+            <a href="{{ route('transactions.print', session('transaction_id')) }}" class="text-sm text-brand-dark-900 bg-brand-neon-teal hover:bg-brand-neon-light px-4 py-1.5 rounded-lg flex items-center font-medium hover-glow">
                 <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
                 Cetak Struk
-            </button>
+            </a>
             @endif
             <button @click="dismissAlert" class="text-brand-neon-light hover:text-brand-neon-teal p-1.5 rounded-full hover:bg-brand-dark-700">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+        @endif
+
+        <!-- Error Alert -->
+        @if(session('error'))
+        <div class="mb-6 bg-red-900/30 border border-red-300/20 text-white p-4 rounded-lg slide-in flex items-center justify-between" role="alert" x-ref="errorAlert">
+            <div class="flex items-center">
+                <div class="bg-red-400 rounded-full p-1.5 mr-2">
+                    <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <p class="font-medium text-sm">{{ session('error') }}</p>
+            </div>
+            <button @click="dismissAlert" class="text-red-300 hover:text-red-400 p-1.5 rounded-full hover:bg-red-800/30">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
@@ -400,311 +395,320 @@
                                 </td>
                                 <td class="px-5 py-3 whitespace-nowrap">
                                     <span class="status-badge" :class="{
-                                        'bg-teal-900/50 text-teal-300 border-teal-200/20/30': transaction.payment_status === 'paid',
+                                        'bg-teal-900/50 text-teal-300 border-teal-200/20': transaction.payment_status === 'paid',
                                         'bg-yellow-900/50 text-yellow-300 border-yellow-200/20': transaction.payment_status === 'pending',
                                         'bg-red-900/50 text-red-300 border-red-200/20': transaction.payment_status === 'cancelled'
                                     }" x-text="translateStatus(transaction.payment_status)"></span>
                                 </td>
                                 <td class="px-5 py-3 text-right whitespace-nowrap space-x-1">
-                                    <a href="{{ route('transactions.show', ['transaction' => ':id']) }}" x-bind:href="`{{ route('transactions.show', ['transaction' => ':id']) }}`.replace(':id', transaction.id)" class="inline-flex items-center p-1.5 bg-blue-900/20 text-blue-400 rounded-lg hover:bg-blue-800/30 hover-glow">
-                                        <svg class="h-3 w-3" viewBox="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 0116 0zM2" d="m2.1 9a1 1 0 0 100 2h2a1 1 0 100-2H2m7-7a9 9 0 009 9 0 009-9 0 009-9H7z" />
-                                    </svg>
-                                    <button @click="printReceipt(transaction)" class="inline-flex items-center p-1.5 bg-gray-900/20 text-gray-400 rounded-lg hover:bg-gray-800/30 hover-glow">
-                                        <svg class="h-3 w-3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 2 0 002-2v-4a2 2 0 0 00-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2-2H9a2 2 0 0 00-2 2v4h10z" />
+                                    <a :href="getShowUrl(transaction.id)" class="inline-flex items-center p-1.5 bg-blue-900/20 text-blue-400 rounded-lg hover:bg-blue-800/30 hover-glow">
+                                        <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.1 9a1 1 0 100 2h2a1 1 0 100-2H2m7-7a9 9 0 009 9 9 9 0 009-9H7z" />
+                                        </svg>
+                                    </a>
+                                    <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id)" class="inline-flex items-center p-1.5 bg-gray-900/20 text-gray-400 rounded-lg hover:bg-gray-800/30 hover-glow">
+                                        <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                        </svg>
+                                    </a>
+                                    <button @click="confirmDelete(transaction)" class="inline-flex items-center p-1.5 bg-red-900/30 text-red-400 rounded-lg hover:bg-red-800/30 hover-glow">
+                                        <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
                                     </button>
-                                    <button @click="confirmDelete(transaction)" class="inline-flex items-center p-1.5 bg-red-900/30 text-red-400 rounded-lg hover:bg-red-800/30 hover-glow">
-                                        <svg class="h-3 w-3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke="m2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h4a1-1 0 0-4-1 0 0 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </td>
+                                </td>
+                            </tr>
                         </template>
                     </tbody>
-                <!-- Empty State -->
-                <div x-show="filteredTransactions.length === 0" class="text-center py-8">
-                    <div class="bg-brand-dark-700 rounded-full p-16 h-3">
-                        <svg class="h-600 w-600" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke="1.5" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m4-4v6m4a1-2 2 0 4-2 a1-2 2 0 1 2 a1-2 h5 5.586 a1 m5.586 a1-1 a1 0 0 01.707.293 a1 m5.414 5.414a1 1 0 0 1.4 0 0.293.707V a1 m9 a2 0 2-2 a1-2 2 0 a2 0 0 0-2-2-2 z" />
-                        </svg>
-                    </div>
-                    <h3 "class="font-['Orbitron'] text-lg font-medium text-white mb-2">Tidak Ada Transaksi</h3>
-                    <p class="text-gray-500 text-sm max-w-sm mx-auto">Belum ada transaksi yang tersedia atau sesuai dengan filter yang Anda tetapkan.</p>
-                    <div class="mt-4">
-                        <button @click="resetFilters" class="px-4 py-4 rounded-lg btn-futuristic text-sm2 flex items-center mx-auto">
-                            <svg class="h-4 w-3 mr-1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke="2" stroke-linecap="round" stroke="round" stroke-linejoin="round" stroke-width="2" d="M4 4m4m4v5 h4v5 h.582 a1 m5.582 m15.356 2 a1 m5.356 A2 0 0 0 4 4.582 9 a1 m4 0 a0 H9 a1 m9 11 a1 m2 m5 h a1-.581 a m5 m0 a0 0 a0 a1-15.357-2 a1 m2 m15.357 m0 a1 a2 H2 m0 H15" />
-                            Reset Filter
-                        </div>
+                    <!-- Empty State -->
+                    <tbody x-show="filteredTransactions.length === 0" class="text-center py-8">
+                        <tr>
+                            <td colspan="7">
+                                <div class="bg-brand-dark-700 rounded-full p-4 inline-block">
+                                    <svg class="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <h3 class="font-['Orbitron'] text-lg font-medium text-white mb-2">Tidak Ada Transaksi</h3>
+                                <p class="text-gray-500 text-sm max-w-sm mx-auto">Belum ada transaksi yang tersedia atau sesuai dengan filter yang Anda tetapkan.</p>
+                                <div class="mt-4">
+                                    <button @click="resetFilters" class="px-4 py-2 rounded-lg btn-futuristic text-sm flex items-center mx-auto">
+                                        <svg class="h-4 w-4 mr-1.5 text-brand-dark-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Reset Filter
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div x-show="filteredTransactions.length > 0" class="flex items-center justify-between p-4 bg-brand-dark-800 border-t border-brand-neon-teal/10">
+                <div class="text-sm text-gray-400">
+                    Menampilkan <span class="font-medium text-white" x-text="paginationFrom()"></span> - <span x-text="paginationTo()"></span> dari <span class="font-medium text-white" x-text="filteredTransactions.length"></span> transaksi
                 </div>
-
-                <!-- Pagination -->
-                <div x-show="filteredTransactions.length > 0" class="flex items-center justify-between p-4 bg-brand-dark-800 py-4 border-top bg-gray-800/30 border-t border-brand-neon-teal/10">
-                    <div class="text-gray-12 md-m-0 text-sm" xsm>
-                        Menampilkan <span class="font-medium text-white font-sm" xsm:text="paginationFrom()"></span> - <span xsm:text="paginationTo()"></span> dari <span class="font-medium text-white font-sm" xsm:text="filteredTransactions().length"></span> transaksi
+                <div class="flex items-center space-x-2">
+                    <div class="mr-2">
+                        <select x-model.number="perPage" class="px-2 py-3 rounded-lg bg-gray-700 border border-gray-200/20 text-gray-400 text-sm">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
                     </div>
-                    <div class="flex items-center items-x-1">
-                        <div class="mr-2">
-                            <select x-model="perPage.number" x-model.number="perPage" class="px-2 py-2 border rounded-lg bg-gray-700 border-gray-200 text-gray-400 border-gray-200/20 py-3 bg-gray-50 text-sm">
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                              </select>
-                            </div>
-                        <div class="flex items-x-2">
-                            <button @click="prevPage ? prevPage : ''" :disabled="page === 1 ? currentPage : 1" class="px-2 py-1 border rounded-lg bg-gray-200" :class="pxDisabled ? {'opacity-50 cursor-not-allowed': page === 1 ? 'currentPage' : 1, 'px-2 hover:bg-2 py-1 bg-gray-200 hover-bg-gray-600 border-gray-bg600 hover:bg-gray-300': page !== currentPage }">
-                            <svg class="h-4 w-4 text-gray-400" viewBox="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" h="4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke="none" stroke-linecap="round" stroke="round" stroke-linejoin="round" stroke-width="2" d="M15 15L-7 7 7-7 7" />
+                    <div class="flex space-x-1">
+                        <button @click="prevPage" :disabled="currentPage === 1" class="px-2 py-1 border rounded-lg bg-gray-700 hover:bg-gray-600 border-gray-200/20" :class="{'opacity-50 cursor-not-allowed': currentPage === 1}">
+                            <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
-                            <template x-for="page in inPages()" : page :key="page.id">
-                            <button x-show="page !== '...'" : page !== '...' ? page : 0" @click="goToPage(page)" class="px-3 py-1 border rounded-lg py-1 bg-gray-300" :class="page === currentPage ? '' : currentPage ? 'bg-blue-2 px-3 py-blue-1 bg-blue-2 rounded-lg bg-blue-600 py-blue-600 text-blue-100 bg-blue-100/10' : 'px bg-3 py-gray-1 bg-gray-300 bg-gray-100 py-gray-100/10 text-gray-300 hover:bg-gray-400 py-gray-400'">
+                        </button>
+                        <template x-for="page in displayedPages()" :key="page">
+                            <button x-show="page !== '…'" @click="goToPage(page)" class="px-3 py-1 border rounded-lg bg-gray-700 hover:bg-gray-600 border-gray-200/20" :class="{'bg-blue-600 text-white': page === currentPage}">
                                 <span x-text="page"></span>
                             </button>
-                            <span x-show="page === '...'" class="px-3 px-2 py-1 text-gray-300">...</span>
-                            <button @click="nextPage ? nextPage : ''" :disabled="page >= totalPages ? totalPages : page" class="px-2 py-1 border rounded-lg bg-gray-200" :class="px-2 py-1 border-gray-px py-gray-1 bg-gray-200/60 py-gray-600 border-gray-bg600 py-gray-300': 'px-2 py-1 bg-gray-200' : page < totalPages }">
-                            <svg class="h-4 w-4" viewBox="0 0 24 24" h="h4" viewBox="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" w="w4" fill="none" viewBox="0 0 24" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke="round" stroke-linejoin="round" stroke-width="2" stroke="none" d="M9 9 5 5 L7 7-7 4" />
-                            }
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Delete Confirmation Modal -->
-                <div x-show="showDeleteModal" class="modal fade modal-fixed inset-x-0" class="fixed inset-bg0 bg-black-100 bg-opacity-50 flex" items-center justify-contentcenter justify-center z-10050" x-cloak="xcloak">
-                    <div @click="modal fade showDeleteModal = "false" class="modal-dialog modal-md bg-gray-800 p-6 rounded-lg" class="card rounded-lg max-w-md mx-auto w-full p-6 bg-gray-100">
-                        <div class="modal-content">
-                            <div class="modal-header flex items-center mb-3">
-                                <div class="bg-red-100 rounded-full p-2">
-                                    <svg class="h-5 w-5" viewBox="h-5 w-4" xmlns="http://www.w3.org/svg2000/svg" viewBox="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke="none" stroke-linecap="round" stroke="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            <span x-show="page === '…'" class="px-3 py-1 text-gray-400">…</span>
+                        </template>
+                        <button @click="nextPage" :disabled="currentPage >= totalPages" class="px-2 py-1 border rounded-lg bg-gray-700 hover:bg-gray-600 border-gray-200/20" :class="{'opacity-50 cursor-not-allowed': currentPage >= totalPages}">
+                            <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
-                        </div>
-                        <div class="ml-2">
-                            <h3 class="font-bold text-lg">Konfirmasi Hapus</h3>
-                            <p class="text-gray-500">Yakin ingin menghapus transaksi <span class="font-bold text-blue-600" x-text="transactionToDelete ? transactionToDelete.invoice_number : ''"></span>?</p>
-                        </div>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-gray-500 p-2 bg-gray-100/10 rounded mb-3">Tindakan ini tidak dapat dibatalkan dan semua data terkait transaksi ini akan dihapus permanen.</p>
-                    </div>
-                    <div class="modal-footer flex justify-end space-x-2">
-                        <button @click="showDeleteModal = false" class="px-4 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">Batal</button>
-                        <form :action="'{{ url('/transactions') }}/' + (transactionToDelete ? transactionToDelete.id : '')" method="POST">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="px-4 py-1 bg-red-600 hover:bg-red-700 text-white rounded">Hapus Transaksi</button>
-                        </form>
+                        </button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Floating Print Button -->
-            <div x-show="newTransactionId" class="fixed bottom-6 right-6" x-cloak>
-                <button @click="printReceipt({ id: newTransactionId })" class="flex items-center justify-center h-12 w-12 bg-brand-neon-teal text-brand-dark-900 rounded-full hover:bg-brand-neon-light hover-glow">
-                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                </button>
+        <!-- Delete Confirmation Modal -->
+        <div x-show="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-cloak>
+            <div class="card-futuristic rounded-lg max-w-md mx-auto w-full p-6">
+                <div class="flex items-center mb-3">
+                    <div class="bg-red-900/30 rounded-full p-2">
+                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div class="ml-2">
+                        <h3 class="font-bold text-lg text-white">Konfirmasi Hapus</h3>
+                        <p class="text-gray-400">Yakin ingin menghapus transaksi <span class="font-bold text-brand-neon-teal" x-text="transactionToDelete ? transactionToDelete.invoice_number : ''"></span>?</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-400 p-2 bg-brand-dark-700/30 rounded mb-3">Tindakan ini tidak dapat dibatalkan dan semua data terkait transaksi ini akan dihapus permanen.</p>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button @click="showDeleteModal = false" class="px-4 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg">Batal</button>
+                    <form :action="getDeleteUrl()" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-4 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg">Hapus Transaksi</button>
+                    </form>
+                </div>
             </div>
+        </div>
 
-            <script>
-                function transactionListApp() {
-                    return {
-                        transactions: @json($transactions->items()),
-                        filteredTransactions: [],
-                        filterDate: '',
-                        paymentMethodFilter: '',
-                        statusFilter: '',
-                        currentPage: {{ $transactions->currentPage() }},
-                        perPage: {{ $transactions->perPage() }},
-                        sortColumn: 'id',
-                        sortDirection: 'desc',
-                        showDeleteModal: false,
-                        transactionToDelete: null,
-                        newTransactionId: @json(session('transaction_id')),
+        <!-- Floating Print Button -->
+        <div x-show="newTransactionId" class="fixed bottom-6 right-6" x-cloak>
+            <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', newTransactionId)" class="flex items-center justify-center h-12 w-12 bg-brand-neon-teal text-brand-dark-900 rounded-full hover:bg-brand-neon-light hover-glow">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+            </a>
+        </div>
 
-                        init() {
-                            this.filteredTransactions = [...this.transactions];
-                            if (this.newTransactionId) {
-                                this.$nextTick(() => this.highlightNewTransaction());
-                            }
-                        },
+        <script>
+            function transactionListApp() {
+                return {
+                    transactions: @json($transactions->items()),
+                    filteredTransactions: [],
+                    filterDate: '',
+                    paymentMethodFilter: '',
+                    statusFilter: '',
+                    currentPage: {{ $transactions->currentPage() }},
+                    perPage: {{ $transactions->perPage() }},
+                    sortColumn: 'id',
+                    sortDirection: 'desc',
+                    showDeleteModal: false,
+                    transactionToDelete: null,
+                    newTransactionId: @json(session('transaction_id')),
 
-                        printReceipt(transaction) {
-                            try {
-                                const printUrl = `{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id);
-                                const printWindow = window.open(printUrl, '_blank');
-                                if (!printWindow) {
-                                    alert('Gagal membuka halaman cetak. Pastikan popup tidak diblokir oleh browser.');
-                                }
-                            } catch (e) {
-                                console.error('Error membuka halaman cetak:', e);
-                                alert('Terjadi kesalahan saat mencoba mencetak struk.');
-                            }
-                        },
-
-                        dismissAlert() {
-                            const alert = document.querySelector('.slide-in[role="alert"]');
-                            if (alert) {
-                                alert.remove();
-                            }
-                        },
-
-                        isNewTransaction(id) {
-                            return id == this.newTransactionId;
-                        },
-
-                        highlightNewTransaction() {
-                            const index = this.filteredTransactions.findIndex(t => t.id == this.newTransactionId);
-                            if (index >= 0) {
-                                this.goToPage(Math.floor(index / this.perPage) + 1);
-                                this.$nextTick(() => {
-                                    const newRow = document.querySelector(`tr.bg-brand-dark-700/30`);
-                                    if (newRow) {
-                                        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    }
-                                });
-                            }
-                        },
-
-                        formatRupiah(amount) {
-                            return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
-                        },
-
-                        formatDate(dateString) {
-                            if (!dateString) return '-';
-                            return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                        },
-
-                        translatePaymentMethod(method) {
-                            return {
-                                cash: 'Tunai',
-                                credit_card: 'Kartu Kredit',
-                                transfer: 'Transfer Bank'
-                            }[method] || method;
-                        },
-
-                        translateStatus(status) {
-                            return {
-                                paid: 'Lunas',
-                                pending: 'Pending',
-                                cancelled: 'Dibatalkan'
-                            }[status] || status;
-                        },
-
-                        resetFilters() {
-                            this.filterDate = '';
-                            this.paymentMethodFilter = '';
-                            this.statusFilter = '';
-                            this.filterTransactions();
-                        },
-
-                        filterTransactions() {
-                            let results = [...this.transactions];
-
-                            if (this.filterDate) {
-                                const selectedDate = new Date(this.filterDate);
-                                const selectedDateStr = selectedDate.toISOString().split('T')[0];
-                                results = results.filter(t => {
-                                    const transactionDate = new Date(t.created_at);
-                                    const transactionDateStr = transactionDate.toISOString().split('T')[0];
-                                    return transactionDateStr === selectedDateStr;
-                                });
-                            }
-
-                            if (this.paymentMethodFilter) {
-                                results = results.filter(t => t.payment_method === this.paymentMethodFilter);
-                            }
-
-                            if (this.statusFilter) {
-                                results = results.filter(t => t.payment_status === this.statusFilter);
-                            }
-
-                            this.sortResults(results);
-                            this.filteredTransactions = results;
-                            this.currentPage = 1;
-                        },
-
-                        sortResults(results) {
-                            results.sort((a, b) => {
-                                let aValue, bValue;
-                                switch (this.sortColumn) {
-                                    case 'date':
-                                        aValue = new Date(a.created_at);
-                                        bValue = new Date(b.created_at);
-                                        break;
-                                    case 'total':
-                                        aValue = parseFloat(a.final_amount);
-                                        bValue = parseFloat(b.final_amount);
-                                        break;
-                                    default:
-                                        aValue = a.id;
-                                        bValue = b.id;
-                                }
-                                return this.sortDirection === 'asc' ? (aValue < bValue ? -1 : 1) : (aValue > bValue ? -1 : 1);
+                    init() {
+                        this.filteredTransactions = [...this.transactions];
+                        if (this.newTransactionId) {
+                            this.$nextTick(() => {
+                                this.highlightNewTransaction();
                             });
-                            return results;
-                        },
-
-                        sortBy(column) {
-                            this.sortDirection = (this.sortColumn === column && this.sortDirection === 'asc') ? 'desc' : 'asc';
-                            this.sortColumn = column;
-                            this.filterTransactions();
-                        },
-
-                        get totalPages() {
-                            return Math.ceil(this.filteredTransactions.length / this.perPage);
-                        },
-
-                        get paginatedTransactions() {
-                            const start = (this.currentPage - 1) * this.perPage;
-                            return this.filteredTransactions.slice(start, start + this.perPage);
-                        },
-
-                        prevPage() {
-                            if (this.currentPage > 1) this.currentPage--;
-                        },
-
-                        nextPage() {
-                            if (this.currentPage < this.totalPages) this.currentPage++;
-                        },
-
-                        goToPage(page) {
-                            if (typeof page === 'number') this.currentPage = Math.min(Math.max(1, page), this.totalPages);
-                        },
-
-                        paginationFrom() {
-                            return this.filteredTransactions.length ? (this.currentPage - 1) * this.perPage + 1 : 0;
-                        },
-
-                        paginationTo() {
-                            return Math.min(this.currentPage * this.perPage, this.filteredTransactions.length);
-                        },
-
-                        displayedPages() {
-                            if (this.totalPages <= 5) {
-                                return Array.from({length: this.totalPages}, (_, i) => i + 1);
-                            }
-
-                            let pages = [];
-                            if (this.currentPage <= 3) {
-                                pages = [1, 2, 3, 4, '...', this.totalPages];
-                            } else if (this.currentPage >= this.totalPages - 2) {
-                                pages = [1, '...', this.totalPages - 3, this.totalPages - 2, this.totalPages - 1, this.totalPages];
-                            } else {
-                                pages = [1, '...', this.currentPage - 1, this.currentPage, this.currentPage + 1, '...', this.totalPages];
-                            }
-                            return pages;
-                        },
-
-                        confirmDelete(transaction) {
-                            this.transactionToDelete = transaction;
-                            this.showDeleteModal = true;
                         }
-                    };
-                }
-            </script>
-</body>
+                    },
+
+                    dismissAlert() {
+                        const successAlert = this.$refs.successAlert;
+                        const errorAlert = this.$refs.errorAlert;
+                        if (successAlert) successAlert.remove();
+                        if (errorAlert) errorAlert.remove();
+                    },
+
+                    isNewTransaction(id) {
+                        return id == this.newTransactionId;
+                    },
+
+                    highlightNewTransaction() {
+                        const index = this.filteredTransactions.findIndex(t => t.id == this.newTransactionId);
+                        if (index >= 0) {
+                            this.goToPage(Math.floor(index / this.perPage) + 1);
+                            this.$nextTick(() => {
+                                const newRow = document.querySelector(`tr.bg-brand-dark-700/30`);
+                                if (newRow) {
+                                    newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            });
+                        }
+                    },
+
+                    formatRupiah(amount) {
+                        return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
+                    },
+
+                    formatDate(dateString) {
+                        if (!dateString) return '-';
+                        return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    },
+
+                    translatePaymentMethod(method) {
+                        return {
+                            cash: 'Tunai',
+                            credit_card: 'Kartu Kredit',
+                            transfer: 'Transfer Bank'
+                        }[method] || method;
+                    },
+
+                    translateStatus(status) {
+                        return {
+                            paid: 'Lunas',
+                            pending: 'Pending',
+                            cancelled: 'Dibatalkan'
+                        }[status] || status;
+                    },
+
+                    resetFilters() {
+                        this.filterDate = '';
+                        this.paymentMethodFilter = '';
+                        this.statusFilter = '';
+                        this.filterTransactions();
+                    },
+
+                    filterTransactions() {
+                        let results = [...this.transactions];
+
+                        if (this.filterDate) {
+                            const selectedDate = new Date(this.filterDate);
+                            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+                            results = results.filter(t => {
+                                const transactionDate = new Date(t.created_at);
+                                const transactionDateStr = transactionDate.toISOString().split('T')[0];
+                                return transactionDateStr === selectedDateStr;
+                            });
+                        }
+
+                        if (this.paymentMethodFilter) {
+                            results = results.filter(t => t.payment_method === this.paymentMethodFilter);
+                        }
+
+                        if (this.statusFilter) {
+                            results = results.filter(t => t.payment_status === this.statusFilter);
+                        }
+
+                        this.sortResults(results);
+                        this.filteredTransactions = results;
+                        this.currentPage = 1;
+                    },
+
+                    sortResults(results) {
+                        results.sort((a, b) => {
+                            let aValue, bValue;
+                            switch (this.sortColumn) {
+                                case 'date':
+                                    aValue = new Date(a.created_at);
+                                    bValue = new Date(b.created_at);
+                                    break;
+                                case 'total':
+                                    aValue = parseFloat(a.final_amount);
+                                    bValue = parseFloat(b.final_amount);
+                                    break;
+                                default:
+                                    aValue = a.id;
+                                    bValue = b.id;
+                            }
+                            return this.sortDirection === 'asc' ? (aValue < bValue ? -1 : 1) : (aValue > bValue ? -1 : 1);
+                        });
+                        return results;
+                    },
+
+                    sortBy(column) {
+                        this.sortDirection = (this.sortColumn === column && this.sortDirection === 'asc') ? 'desc' : 'asc';
+                        this.sortColumn = column;
+                        this.filterTransactions();
+                    },
+
+                    get totalPages() {
+                        return Math.ceil(this.filteredTransactions.length / this.perPage);
+                    },
+
+                    get paginatedTransactions() {
+                        const start = (this.currentPage - 1) * this.perPage;
+                        return this.filteredTransactions.slice(start, start + this.perPage);
+                    },
+
+                    prevPage() {
+                        if (this.currentPage > 1) this.currentPage--;
+                    },
+
+                    nextPage() {
+                        if (this.currentPage < this.totalPages) this.currentPage++;
+                    },
+
+                    goToPage(page) {
+                        if (typeof page === 'number') this.currentPage = Math.min(Math.max(1, page), this.totalPages);
+                    },
+
+                    paginationFrom() {
+                        return this.filteredTransactions.length ? (this.currentPage - 1) * this.perPage + 1 : 0;
+                    },
+
+                    paginationTo() {
+                        return Math.min(this.currentPage * this.perPage, this.filteredTransactions.length);
+                    },
+
+                    displayedPages() {
+                        if (this.totalPages <= 5) {
+                            return Array.from({length: this.totalPages}, (_, i) => i + 1);
+                        }
+
+                        let pages = [];
+                        if (this.currentPage <= 3) {
+                            pages = [1, 2, 3, 4, '…', this.totalPages];
+                        } else if (this.currentPage >= this.totalPages - 2) {
+                            pages = [1, '…', this.totalPages - 3, this.totalPages - 2, this.totalPages - 1, this.totalPages];
+                        } else {
+                            pages = [1, '…', this.currentPage - 1, this.currentPage, this.currentPage + 1, '…', this.totalPages];
+                        }
+                        return pages;
+                    },
+
+                    confirmDelete(transaction) {
+                        this.transactionToDelete = transaction;
+                        this.showDeleteModal = true;
+                    },
+
+                    getShowUrl(id) {
+                        return `{{ route('transactions.show', ['transaction' => ':id']) }}`.replace(':id', id);
+                    },
+
+                    getDeleteUrl() {
+                        return this.transactionToDelete ? `{{ url('/transactions') }}/${this.transactionToDelete.id}` : '#';
+                    }
+                };
+            }
+        </script>
+    </body>
 </html>

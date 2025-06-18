@@ -10,8 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <style>
         [x-cloak] { display: none !important; }
-
-        /* Futuristic background with dynamic gradient */
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #1a202c 100%), url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
@@ -23,8 +21,6 @@
             position: relative;
             font-size: 14px;
         }
-
-        /* Dark overlay for contrast */
         body::before {
             content: '';
             position: absolute;
@@ -35,15 +31,11 @@
             background: rgba(26, 32, 44, 0.7);
             z-index: -1;
         }
-
-        /* Smooth hover animation */
         .hover-glow:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(79, 209, 197, 0.3);
             transition: all 0.3s ease;
         }
-
-        /* Futuristic button style */
         .btn-futuristic {
             background: linear-gradient(90deg, #4fd1c5, #81e6d9);
             color: #1a202c;
@@ -75,14 +67,10 @@
         .btn-futuristic:hover::after {
             left: 100%;
         }
-
-        /* Header with sleek gradient */
         .bg-futuristic-header {
             background: linear-gradient(180deg, rgba(26, 32, 44, 0.95), rgba(79, 209, 197, 0.1));
             border-bottom: 1px solid #4fd1c5;
         }
-
-        /* Card with neon accent */
         .card-futuristic {
             background: rgba(45, 55, 72, 0.8);
             backdrop-filter: blur(10px);
@@ -94,8 +82,6 @@
             transform: translateY(-3px);
             border-color: rgba(79, 209, 197, 0.4);
         }
-
-        /* Status badges with neon colors */
         .status-badge {
             padding: 0.4rem 1.2rem;
             border-radius: 9999px;
@@ -110,8 +96,6 @@
             color: #e6fffa;
             border-color: rgba(79, 209, 197, 0.2);
         }
-
-        /* Custom scrollbar with neon theme */
         .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -127,8 +111,6 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #81e6d9;
         }
-
-        /* Inputs with sleek design */
         input, select, textarea {
             background: rgba(45, 55, 72, 0.8);
             border: 1px solid rgba(79, 209, 197, 0.3);
@@ -141,13 +123,9 @@
             border-color: #4fd1c5;
             box-shadow: 0 0 5px rgba(79, 209, 197, 0.5);
         }
-
-        /* List item hover effect */
         li:hover {
             background: rgba(79, 209, 197, 0.1);
         }
-
-        /* Slide-in animation */
         .slide-in {
             animation: slideIn 0.5s ease-out;
         }
@@ -155,16 +133,12 @@
             from { opacity: 0; transform: translateX(-20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-
-        /* QR reader styling */
         #qr-reader {
             width: 100%;
             max-width: 500px;
             margin: 0 auto;
             border-radius: 12px;
         }
-
-        /* Modal overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -177,8 +151,6 @@
             align-items: center;
             z-index: 50;
         }
-
-        /* Popup animation */
         .popup-enter {
             animation: popupIn 0.3s ease-out;
         }
@@ -186,8 +158,6 @@
             from { opacity: 0; transform: scale(0.8); }
             to { opacity: 1; transform: scale(1); }
         }
-
-        /* Print styles */
         @media print {
             body * { visibility: hidden; }
             .print-section, .print-section * { visibility: visible; }
@@ -250,6 +220,25 @@
 
         <!-- Main Content -->
         <main class="container mx-auto px-6 py-12 max-w-7xl">
+            <!-- Error Messages -->
+            @if ($errors->any())
+                <div class="mb-6 bg-red-900/30 border border-red-300/20 text-white p-4 rounded-lg slide-in">
+                    <div class="flex items-center">
+                        <svg class="h-5 w-5 text-red-400 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div>
+                            <p class="font-medium text-sm">Terjadi kesalahan:</p>
+                            <ul class="list-disc list-inside text-sm text-red-200">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="mb-8 card-futuristic rounded-xl p-6 border slide-in">
                 <h1 class="font-['Orbitron'] text-2xl font-bold text-white mb-2 flex items-center">
                     <svg class="h-8 w-8 mr-3 text-brand-neon-teal" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -266,7 +255,7 @@
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-base font-semibold text-white font-['Orbitron']" x-text="popupTitle"></h3>
                         <button type="button" @click="closePopup" class="text-gray-400 hover:text-brand-neon-teal p-1 rounded-full hover:bg-brand-dark-700 transition-colors">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 22" stroke="currentColor">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
@@ -307,7 +296,7 @@
                             </div>
                             <div class="flex space-x-2">
                                 <button type="button" @click="openScanner" class="btn-futuristic px-3 py-2 rounded-lg flex items-center text-xs font-semibold hover-glow">
-                                    <svg class="h-4 w-4 mr-1 text-brand-dark-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 22" stroke="currentColor">
+                                    <svg class="h-4 w-4 mr-1 text-brand-dark-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8h4" />
                                     </svg>
                                     Scan QR
@@ -414,28 +403,28 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Nama Pelanggan</label>
-                                <input type="text" name="customer_name" placeholder="Masukkan nama pelanggan" class="w-full px-3 py-2 text-xs">
+                                <input type="text" name="customer_name" placeholder="Masukkan nama pelanggan" value="{{ old('customer_name') }}" class="w-full px-3 py-2 text-xs">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">No. Telepon</label>
-                                <input type="text" name="customer_phone" placeholder="Masukkan nomor telepon" class="w-full px-3 py-2 text-xs">
+                                <input type="text" name="customer_phone" placeholder="Masukkan nomor telepon" value="{{ old('customer_phone') }}" class="w-full px-3 py-2 text-xs">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Email</label>
-                                <input type="email" name="customer_email" placeholder="email@example.com" class="w-full px-3 py-2 text-xs">
+                                <input type="email" name="customer_email" placeholder="email@example.com" value="{{ old('customer_email') }}" class="w-full px-3 py-2 text-xs">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Metode Pembayaran <span class="text-red-300">*</span></label>
                                 <select name="payment_method" id="payment_method" class="w-full px-3 py-2 text-xs" required>
-                                    <option value="" disabled selected>Pilih metode pembayaran</option>
-                                    <option value="cash">Tunai</option>
-                                    <option value="credit_card">Kartu Kredit</option>
-                                    <option value="transfer">Transfer Bank</option>
+                                    <option value="" disabled {{ old('payment_method') ? '' : 'selected' }}>Pilih metode pembayaran</option>
+                                    <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Tunai</option>
+                                    <option value="credit_card" {{ old('payment_method') == 'credit_card' ? 'selected' : '' }}>Kartu Kredit</option>
+                                    <option value="transfer" {{ old('payment_method') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
                                 </select>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Catatan</label>
-                                <textarea name="notes" rows="3" placeholder="Catatan tambahan untuk transaksi" class="w-full px-3 py-2 text-xs"></textarea>
+                                <textarea name="notes" rows="3" placeholder="Catatan tambahan untuk transaksi" class="w-full px-3 py-2 text-xs">{{ old('notes') }}</textarea>
                             </div>
                         </div>
 
@@ -495,7 +484,7 @@
                                     <span class="text-gray-400">Diskon</span>
                                     <div class="flex items-center">
                                         <span class="text-gray-400 mr-2">Rp</span>
-                                        <input type="number" name="discount_amount" x-model="discount" min="0" class="w-20 text-right px-2 py-1 text-xs">
+                                        <input type="number" name="discount_amount" x-model="discount" min="0" value="{{ old('discount_amount', 0) }}" class="w-20 text-right px-2 py-1 text-xs">
                                     </div>
                                 </div>
                                 <div class="flex justify-between border-t border-brand-neon-teal/20 pt-3 text-sm">
@@ -523,7 +512,7 @@
                 searchQuery: '',
                 searchResults: [],
                 cart: [],
-                discount: 0,
+                discount: {{ old('discount_amount', 0) }},
                 isScannerOpen: false,
                 qrScanner: null,
                 scanError: '',
@@ -567,8 +556,7 @@
                 },
 
                 addToCart(unit) {
-                    const index = this.cart.findIndex(item => item.unit_code === unit.unit_code);
-                    if (index >= 0) {
+                    if (this.scannedUnitCodes.includes(unit.unit_code)) {
                         this.popupTitle = 'Unit Sudah Ada';
                         this.popupMessage = `Unit "${unit.unit_code}" sudah ada di keranjang.`;
                         this.popupType = 'error';
@@ -590,14 +578,12 @@
                     this.showPopup = true;
                     this.searchQuery = '';
                     this.searchResults = [];
-                    this.$forceUpdate();
                 },
 
                 removeItem(index) {
                     const unitCode = this.cart[index].unit_code;
                     this.scannedUnitCodes = this.scannedUnitCodes.filter(code => code !== unitCode);
                     this.cart.splice(index, 1);
-                    this.$forceUpdate();
                 },
 
                 calculateSubtotal() {
@@ -611,12 +597,18 @@
                 validateForm(event) {
                     if (this.cart.length === 0) {
                         event.preventDefault();
-                        alert('Keranjang masih kosong! Tambahkan unit produk terlebih dahulu.');
+                        this.popupTitle = 'Keranjang Kosong';
+                        this.popupMessage = 'Tambahkan unit produk terlebih dahulu.';
+                        this.popupType = 'error';
+                        this.showPopup = true;
                         return false;
                     }
                     if (!document.getElementById('payment_method').value) {
                         event.preventDefault();
-                        alert('Silakan pilih metode pembayaran!');
+                        this.popupTitle = 'Metode Pembayaran Kosong';
+                        this.popupMessage = 'Silakan pilih metode pembayaran!';
+                        this.popupType = 'error';
+                        this.showPopup = true;
                         return false;
                     }
                     return true;
@@ -693,20 +685,17 @@
                     }
 
                     try {
-                        const response = await fetch(`/transactions/add-product/${unitCode}`);
+                        const response = await fetch(`/transactions/add-product/${unitCode}`, {
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        });
                         const data = await response.json();
                         if (!data.success) {
                             this.scanError = data.message;
                             return;
                         }
-                        this.addToCart({
-                            product_id: data.unit.product_id,
-                            product_name: data.unit.product_name,
-                            color: data.unit.color,
-                            size: data.unit.size,
-                            selling_price: data.unit.selling_price,
-                            unit_code: data.unit.unit_code,
-                        });
+                        this.addToCart(data.unit);
                         this.closeScanner();
                     } catch (err) {
                         this.scanError = 'Gagal memuat unit produk. Coba lagi.';
@@ -738,21 +727,18 @@
                     }
 
                     try {
-                        const response = await fetch(`/transactions/add-product/${unitCode}`);
+                        const response = await fetch(`/transactions/add-product/${unitCode}`, {
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        });
                         const data = await response.json();
                         if (!data.success) {
                             this.scanError = data.message;
                             this.qrInput = '';
                             return;
                         }
-                        this.addToCart({
-                            product_id: data.unit.product_id,
-                            product_name: data.unit.product_name,
-                            color: data.unit.color,
-                            size: data.unit.size,
-                            selling_price: data.unit.selling_price,
-                            unit_code: data.unit.unit_code,
-                        });
+                        this.addToCart(data.unit);
                         this.qrInput = '';
                     } catch (err) {
                         this.scanError = 'Gagal memuat unit produk. Coba lagi.';
@@ -762,7 +748,11 @@
                 },
 
                 initialize() {
-                    // Initialization logic
+                    // Restore cart from old input if available
+                    @if(old('products'))
+                        this.cart = @json(old('products'));
+                        this.scannedUnitCodes = this.cart.map(item => item.unit_code);
+                    @endif
                 }
             };
         }

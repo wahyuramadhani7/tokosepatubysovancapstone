@@ -9,6 +9,7 @@ use App\Models\ProductUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -44,41 +45,21 @@ class TransactionController extends Controller
         return view('transactions.create', compact('availableUnits'));
     }
 
-    public function destroy(Transaction $transaction)
-    {
-        DB::beginTransaction();
-        try {
-            // Restore is_active status for related ProductUnits
-            foreach ($transaction->items as $item) {
-                if ($item->productUnit) {
-                    $item->productUnit->update(['is_active' => true]);
-                }
-            }
-            $transaction->items()->delete();
-            $transaction->delete();
-            DB::commit();
-            return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal menghapus transaksi: ' . $e->getMessage());
-        }
-    }
-
     public function store(Request $request)
     {
-        $request->validate([
-            'customer_name' => 'nullable|string|max:255',
-            'customer_phone' => 'nullable|string|max:20',
-            'customer_email' => 'nullable|email|max:255',
-            'payment_method' => 'required|string|in:cash,credit_card,transfer',
-            'products' => 'required|array',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.unit_code' => 'required|exists:product_units,unit_code,is_active,1',
-            'discount_amount' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
-        ]);
-
         try {
+            $request->validate([
+                'customer_name' => 'nullable|string|max:255',
+                'customer_phone' => 'nullable|string|max:20',
+                'customer_email' => 'nullable|email|max:255',
+                'payment_method' => 'required|string|in:cash,credit_card,transfer',
+                'products' => 'required|array|min:1',
+                'products.*.product_id' => 'required|exists:products,id',
+                'products.*.unit_code' => 'required|exists:product_units,unit_code,is_active,1',
+                'discount_amount' => 'nullable|numeric|min:0',
+                'notes' => 'nullable|string',
+            ]);
+
             DB::beginTransaction();
 
             $transaction = new Transaction();
@@ -102,7 +83,7 @@ class TransactionController extends Controller
                     ->firstOrFail();
 
                 $price = $product->selling_price;
-                $subtotal = $price; // No per-item discount in Blade template
+                $subtotal = $price;
                 $totalAmount += $subtotal;
 
                 // Deactivate the product unit
@@ -113,13 +94,13 @@ class TransactionController extends Controller
                     'product_unit_id' => $unit->id,
                     'quantity' => 1,
                     'price' => $price,
-                    'discount' => 0, // No per-item discount in Blade template
+                    'discount' => 0,
                     'subtotal' => $subtotal,
                 ]);
             }
 
             $discountAmount = (float)($request->discount_amount ?? 0);
-            $finalAmount = $totalAmount - $discountAmount;
+            $finalAmount = max(0, $totalAmount - $discountAmount);
 
             $transaction->total_amount = $totalAmount;
             $transaction->discount_amount = $discountAmount;
@@ -136,9 +117,33 @@ class TransactionController extends Controller
                 ->with('success', 'Transaksi berhasil diselesaikan.')
                 ->with('transaction_id', $transaction->id)
                 ->with('new_transaction', $transaction->load(['items.product', 'items.productUnit', 'user']));
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation failed: ' . json_encode($e->errors()));
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Transaksi gagal: ' . $e->getMessage()]);
+            Log::error('Transaction store failed: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Transaksi gagal: ' . $e->getMessage()])->withInput();
+        }
+    }
+
+    public function destroy(Transaction $transaction)
+    {
+        try {
+            DB::beginTransaction();
+            foreach ($transaction->items as $item) {
+                if ($item->productUnit) {
+                    $item->productUnit->update(['is_active' => true]);
+                }
+            }
+            $transaction->items()->delete();
+            $transaction->delete();
+            DB::commit();
+            return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Transaction delete failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghapus transaksi: ' . $e->getMessage());
         }
     }
 
@@ -177,26 +182,31 @@ class TransactionController extends Controller
 
     public function addProductByQr($unitCode)
     {
-        $unit = ProductUnit::where('unit_code', $unitCode)->where('is_active', true)->first();
-        if (!$unit) {
-            return response()->json(['success' => false, 'message' => 'Unit produk tidak ditemukan atau sudah tidak aktif.'], 404);
-        }
+        try {
+            $unit = ProductUnit::where('unit_code', $unitCode)->where('is_active', true)->first();
+            if (!$unit) {
+                return response()->json(['success' => false, 'message' => 'Unit produk tidak ditemukan atau sudah tidak aktif.'], 404);
+            }
 
-        $product = $unit->product;
-        if (!$product) {
-            return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
-        }
+            $product = $unit->product;
+            if (!$product) {
+                return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
+            }
 
-        return response()->json([
-            'success' => true,
-            'unit' => [ // Changed from 'product' to 'unit' to match Blade template
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'color' => $product->color,
-                'size' => $product->size,
-                'selling_price' => $product->selling_price,
-                'unit_code' => $unit->unit_code,
-            ],
-        ], 200);
+            return response()->json([
+                'success' => true,
+                'unit' => [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'color' => $product->color,
+                    'size' => $product->size,
+                    'selling_price' => $product->selling_price,
+                    'unit_code' => $unit->unit_code,
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('QR scan failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Gagal memuat unit produk: ' . $e->getMessage()], 500);
+        }
     }
 }
