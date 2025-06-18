@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Route;
 // Redirect root to login
 Route::get('/', function () {
     return redirect()->route('login');
-});
+})->middleware('guest');
 
 // Public routes for product and unit details without rate limiting
 Route::prefix('inventory')->group(function () {
@@ -29,6 +29,11 @@ Route::prefix('inventory')->group(function () {
     Route::get('/{product}/unit/{unitCode}', [InventoryController::class, 'showUnit'])->name('inventory.show_unit');
     Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
 });
+
+// Main dashboard route after login
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 // Routes for employee dashboard
 Route::middleware(['auth', 'role:employee'])->group(function () {
@@ -51,7 +56,7 @@ Route::middleware(['auth'])->group(function () {
     // Inventory Routes
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::get('/create', [InventoryController::class, 'create'])->name('inventory.create');
         Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
@@ -59,8 +64,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
         Route::post('/{product}/physical-stock', [InventoryController::class, 'updatePhysicalStock'])->name('inventory.updatePhysicalStock');
-        Route::get('inventory/stock-opname', [InventoryController::class, 'stockOpname'])->name('inventory.stock_opname');
-        Route::post('inventory/update-stock', [InventoryController::class, 'updateStock'])->name('inventory.update_stock');
+        Route::get('/stock-opname', [InventoryController::class, 'stockOpname'])->name('inventory.stock_opname');
+        Route::post('/update-stock', [InventoryController::class, 'updateStock'])->name('inventory.update_stock');
     });
 
     // Transactions Routes
@@ -68,14 +73,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [TransactionController::class, 'index'])->name('transactions.index');
         Route::get('/create', [TransactionController::class, 'create'])->name('transactions.create');
         Route::post('/', [TransactionController::class, 'store'])->name('transactions.store');
-        Route::delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
         Route::get('/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
         Route::get('/{transaction}/print', [TransactionController::class, 'print'])->name('transactions.print');
-        Route::get('/add-product/{product}', [TransactionController::class, 'addProductByQr'])->name('transactions.add-product-by-qr');
+        Route::delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+        Route::get('/report', [TransactionController::class, 'report'])->name('transactions.report');
+        Route::get('/add-product/{unitCode}', [TransactionController::class, 'addProductByQr'])->name('transactions.add_product');
     });
 
-    // Transaction Reports
-    Route::get('/transactions/reports/sales', [TransactionController::class, 'report'])->name('transactions.report');
+    // Remove duplicate report route
+    // Route::get('/transactions/reports/sales', [TransactionController::class, 'report'])->name('transactions.report');
 
     // Visitor Monitoring Routes
     Route::get('/visitor-monitoring', [VisitorMonitoringController::class, 'index'])->name('visitor-monitoring.index');
@@ -92,15 +98,10 @@ Route::prefix('api')->group(function () {
     Route::post('/visitor-exit/{id}', [VisitorMonitoringController::class, 'storeVisitorExit'])->name('api.visitor.exit');
 });
 
-// Main dashboard route after login
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 // Include authentication routes
 require __DIR__ . '/auth.php';
 
-// Catch-all route for invalid URLs
-Route::get('/{any}', function () {
+// Catch-all route for invalid URLs (only for unauthenticated users)
+Route::fallback(function () {
     return redirect()->route('login');
-})->where('any', '.*')->middleware('guest');
+})->middleware('guest');
