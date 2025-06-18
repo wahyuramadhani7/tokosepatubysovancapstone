@@ -32,7 +32,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a8 8 0 01-8 8m8-8a8 8 0 00-8-8m8 8h-4m-4 0H5" />
                     </svg>
                     <div>
-                        <h3 class="text-sm md:text-base font-semibold uppercase">Total Stok</h3>
+                        <h3 class="text-sm md:text-base font-semibold uppercase">Total Unit</h3>
                         <p class="text-gray-600 text-base md:text-lg font-medium">{{ $totalStock ?? 0 }}</p>
                     </div>
                 </div>
@@ -98,7 +98,7 @@
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Produk</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Ukuran</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Warna</div>
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Unit Aktif</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Harga Jual</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Harga Diskon</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">QR Code</div>
@@ -112,7 +112,7 @@
                             <div class="p-3 text-black">{{ $product->name ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->size ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->color ?? '-' }}</div>
-                            <div class="p-3 font-medium text-center {{ $product->stock < 5 ? 'text-red-600' : 'text-black' }}">{{ $product->stock ?? 0 }}</div>
+                            <div class="p-3 font-medium text-center {{ $product->product_units_count < 5 ? 'text-red-600' : 'text-black' }}">{{ $product->product_units_count ?? 0 }}</div>
                             <div class="p-3 text-black text-right">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</div>
                             <div class="p-3 text-black text-right">{{ $product->discount_price ? 'Rp ' . number_format($product->discount_price, 0, ',', '.') : '-' }}</div>
                             <div class="p-3 text-center">
@@ -172,8 +172,8 @@
                     
                     <div class="grid grid-cols-2 gap-2 mb-3">
                         <div>
-                            <div class="text-xs text-gray-500">Stok</div>
-                            <div class="font-medium {{ $product->stock < 5 ? 'text-red-600' : 'text-gray-900' }}">{{ $product->stock ?? 0 }}</div>
+                            <div class="text-xs text-gray-500">Unit Aktif</div>
+                            <div class="font-medium {{ $product->product_units_count < 5 ? 'text-red-600' : 'text-gray-900' }}">{{ $product->product_units_count ?? 0 }}</div>
                         </div>
                         <div>
                             <div class="text-xs text-gray-500">Harga Jual</div>
@@ -338,7 +338,7 @@
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 mb-3">
                                     <div>
-                                        <div class="text-xs text-gray-500">Stok</div>
+                                        <div class="text-xs text-gray-500">Unit Aktif</div>
                                         <div class="font-medium ${product.stock < 5 ? 'text-red-600' : 'text-gray-900'}">${product.stock || 0}</div>
                                     </div>
                                     <div>

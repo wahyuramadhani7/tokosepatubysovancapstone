@@ -23,9 +23,10 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Public routes for product details without rate limiting
+// Public routes for product and unit details without rate limiting
 Route::prefix('inventory')->group(function () {
     Route::get('/{product}', [InventoryController::class, 'show'])->name('inventory.show');
+    Route::get('/{product}/unit/{unitCode}', [InventoryController::class, 'showUnit'])->name('inventory.show_unit');
     Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
 });
 
@@ -55,7 +56,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
         Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-        Route::get('/inventorysearch', [InventoryController::class, 'search'])->name('inventory.search');
+        Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
         Route::post('/{product}/physical-stock', [InventoryController::class, 'updatePhysicalStock'])->name('inventory.updatePhysicalStock');
         Route::get('inventory/stock-opname', [InventoryController::class, 'stockOpname'])->name('inventory.stock_opname');

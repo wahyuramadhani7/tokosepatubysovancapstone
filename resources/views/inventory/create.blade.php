@@ -55,7 +55,7 @@
 
                     <!-- Stok -->
                     <div>
-                        <label for="stock" class="block text-sm font-medium text-white mb-1">Stok</label>
+                        <label for="stock" class="block text-sm font-medium text-white mb-1">Jumlah Unit</label>
                         <input type="number" name="stock" id="stock" class="block w-full p-3 border-0 rounded-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('stock') border-red-500 @enderror" value="{{ old('stock') }}">
                         @error('stock')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>

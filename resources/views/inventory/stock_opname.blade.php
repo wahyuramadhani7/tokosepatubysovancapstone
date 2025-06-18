@@ -15,14 +15,14 @@
                         Mulai Scan QR
                     </button>
                 </div>
-                <a href="{{ route('inventory.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <a href="{{ route('inventory.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-black transition-colors flex items-center justify-center">
                     Kembali ke Inventory
                 </a>
             </div>
 
             <div id="scanner-container" class="hidden mt-4">
                 <div id="qr-scanner" class="w-full max-w-md mx-auto rounded-lg"></div>
-                <button id="stop-scanner" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors mt-2 w-full md:w-auto">
+                <button id="stop-scanner" type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors mt-2 w-full md:w-auto">
                     Stop Scan
                 </button>
             </div>
@@ -154,20 +154,37 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Extract productId and unitCode from URL
+        const urlParts = decodedText.split('/');
+        const productIndex = urlParts.indexOf('inventory');
+        if (productIndex === -1 || productIndex + 1 >= urlParts.length) {
+            showAlert('error', 'Format QR code tidak valid.');
+            return;
+        }
+
+        const productId = urlParts[productIndex + 1];
+        const isUnitQR = urlParts[productIndex + 2] === 'unit';
+        const unitCode = isUnitQR ? urlParts[productIndex + 3]?.split('?')[0] : null;
+
+        // Validate productId as a number
+        if (!/^\d+$/.test(productId)) {
+            showAlert('error', 'ID produk tidak valid.');
+            return;
+        }
+
         // Check if QR code has already been scanned
         if (scannedQRCodes.includes(decodedText)) {
             showAlert('error', 'QR code ini sudah dipindai.');
             return;
         }
 
-        const productId = decodedText.split('/').pop().split('?')[0]; // Handle query params if any
         if (!currentProductId) {
             // First scan, set product and fetch data
             currentProductId = productId;
             scannedCount = 1;
             scannedQRCodes.push(decodedText);
             physicalStockInput.value = scannedCount;
-            fetchProductData(decodedText);
+            fetchProductData(productId);
             productInfo.classList.remove('hidden');
             showAlert('success', 'QR code dipindai. Update stok: ' + scannedCount);
         } else if (productId === currentProductId) {
@@ -186,9 +203,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('QR scan error:', errorMessage);
     }
 
-    // Fetch product data from scanned QR
-    function fetchProductData(url) {
-        const productId = url.split('/').pop().split('?')[0]; // Handle query params if any
+    // Fetch product data by productId
+    function fetchProductData(productId) {
         fetch(`/inventory/${productId}/json`, {
             headers: {
                 'Accept': 'application/json',
@@ -234,14 +250,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.href = '{{ route('inventory.index') }}';
+                showAlert('success', data.message);
+                setTimeout(() => {
+                    window.location.href = '{{ route('inventory.index') }}';
+                }, 2000);
             } else {
                 showAlert('error', data.message);
             }
         })
         .catch(error => {
             console.error('Error updating stock:', error);
-            showAlert('error', 'Gagal memperbarui stok');
+            showAlert('error', 'Gagal memperbarui stok: ' + error.message);
         });
     });
 

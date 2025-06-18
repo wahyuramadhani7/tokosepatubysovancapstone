@@ -11,28 +11,28 @@
 
         <!-- QR Code Print Area -->
         <div class="print-area grid gap-4">
-            @for ($i = 0; $i < ($product->stock ?? 0); $i++)
+            @forelse ($product->productUnits as $unit)
                 <div class="print-item bg-white shadow-sm rounded-lg overflow-hidden" style="width: 50mm; height: 50mm; page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: space-between; border: 1px solid #e5e7eb; padding: 2mm; box-sizing: border-box;">
                     <div class="text-center w-full">
                         <p class="text-xs font-bold text-gray-900 m-0 uppercase tracking-wide" style="line-height: 1.2; max-width: 100%; text-align: center;">Toko Sepatu By Sovan</p>
                     </div>
                     <div class="flex justify-center w-full" style="margin: 1mm 0;">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(route('inventory.show', $product->id)) }}" alt="QR Code for {{ $product->name ?? '-' }}" style="width: 24mm; height: 24mm;" onerror="this.nextElementSibling.style.display='block';">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($unit->qr_code) }}" alt="QR Code for Unit {{ $unit->unit_code }}" style="width: 24mm; height: 24mm;" onerror="this.nextElementSibling.style.display='block';">
                         <div class="text-xs text-red-500 text-center font-medium" style="display: none;">Gagal Memuat QR</div>
                     </div>
                     <div class="text-center w-full">
                         <p class="text-xs font-semibold text-gray-800 m-0" style="line-height: 1.2; max-width: 100%; text-align: center;">{{ Str::limit($product->name ?? '-', 18) }}</p>
+                        <p class="text-xs text-gray-600 m-0" style="line-height: 1.2;">Unit: {{ $unit->unit_code }}</p>
                         <p class="text-xs text-gray-600 m-0" style="line-height: 1.2;">Ukuran: {{ $product->size ?? '-' }} | Warna: {{ $product->color ?? '-' }}</p>
                         <p class="text-xs font-medium text-gray-900 m-0" style="line-height: 1.2;">Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</p>
                         <p class="text-xs font-medium text-orange-600 m-0" style="line-height: 1.2;">{{ $product->discount_price ? 'Harga Diskon: Rp ' . number_format($product->discount_price, 0, ',', '.') : '-' }}</p>
                     </div>
                 </div>
-            @endfor
-            @if (($product->stock ?? 0) == 0)
+            @empty
                 <div class="text-center p-6 bg-white rounded-lg shadow-sm text-gray-700">
-                    <p class="text-sm font-medium">Tidak ada stok untuk produk ini. Silakan tambah stok terlebih dahulu.</p>
+                    <p class="text-sm font-medium">Tidak ada unit aktif untuk produk ini. Silakan tambah stok terlebih dahulu.</p>
                 </div>
-            @endif
+            @endforelse
         </div>
 
         <!-- Action Buttons -->

@@ -145,13 +145,13 @@
             font-weight: 600;
         }
 
-        .stock-status, .price-info, .additional-info {
+        .stock-status, .price-info, .additional-info, .unit-list {
             background: #3f3f3f;
             border-radius: 0.75rem;
             padding: 1.5rem;
         }
 
-        .stock-status h3, .price-info h2, .additional-info h3 {
+        .stock-status h3, .price-info h2, .additional-info h3, .unit-list h3 {
             font-size: 1.125rem;
             font-weight: 600;
             color: #fff;
@@ -183,6 +183,12 @@
             margin-top: 0.5rem;
         }
 
+        .stock-status .progress-bar .progress {
+            background: #f97316;
+            height: 100%;
+            border-radius: 9999px;
+        }
+
         .price-info .price {
             display: flex;
             justify-content: space-between;
@@ -210,6 +216,26 @@
         }
 
         .additional-info .info-item p {
+            color: #d1d5db;
+            font-size: 0.875rem;
+        }
+
+        .unit-list .unit-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            background: #4b5563;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+        .unit-list .unit-item img {
+            width: 3rem;
+            height: 3rem;
+            margin-right: 1rem;
+        }
+
+        .unit-list .unit-item p {
             color: #d1d5db;
             font-size: 0.875rem;
         }
@@ -269,8 +295,8 @@
             <div class="product-header">
                 <h2>{{ $product->name ?? 'Nama Produk' }}</h2>
                 <div class="tags">
-                    <span class="tag">{{ $product->size ?? 'Size' }}</span>
-                    <span class="tag">{{ $product->color ?? 'Color' }}</span>
+                    <span class="tag">{{ $product->size ?? 'Ukuran' }}</span>
+                    <span class="tag">{{ $product->color ?? 'Warna' }}</span>
                 </div>
             </div>
 
@@ -278,7 +304,7 @@
             <div class="product-content">
                 <!-- Left Column - QR Code and Product ID -->
                 <div>
-                    <!-- QR Code Display -->
+                    <!-- QR Code Display (Representative for Product) -->
                     <div class="qr-code">
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode(route('inventory.show', $product->id)) }}" alt="QR Code for {{ $product->name ?? '-' }}" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
                         <p>QR Code Produk</p>
@@ -296,6 +322,23 @@
                             <p><strong>#{{ str_pad($product->id ?? '001', 3, '0', STR_PAD_LEFT) }}</strong></p>
                         </div>
                     </div>
+
+                    <!-- Stock Status -->
+                    <div class="stock-status">
+                        <h3>Status Stok</h3>
+                        <div class="status">
+                            <span>Unit Aktif</span>
+                            <span class="badge {{ $product->stock < 5 ? 'bg-red-400 text-white' : 'bg-green-400 text-black' }}">
+                                {{ $product->stock ?? 0 }}
+                            </span>
+                        </div>
+                        <div class="stock-details">
+                            <p class="text-gray-400">Stok Rendah: < 5 unit</p>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: {{ min(($product->stock / 50) * 100, 100) }}%;"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right Column - Product Details -->
@@ -311,32 +354,27 @@
                             <span style="color: #d1d5db;">Harga Diskon</span>
                             <span>{{ $product->discount_price ? 'Rp ' . number_format($product->discount_price, 0, ',', '.') : '-' }}</span>
                         </div>
-                    </div>
-
-                    <!-- Additional Info -->
-                    @if(isset($product->description) || isset($product->category))
-                    <div class="additional-info">
-                        <h3>Informasi Tambahan</h3>
-                        <div>
-                            @if(isset($product->category))
-                            <div class="info-item">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a8 8 0 01-8 8m8-8a8 8 0 00-8-8m8 8h-4m-4 0H5" />
-                                </svg>
-                                <p>Kategori: {{ $product->category }}</p>
-                            </div>
-                            @endif
-                            @if(isset($product->description))
-                            <div class="info-item">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <p>{{ $product->description }}</p>
-                            </div>
-                            @endif
+                        <div class="price">
+                            <span style="color: #d1d5db;">Harga Beli</span>
+                            <span>Rp {{ number_format($product->purchase_price ?? 0, 0, ',', '.') }}</span>
                         </div>
                     </div>
-                    @endif
+
+                    <!-- Unit List -->
+                    <div class="unit-list">
+                        <h3>Daftar Unit Aktif</h3>
+                        @forelse ($product->productUnits as $unit)
+                            <div class="unit-item">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data={{ urlencode($unit->qr_code) }}" alt="QR Code for Unit {{ $unit->unit_code }}" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
+                                <div>
+                                    <p>Kode Unit: <strong>{{ $unit->unit_code }}</strong></p>
+                                    <p>Status: <span class="{{ $unit->is_active ? 'text-green-400' : 'text-red-400' }}">{{ $unit->is_active ? 'Aktif' : 'Non-Aktif' }}</span></p>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-gray-400">Tidak ada unit aktif untuk produk ini.</p>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>

@@ -10,18 +10,26 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'qr_code',
         'name',
         'color',
         'size',
-        'stock',
         'purchase_price',
         'selling_price',
         'discount_price',
     ];
 
+    public function productUnits()
+    {
+        return $this->hasMany(ProductUnit::class);
+    }
+
     public function transactionItems()
     {
         return $this->hasMany(TransactionItem::class);
+    }
+
+    public function getStockAttribute()
+    {
+        return $this->productUnits()->where('is_active', true)->count();
     }
 }

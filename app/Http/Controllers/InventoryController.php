@@ -3,44 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class InventoryController extends Controller
 {
-    /**
-     * Display the inventory management page.
-     *
-     * @return \Illuminate\View\View
-     */
     public function index()
     {
-        $products = Product::paginate(10);
+        $products = Product::withCount(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])->paginate(10);
         $totalProducts = Product::count();
-        $lowStockProducts = Product::where('stock', '<=', 10)->count();
-        $totalStock = Product::sum('stock');
+        $lowStockProducts = Product::whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        }, '<=', 10)->count();
+        $totalStock = ProductUnit::where('is_active', true)->count();
 
         Log::info('Loaded products for inventory index: ' . $products->count());
         return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock'));
     }
 
-    /**
-     * Show the form for creating a new product.
-     *
-     * @return \Illuminate\View\View
-     */
     public function create()
     {
         return view('inventory.create');
     }
 
-    /**
-     * Store a newly created product in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -51,6 +41,7 @@ class InventoryController extends Controller
             'stock' => 'required|integer|min:0',
             'selling_price' => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lte:selling_price',
+            'purchase_price' => 'required|numeric|min:0',
         ]);
 
         DB::beginTransaction();
@@ -59,18 +50,28 @@ class InventoryController extends Controller
             $product = Product::create([
                 'name' => trim($validated['brand'] . ' ' . $validated['model']),
                 'size' => $validated['size'],
-                'stock' => $validated['stock'],
-                'purchase_price' => 0,
+                'color' => $validated['color'],
+                'purchase_price' => $validated['purchase_price'],
                 'selling_price' => $validated['selling_price'],
                 'discount_price' => $validated['discount_price'] ?? null,
-                'color' => $validated['color'],
             ]);
 
-            Log::info('Product created: ID ' . $product->id);
+            for ($i = 0; $i < $validated['stock']; $i++) {
+                $unitCode = 'UNIT-' . strtoupper(Str::random(8));
+                $unit = ProductUnit::create([
+                    'product_id' => $product->id,
+                    'unit_code' => $unitCode,
+                    'qr_code' => '',
+                    'is_active' => true,
+                ]);
+                $qrCode = route('inventory.show_unit', ['product' => $product->id, 'unitCode' => $unit->unit_code]);
+                $unit->update(['qr_code' => $qrCode]);
+            }
+
+            Log::info('Product created: ID ' . $product->id . ' with ' . $validated['stock'] . ' units');
 
             DB::commit();
-
-            return redirect()->route('inventory.index')->with('success', 'Produk berhasil ditambahkan');
+            return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil ditambahkan');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error storing product: ' . $e->getMessage());
@@ -78,28 +79,24 @@ class InventoryController extends Controller
         }
     }
 
-    /**
-     * Display the specified product details.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\View\View
-     */
     public function show(Product $product)
     {
+        $product->load(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }]);
         if (!$product) {
             Log::warning('Product not found for show: ID ' . request()->segment(2));
             return response()->view('errors.404-public', [], 404);
         }
-
         return view('inventory.show', compact('product'));
     }
 
-    /**
-     * Return product data in JSON format (only for explicit JSON requests).
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\JsonResponse
-     */
+    public function showUnit(Product $product, $unitCode)
+    {
+        $unit = ProductUnit::where('product_id', $product->id)->where('unit_code', $unitCode)->firstOrFail();
+        return view('inventory.show_unit', compact('product', 'unit'));
+    }
+
     public function json(Product $product)
     {
         if (!$product) {
@@ -117,15 +114,16 @@ class InventoryController extends Controller
             'selling_price' => $product->selling_price,
             'discount_price' => $product->discount_price,
             'stock' => $product->stock,
+            'units' => $product->productUnits()->where('is_active', true)->get()->map(function ($unit) {
+                return [
+                    'unit_code' => $unit->unit_code,
+                    'qr_code' => $unit->qr_code,
+                    'is_active' => $unit->is_active,
+                ];
+            }),
         ], 200);
     }
 
-    /**
-     * Show the form for editing the specified product.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\View\View
-     */
     public function edit(Product $product)
     {
         if (!$product) {
@@ -135,13 +133,6 @@ class InventoryController extends Controller
         return view('inventory.edit', compact('product'));
     }
 
-    /**
-     * Update the specified product in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function update(Request $request, Product $product)
     {
         if (!$product) {
@@ -166,18 +157,38 @@ class InventoryController extends Controller
             $product->update([
                 'name' => trim($validated['brand'] . ' ' . $validated['model']),
                 'size' => $validated['size'],
-                'stock' => $validated['stock'],
+                'color' => $validated['color'],
                 'purchase_price' => $validated['purchase_price'],
                 'selling_price' => $validated['selling_price'],
                 'discount_price' => $validated['discount_price'] ?? null,
-                'color' => $validated['color'],
             ]);
 
-            Log::info('Product updated: ID ' . $product->id);
+            $currentStock = $product->productUnits()->where('is_active', true)->count();
+            $desiredStock = $validated['stock'];
+
+            if ($desiredStock > $currentStock) {
+                for ($i = $currentStock; $i < $desiredStock; $i++) {
+                    $unitCode = 'UNIT-' . strtoupper(Str::random(8));
+                    $unit = ProductUnit::create([
+                        'product_id' => $product->id,
+                        'unit_code' => $unitCode,
+                        'qr_code' => '',
+                        'is_active' => true,
+                    ]);
+                    $qrCode = route('inventory.show_unit', ['product' => $product->id, 'unitCode' => $unit->unit_code]);
+                    $unit->update(['qr_code' => $qrCode]);
+                }
+            } elseif ($desiredStock < $currentStock) {
+                $unitsToDeactivate = $product->productUnits()->where('is_active', true)->take($currentStock - $desiredStock)->get();
+                foreach ($unitsToDeactivate as $unit) {
+                    $unit->update(['is_active' => false]);
+                }
+            }
+
+            Log::info('Product updated: ID ' . $product->id . ' with ' . $desiredStock . ' units');
 
             DB::commit();
-
-            return redirect()->route('inventory.index')->with('success', 'Produk berhasil diperbarui');
+            return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating product: ' . $e->getMessage());
@@ -185,12 +196,6 @@ class InventoryController extends Controller
         }
     }
 
-    /**
-     * Remove the specified product from storage.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function destroy(Product $product)
     {
         if (!$product) {
@@ -201,12 +206,12 @@ class InventoryController extends Controller
         DB::beginTransaction();
 
         try {
+            $product->productUnits()->delete();
             $product->delete();
             Log::info('Product deleted: ID ' . $product->id);
 
             DB::commit();
-
-            return redirect()->route('inventory.index')->with('success', 'Produk berhasil dihapus');
+            return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil dihapus');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error deleting product: ' . $e->getMessage());
@@ -214,12 +219,6 @@ class InventoryController extends Controller
         }
     }
 
-    /**
-     * Search products by keyword.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function search(Request $request)
     {
         $keyword = $request->input('search');
@@ -228,16 +227,29 @@ class InventoryController extends Controller
             return response()->json(['products' => []], 200);
         }
 
-        $products = Product::where('name', 'like', "%{$keyword}%")
+        $products = Product::withCount(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])
+            ->where('name', 'like', "%{$keyword}%")
             ->orWhere('color', 'like', "%{$keyword}%")
             ->orWhere('size', 'like', "%{$keyword}%")
-            ->select('id', 'name', 'size', 'color', 'stock', 'selling_price', 'discount_price')
+            ->select('id', 'name', 'size', 'color', 'selling_price', 'discount_price')
             ->paginate(10);
 
         Log::info('Search performed with keyword: ' . $keyword . ', found: ' . $products->count());
 
         return response()->json([
-            'products' => $products->items(),
+            'products' => $products->items()->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'size' => $product->size,
+                    'color' => $product->color,
+                    'stock' => $product->product_units_count,
+                    'selling_price' => $product->selling_price,
+                    'discount_price' => $product->discount_price,
+                ];
+            }),
             'pagination' => [
                 'total' => $products->total(),
                 'per_page' => $products->perPage(),
@@ -249,12 +261,6 @@ class InventoryController extends Controller
         ], 200);
     }
 
-    /**
-     * Display the QR code print page for a product.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\View\View
-     */
     public function printQr(Product $product)
     {
         if (!$product) {
@@ -262,28 +268,21 @@ class InventoryController extends Controller
             return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
         }
 
-        Log::info('Preparing to print QR codes for product ID ' . $product->id . ' with stock: ' . $product->stock);
+        $product->load(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }]);
+
+        Log::info('Preparing to print QR codes for product ID ' . $product->id . ' with ' . $product->stock . ' units');
 
         return view('inventory.print_qr', compact('product'));
     }
 
-    /**
-     * Display the stock opname page.
-     *
-     * @return \Illuminate\View\View
-     */
     public function stockOpname()
     {
+        Log::info('Stock opname page accessed');
         return view('inventory.stock_opname');
     }
 
-    /**
-     * Update physical stock after scanning QR code.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function updatePhysicalStock(Request $request, Product $product)
     {
         if (!$product) {
@@ -298,21 +297,50 @@ class InventoryController extends Controller
         DB::beginTransaction();
 
         try {
-            $oldStock = $product->stock;
-            $product->stock = $validated['physical_stock'];
-            $product->save();
+            $currentStock = $product->productUnits()->where('is_active', true)->count();
+            $desiredStock = $validated['physical_stock'];
+            $difference = $desiredStock - $currentStock;
+            $stockMessage = '';
 
-            Log::info("Stock opname updated for product ID {$product->id}: Old stock {$oldStock}, New stock {$product->stock}");
+            if ($difference > 0) {
+                $stockMessage = "Produk terdapat selisih: lebih {$difference} unit";
+            } elseif ($difference < 0) {
+                $stockMessage = "Produk terdapat selisih: kurang " . abs($difference) . " unit";
+            } else {
+                $stockMessage = "Stok sesuai dengan sistem";
+            }
+
+            if ($desiredStock > $currentStock) {
+                for ($i = $currentStock; $i < $desiredStock; $i++) {
+                    $unitCode = 'UNIT-' . strtoupper(Str::random(8));
+                    $unit = ProductUnit::create([
+                        'product_id' => $product->id,
+                        'unit_code' => $unitCode,
+                        'qr_code' => '',
+                        'is_active' => true,
+                    ]);
+                    $qrCode = route('inventory.show_unit', ['product' => $product->id, 'unitCode' => $unit->unit_code]);
+                    $unit->update(['qr_code' => $qrCode]);
+                }
+            } elseif ($desiredStock < $currentStock) {
+                $unitsToDeactivate = $product->productUnits()->where('is_active', true)->take($currentStock - $desiredStock)->get();
+                foreach ($unitsToDeactivate as $unit) {
+                    $unit->update(['is_active' => false]);
+                }
+            }
+
+            Log::info("Stock opname updated for product ID {$product->id}: Old stock {$currentStock}, New stock {$desiredStock}, Message: {$stockMessage}");
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Stok fisik berhasil diperbarui',
+                'stock_message' => $stockMessage,
                 'product' => [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'stock' => $product->stock,
+                    'stock' => $desiredStock,
                 ]
             ], 200);
         } catch (\Exception $e) {
