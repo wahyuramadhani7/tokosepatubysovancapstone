@@ -346,7 +346,7 @@
                                                 </div>
                                             </div>
                                             <div class="text-right">
-                                                <p class="font-medium text-white text-xs" x-text="formatRupiah(unit.selling_price)"></p>
+                                                <p class="font-medium text-white text-xs" x-text="unit.discount_price ? formatRupiah(unit.discount_price) : formatRupiah(unit.selling_price)"></p>
                                                 <button type="button" class="mt-1 text-xs bg-brand-neon-teal text-brand-dark-900 py-1 px-2 rounded-full transition-colors font-semibold hover-glow">+ Tambah</button>
                                             </div>
                                         </div>
@@ -380,7 +380,7 @@
                                                 </div>
                                             </div>
                                             <div class="text-right">
-                                                <p class="font-medium text-white text-xs" x-text="formatRupiah(unit.selling_price)"></p>
+                                                <p class="font-medium text-white text-xs" x-text="unit.discount_price ? formatRupiah(unit.discount_price) : formatRupiah(unit.selling_price)"></p>
                                                 <button type="button" class="mt-1 text-xs bg-brand-neon-teal text-brand-dark-900 py-1 px-2 rounded-full transition-colors font-semibold hover-glow">+ Tambah</button>
                                             </div>
                                         </div>
@@ -410,15 +410,11 @@
                                 <input type="text" name="customer_phone" placeholder="Masukkan nomor telepon" value="{{ old('customer_phone') }}" class="w-full px-3 py-2 text-xs">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Email</label>
-                                <input type="email" name="customer_email" placeholder="email@example.com" value="{{ old('customer_email') }}" class="w-full px-3 py-2 text-xs">
-                            </div>
-                            <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Metode Pembayaran <span class="text-red-300">*</span></label>
                                 <select name="payment_method" id="payment_method" class="w-full px-3 py-2 text-xs" required>
                                     <option value="" disabled {{ old('payment_method') ? '' : 'selected' }}>Pilih metode pembayaran</option>
                                     <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Tunai</option>
-                                    <option value="credit_card" {{ old('payment_method') == 'credit_card' ? 'selected' : '' }}>Kartu Kredit</option>
+                                    <option value="credit_card" {{ old('payment_method') == 'credit_card' ? 'selected' : '' }}>QRIS</option>
                                     <option value="transfer" {{ old('payment_method') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
                                 </select>
                             </div>
@@ -463,10 +459,11 @@
                                             <span class="text-xs text-gray-400" x-text="`Kode: ${item.unit_code}`"></span>
                                         </div>
                                         <div class="flex justify-between items-center mt-3">
-                                            <p class="font-medium text-white text-xs" x-text="formatRupiah(item.selling_price)"></p>
+                                            <p class="font-medium text-white text-xs" x-text="item.discount_price ? formatRupiah(item.discount_price) : formatRupiah(item.selling_price)"></p>
                                         </div>
                                         <input type="hidden" :name="'products['+index+'][product_id]'" x-model="item.product_id">
                                         <input type="hidden" :name="'products['+index+'][unit_code]'" x-model="item.unit_code">
+                                        <input type="hidden" :name="'products['+index+'][discount_price]'" x-model="item.discount_price">
                                     </li>
                                 </template>
                             </ul>
@@ -524,7 +521,7 @@
                 scannedUnitCodes: [],
 
                 formatRupiah(amount) {
-                    return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
+                    return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount || 0);
                 },
 
                 getColorCode(color) {
@@ -569,6 +566,7 @@
                         color: unit.color,
                         size: unit.size,
                         selling_price: unit.selling_price,
+                        discount_price: unit.discount_price || null,
                         unit_code: unit.unit_code,
                     });
                     this.scannedUnitCodes.push(unit.unit_code);
@@ -587,7 +585,10 @@
                 },
 
                 calculateSubtotal() {
-                    return this.cart.reduce((total, item) => total + item.selling_price, 0);
+                    return this.cart.reduce((total, item) => {
+                        // Use discount_price if available and not null, otherwise use selling_price
+                        return total + (item.discount_price !== null ? item.discount_price : item.selling_price);
+                    }, 0);
                 },
 
                 calculateTotal() {

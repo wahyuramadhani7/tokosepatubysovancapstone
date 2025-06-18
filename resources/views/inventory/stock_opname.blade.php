@@ -30,6 +30,7 @@
             <div id="product-info" class="hidden mt-4 bg-gray-800 p-4 rounded-lg">
                 <h2 class="text-lg font-semibold text-white mb-3">Informasi Produk</h2>
                 <div id="product-details" class="text-white"></div>
+                <div id="stock-status" class="text-white mt-2"></div>
                 <form id="stock-opname-form" class="mt-4">
                     @csrf
                     <div class="mb-4">
@@ -74,6 +75,26 @@
         background-color: #4b5563 !important; /* bg-gray-600 */
         cursor: not-allowed;
     }
+    .scanned-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+        margin-bottom: 4px;
+        background-color: #f87171;
+        color: white;
+        border-radius: 4px;
+    }
+    .scanned-item.new {
+        background-color: #34d399;
+    }
+    .scanned-item button {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+    }
 </style>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -84,12 +105,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const scannerContainer = document.getElementById('scanner-container');
     const productInfo = document.getElementById('product-info');
     const productDetails = document.getElementById('product-details');
+    const stockStatus = document.getElementById('stock-status');
     const stockOpnameForm = document.getElementById('stock-opname-form');
     const physicalStockInput = document.getElementById('physical_stock');
     let html5QrCode = null;
     let currentProductId = null;
-    let scannedQRCodes = [];
+    let scannedQRCodes = new Set(); // Menggunakan Set untuk menghindari duplikat
     let scannedCount = 0;
+    let systemStock = 0;
+    const scannedList = document.createElement('div'); // Container untuk daftar QR yang dipindai
+
+    // Tambahkan container daftar QR ke DOM
+    scannerContainer.parentNode.insertBefore(scannedList, scannerContainer.nextSibling);
+    scannedList.className = 'mt-4';
 
     // Initialize QR scanner
     startScannerBtn.addEventListener('click', async () => {
@@ -105,8 +133,11 @@ document.addEventListener('DOMContentLoaded', function() {
             productInfo.classList.add('hidden');
             startScannerBtn.classList.add('hidden');
             scannedCount = 0;
-            scannedQRCodes = [];
+            scannedQRCodes.clear();
+            systemStock = 0;
             physicalStockInput.value = scannedCount;
+            stockStatus.innerHTML = '';
+            scannedList.innerHTML = ''; // Bersihkan daftar QR sebelum memulai
             currentProductId = null;
 
             // Initialize scanner
@@ -172,27 +203,31 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Check if QR code has already been scanned
-        if (scannedQRCodes.includes(decodedText)) {
-            showAlert('error', 'QR code ini sudah dipindai.');
-            return;
-        }
-
         if (!currentProductId) {
             // First scan, set product and fetch data
             currentProductId = productId;
             scannedCount = 1;
-            scannedQRCodes.push(decodedText);
+            scannedQRCodes.add(decodedText);
             physicalStockInput.value = scannedCount;
             fetchProductData(productId);
             productInfo.classList.remove('hidden');
+            addScannedItem(decodedText, true); // Tambah item dengan status baru
             showAlert('success', 'QR code dipindai. Update stok: ' + scannedCount);
         } else if (productId === currentProductId) {
             // Same product, different QR code
-            scannedCount++;
-            scannedQRCodes.push(decodedText);
-            physicalStockInput.value = scannedCount;
-            showAlert('success', 'QR code dipindai. Update stok: ' + scannedCount);
+            if (!scannedQRCodes.has(decodedText)) {
+                scannedCount++;
+                scannedQRCodes.add(decodedText);
+                physicalStockInput.value = scannedCount;
+                updateStockStatus();
+                addScannedItem(decodedText, true); // Tambah item dengan status baru
+                showAlert('success', 'QR code dipindai. Update stok: ' + scannedCount);
+            } else {
+                // QR code sudah dipindai, tambahkan ke daftar tanpa notifikasi berulang
+                if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
+                    addScannedItem(decodedText, false); // Tambah item tanpa status baru
+                }
+            }
         } else {
             // Different product
             showAlert('error', 'QR code dari produk lain. Silakan pindai QR code untuk produk yang sama.');
@@ -219,19 +254,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            systemStock = data.stock || 0;
             productDetails.innerHTML = `
                 <p><strong>Nama:</strong> ${data.name || '-'}</p>
                 <p><strong>Ukuran:</strong> ${data.size || '-'}</p>
                 <p><strong>Warna:</strong> ${data.color || '-'}</p>
-                <p><strong>Stok Sistem:</strong> ${data.stock || 0}</p>
+                <p><strong>Stok Sistem:</strong> ${systemStock}</p>
             `;
             stockOpnameForm.action = `/inventory/${data.id}/physical-stock`;
+            updateStockStatus();
         })
         .catch(error => {
             console.error('Error fetching product:', error);
             showAlert('error', 'Gagal mengambil data produk');
             resetScanner();
         });
+    }
+
+    // Update stock status message
+    function updateStockStatus() {
+        const difference = scannedCount - systemStock;
+        let statusMessage = '';
+        let statusClass = '';
+
+        if (difference === 0) {
+            statusMessage = 'Stok sesuai dengan sistem.';
+            statusClass = 'text-green-400';
+        } else if (difference > 0) {
+            statusMessage = `Produk tidak sesuai, lebih ${difference} unit.`;
+            statusClass = 'text-yellow-400';
+        } else {
+            statusMessage = `Produk tidak sesuai, kurang ${Math.abs(difference)} unit.`;
+            statusClass = 'text-red-400';
+        }
+
+        stockStatus.innerHTML = `<p class="${statusClass}"><strong>Status Stok:</strong> ${statusMessage}</p>`;
     }
 
     // Handle stock opname form submission
@@ -274,8 +331,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 productInfo.classList.add('hidden');
                 startScannerBtn.classList.remove('hidden');
                 scannedCount = 0;
-                scannedQRCodes = [];
+                scannedQRCodes.clear();
+                systemStock = 0;
                 physicalStockInput.value = scannedCount;
+                stockStatus.innerHTML = '';
+                scannedList.innerHTML = ''; // Bersihkan daftar QR
                 currentProductId = null;
             }).catch(err => {
                 console.error('Error stopping scanner:', err);
@@ -285,8 +345,11 @@ document.addEventListener('DOMContentLoaded', function() {
             productInfo.classList.add('hidden');
             startScannerBtn.classList.remove('hidden');
             scannedCount = 0;
-            scannedQRCodes = [];
+            scannedQRCodes.clear();
+            systemStock = 0;
             physicalStockInput.value = scannedCount;
+            stockStatus.innerHTML = '';
+            scannedList.innerHTML = ''; // Bersihkan daftar QR
             currentProductId = null;
         }
     }
@@ -310,6 +373,35 @@ document.addEventListener('DOMContentLoaded', function() {
             alertDiv.style.transition = 'opacity 0.5s ease';
             setTimeout(() => alertDiv.remove(), 500);
         }, 5000);
+    }
+
+    // Tambahkan item ke daftar QR yang dipindai
+    function addScannedItem(decodedText, isNew) {
+        if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
+            const item = document.createElement('div');
+            item.className = `scanned-item ${isNew ? 'new' : ''}`;
+            item.setAttribute('data-qr', decodedText);
+            item.innerHTML = `
+                ${isNew ? 'QR code dipindai. ' : 'QR code ini sudah dipindai. '}
+                <button onclick="this.parentElement.remove()">×</button>
+            `;
+            scannedList.appendChild(item);
+
+            // Hapus item dari Set jika dihapus manual
+            item.querySelector('button').addEventListener('click', () => {
+                scannedQRCodes.delete(decodedText);
+                scannedCount = scannedQRCodes.size;
+                physicalStockInput.value = scannedCount;
+                updateStockStatus();
+            });
+
+            // Perbarui hitungan stok setelah menambahkan item baru
+            if (isNew) {
+                scannedCount = scannedQRCodes.size;
+                physicalStockInput.value = scannedCount;
+                updateStockStatus();
+            }
+        }
     }
 });
 </script>

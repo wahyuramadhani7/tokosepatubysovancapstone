@@ -301,11 +301,24 @@ class InventoryController extends Controller
             $desiredStock = $validated['physical_stock'];
             $difference = $desiredStock - $currentStock;
             $stockMessage = '';
+            $stockMismatch = null;
 
             if ($difference > 0) {
                 $stockMessage = "Produk terdapat selisih: lebih {$difference} unit";
+                $stockMismatch = [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'message' => "Stok tidak sesuai, lebih {$difference} unit",
+                    'difference' => $difference
+                ];
             } elseif ($difference < 0) {
                 $stockMessage = "Produk terdapat selisih: kurang " . abs($difference) . " unit";
+                $stockMismatch = [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'message' => "Stok tidak sesuai, kurang " . abs($difference) . " unit",
+                    'difference' => $difference
+                ];
             } else {
                 $stockMessage = "Stok sesuai dengan sistem";
             }
@@ -330,6 +343,18 @@ class InventoryController extends Controller
             }
 
             Log::info("Stock opname updated for product ID {$product->id}: Old stock {$currentStock}, New stock {$desiredStock}, Message: {$stockMessage}");
+
+            // Simpan informasi ketidaksesuaian ke session jika ada
+            if ($stockMismatch) {
+                $existingMismatches = session('stock_mismatches', []);
+                $existingMismatches[$product->id] = $stockMismatch;
+                session(['stock_mismatches' => $existingMismatches]);
+            } else {
+                // Hapus ketidaksesuaian dari session jika stok sesuai
+                $existingMismatches = session('stock_mismatches', []);
+                unset($existingMismatches[$product->id]);
+                session(['stock_mismatches' => $existingMismatches]);
+            }
 
             DB::commit();
 

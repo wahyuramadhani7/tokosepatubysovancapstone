@@ -37,6 +37,7 @@ class TransactionController extends Controller
                     'color' => $product->color,
                     'size' => $product->size,
                     'selling_price' => $product->selling_price,
+                    'discount_price' => $product->discount_price,
                     'unit_code' => $unit->unit_code,
                 ];
             });
@@ -56,6 +57,7 @@ class TransactionController extends Controller
                 'products' => 'required|array|min:1',
                 'products.*.product_id' => 'required|exists:products,id',
                 'products.*.unit_code' => 'required|exists:product_units,unit_code,is_active,1',
+                'products.*.discount_price' => 'nullable|numeric|min:0',
                 'discount_amount' => 'nullable|numeric|min:0',
                 'notes' => 'nullable|string',
             ]);
@@ -82,7 +84,10 @@ class TransactionController extends Controller
                     ->where('is_active', true)
                     ->firstOrFail();
 
-                $price = $product->selling_price;
+                // Use discount_price if provided and not null, otherwise use selling_price
+                $price = isset($item['discount_price']) && $item['discount_price'] !== null 
+                    ? $item['discount_price'] 
+                    : $product->selling_price;
                 $subtotal = $price;
                 $totalAmount += $subtotal;
 
@@ -94,7 +99,7 @@ class TransactionController extends Controller
                     'product_unit_id' => $unit->id,
                     'quantity' => 1,
                     'price' => $price,
-                    'discount' => 0,
+                    'discount' => 0, // Per-item discount is not used here
                     'subtotal' => $subtotal,
                 ]);
             }
@@ -201,6 +206,7 @@ class TransactionController extends Controller
                     'color' => $product->color,
                     'size' => $product->size,
                     'selling_price' => $product->selling_price,
+                    'discount_price' => $product->discount_price,
                     'unit_code' => $unit->unit_code,
                 ],
             ], 200);

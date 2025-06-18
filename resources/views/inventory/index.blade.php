@@ -109,7 +109,12 @@
                 <div class="mt-1" id="desktop-table-body">
                     @forelse ($products ?? [] as $index => $product)
                         <div class="grid grid-cols-8 gap-0 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
-                            <div class="p-3 text-black">{{ $product->name ?? '-' }}</div>
+                            <div class="p-3 text-black">
+                                {{ $product->name ?? '-' }}
+                                @if(session('stock_mismatches') && isset(session('stock_mismatches')[$product->id]))
+                                    <p class="text-sm text-red-600 mt-1">{{ session('stock_mismatches')[$product->id]['message'] }}</p>
+                                @endif
+                            </div>
                             <div class="p-3 text-black text-center">{{ $product->size ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->color ?? '-' }}</div>
                             <div class="p-3 font-medium text-center {{ $product->product_units_count < 5 ? 'text-red-600' : 'text-black' }}">{{ $product->product_units_count ?? 0 }}</div>
@@ -166,6 +171,9 @@
                         <div>
                             <h3 class="font-medium text-gray-900">{{ $product->name ?? '-' }}</h3>
                             <div class="text-sm text-gray-500">{{ $product->size ?? '-' }} | {{ $product->color ?? '-' }}</div>
+                            @if(session('stock_mismatches') && isset(session('stock_mismatches')[$product->id]))
+                                <p class="text-sm text-red-600 mt-1">{{ session('stock_mismatches')[$product->id]['message'] }}</p>
+                            @endif
                         </div>
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data={{ urlencode(route('inventory.show', $product->id)) }}" alt="QR Code for {{ $product->name ?? '-' }}" class="h-12 w-12 ml-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
                     </div>
@@ -290,9 +298,13 @@
                     mobileCards.innerHTML = '<div class="text-center text-gray-500 p-4">Tidak ada produk ditemukan.</div>';
                 } else {
                     data.products.forEach((product, index) => {
+                        const mismatchMessage = @json(session('stock_mismatches', []))[product.id]?.message || '';
                         const row = `
                             <div class="grid grid-cols-8 gap-0 items-center ${index % 2 === 0 ? 'bg-white' : 'bg-gray-200'}">
-                                <div class="p-3 text-black">${product.name || '-'}</div>
+                                <div class="p-3 text-black">
+                                    ${product.name || '-'}
+                                    ${mismatchMessage ? `<p class="text-sm text-red-600 mt-1">${mismatchMessage}</p>` : ''}
+                                </div>
                                 <div class="p-3 text-black text-center">${product.size || '-'}</div>
                                 <div class="p-3 text-black text-center">${product.color || '-'}</div>
                                 <div class="p-3 font-medium text-center ${product.stock < 5 ? 'text-red-600' : 'text-black'}">${product.stock || 0}</div>
@@ -333,6 +345,7 @@
                                     <div>
                                         <h3 class="font-medium text-gray-900">${product.name || '-'}</h3>
                                         <div class="text-sm text-gray-500">${product.size || '-'} | ${product.color || '-'}</div>
+                                        ${mismatchMessage ? `<p class="text-sm text-red-600 mt-1">${mismatchMessage}</p>` : ''}
                                     </div>
                                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${encodeURIComponent('{{ route('inventory.show', ':id') }}'.replace(':id', product.id))}" alt="QR Code for ${product.name || '-'}" class="h-12 w-12 ml-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
                                 </div>
