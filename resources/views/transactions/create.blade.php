@@ -257,7 +257,7 @@
                     </svg>
                     Buat Transaksi Baru
                 </h1>
-                <p class="text-sm text-gray-400">Tambahkan produk dan lengkapi detail transaksi dengan gaya dan kemudahan</p>
+                <p class="text-sm text-gray-400">Pilih unit produk dan lengkapi detail transaksi dengan gaya dan kemudahan</p>
             </div>
 
             <!-- Success/Error Popup Modal -->
@@ -293,7 +293,7 @@
                             <svg class="h-5 w-5 mr-2 text-brand-neon-teal" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0l-2-4H7a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2z" />
                             </svg>
-                            Pilih Produk
+                            Pilih Unit Produk
                         </h2>
 
                         <div class="flex items-center space-x-3 mb-4">
@@ -303,7 +303,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
                                 </div>
-                                <input type="text" x-model="searchQuery" @input="searchProducts" placeholder="Cari nama, warna, atau ukuran produk..." class="w-full pl-10 pr-3 py-2 text-xs">
+                                <input type="text" x-model="searchQuery" @input="searchUnits" placeholder="Cari nama, warna, ukuran, atau kode unit..." class="w-full pl-10 pr-3 py-2 text-xs">
                             </div>
                             <div class="flex space-x-2">
                                 <button type="button" @click="openScanner" class="btn-futuristic px-3 py-2 rounded-lg flex items-center text-xs font-semibold hover-glow">
@@ -326,7 +326,7 @@
                         <div x-show="isScannerOpen" class="modal-overlay" x-cloak @click.self="closeScanner">
                             <div class="card-futuristic rounded-xl p-6 w-full max-w-lg border">
                                 <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-base font-semibold text-white font-['Orbitron']">Scan QR Code</h3>
+                                    <h3 class="text-base font-semibold text-white font-['Orbitron']">Scan QR Code Unit</h3>
                                     <button type="button" @click="closeScanner" class="text-gray-400 hover:text-brand-neon-teal p-1 rounded-full hover:bg-brand-dark-700 transition-colors">
                                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -334,7 +334,7 @@
                                     </button>
                                 </div>
                                 <div id="qr-reader"></div>
-                                <p class="text-xs text-gray-400 mt-3 text-center">Arahkan kamera ke kode QR produk</p>
+                                <p class="text-xs text-gray-400 mt-3 text-center">Arahkan kamera ke kode QR unit produk</p>
                                 <p class="text-xs text-red-300 mt-2 text-center" x-text="scanError" x-show="scanError"></p>
                             </div>
                         </div>
@@ -342,22 +342,22 @@
                         <!-- Search Results -->
                         <div x-show="searchResults.length > 0" class="card-futuristic border rounded-xl mb-4 max-h-48 overflow-y-auto custom-scrollbar slide-in" x-cloak>
                             <ul class="divide-y divide-brand-neon-teal/20">
-                                <template x-for="product in searchResults" :key="product.id">
-                                    <li class="p-3 transition-colors cursor-pointer" @click="addToCart(product)">
+                                <template x-for="unit in searchResults" :key="unit.unit_code">
+                                    <li class="p-3 transition-colors cursor-pointer" @click="addToCart(unit)">
                                         <div class="flex justify-between items-center">
                                             <div>
-                                                <p class="font-medium text-white text-xs" x-text="product.name"></p>
+                                                <p class="font-medium text-white text-xs" x-text="unit.product_name"></p>
                                                 <div class="flex items-center mt-1 space-x-2">
-                                                    <span class="inline-block h-2 w-2 rounded-full" :style="`background-color: ${getColorCode(product.color)}`"></span>
-                                                    <span class="text-xs text-gray-400" x-text="product.color"></span>
+                                                    <span class="inline-block h-2 w-2 rounded-full" :style="`background-color: ${getColorCode(unit.color)}`"></span>
+                                                    <span class="text-xs text-gray-400" x-text="unit.color"></span>
                                                     <span class="text-gray-500">|</span>
-                                                    <span class="text-xs text-gray-400" x-text="`Ukuran: ${product.size}`"></span>
+                                                    <span class="text-xs text-gray-400" x-text="`Ukuran: ${unit.size}`"></span>
                                                     <span class="text-gray-500">|</span>
-                                                    <span class="text-xs" :class="product.stock > 5 ? 'text-teal-300' : 'text-orange-300'" x-text="`Stok: ${product.stock}`"></span>
+                                                    <span class="text-xs text-gray-400" x-text="`Kode: ${unit.unit_code}`"></span>
                                                 </div>
                                             </div>
                                             <div class="text-right">
-                                                <p class="font-medium text-white text-xs" x-text="formatRupiah(product.selling_price)"></p>
+                                                <p class="font-medium text-white text-xs" x-text="formatRupiah(unit.selling_price)"></p>
                                                 <button type="button" class="mt-1 text-xs bg-brand-neon-teal text-brand-dark-900 py-1 px-2 rounded-full transition-colors font-semibold hover-glow">+ Tambah</button>
                                             </div>
                                         </div>
@@ -366,32 +366,32 @@
                             </ul>
                         </div>
 
-                        <!-- Product List -->
+                        <!-- Product Units List -->
                         <div class="border border-brand-neon-teal/20 rounded-xl max-h-80 overflow-y-auto custom-scrollbar">
-                            <div x-show="availableProducts.length === 0" class="text-center py-10 text-gray-400">
+                            <div x-show="availableUnits.length === 0" class="text-center py-10 text-gray-400">
                                 <svg class="h-10 w-10 mx-auto text-brand-neon-teal/50 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                 </svg>
-                                <p class="text-sm">Tidak ada produk tersedia</p>
+                                <p class="text-sm">Tidak ada unit produk tersedia</p>
                                 <p class="text-xs text-gray-400">Coba lagi nanti</p>
                             </div>
                             <ul class="divide-y divide-brand-neon-teal/20">
-                                <template x-for="product in availableProducts" :key="product.id">
-                                    <li class="p-3 transition-colors cursor-pointer slide-in" @click="addToCart(product)">
+                                <template x-for="unit in availableUnits" :key="unit.unit_code">
+                                    <li class="p-3 transition-colors cursor-pointer slide-in" @click="addToCart(unit)">
                                         <div class="flex justify-between items-center">
                                             <div>
-                                                <p class="font-medium text-white text-xs" x-text="product.name"></p>
+                                                <p class="font-medium text-white text-xs" x-text="unit.product_name"></p>
                                                 <div class="flex items-center mt-1 space-x-2">
-                                                    <span class="inline-block h-2 w-2 rounded-full" :style="`background-color: ${getColorCode(product.color)}`"></span>
-                                                    <span class="text-xs text-gray-400" x-text="product.color"></span>
+                                                    <span class="inline-block h-2 w-2 rounded-full" :style="`background-color: ${getColorCode(unit.color)}`"></span>
+                                                    <span class="text-xs text-gray-400" x-text="unit.color"></span>
                                                     <span class="text-gray-500">|</span>
-                                                    <span class="text-xs text-gray-400" x-text="`Ukuran: ${product.size}`"></span>
+                                                    <span class="text-xs text-gray-400" x-text="`Ukuran: ${unit.size}`"></span>
                                                     <span class="text-gray-500">|</span>
-                                                    <span class="text-xs" :class="product.stock > 5 ? 'text-teal-300' : 'text-orange-300'" x-text="`Stok: ${product.stock}`"></span>
+                                                    <span class="text-xs text-gray-400" x-text="`Kode: ${unit.unit_code}`"></span>
                                                 </div>
                                             </div>
                                             <div class="text-right">
-                                                <p class="font-medium text-white text-xs" x-text="formatRupiah(product.selling_price)"></p>
+                                                <p class="font-medium text-white text-xs" x-text="formatRupiah(unit.selling_price)"></p>
                                                 <button type="button" class="mt-1 text-xs bg-brand-neon-teal text-brand-dark-900 py-1 px-2 rounded-full transition-colors font-semibold hover-glow">+ Tambah</button>
                                             </div>
                                         </div>
@@ -452,7 +452,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </svg>
                             <p class="text-sm font-medium">Keranjang Kosong</p>
-                            <p class="text-xs text-gray-400">Tambahkan produk dari daftar di samping</p>
+                            <p class="text-xs text-gray-400">Tambahkan unit produk dari daftar di samping</p>
                         </div>
 
                         <div x-show="cart.length > 0" class="max-h-56 overflow-y-auto custom-scrollbar mb-4 space-y-3">
@@ -470,25 +470,14 @@
                                             <span class="text-xs text-gray-400" x-text="item.color"></span>
                                             <span class="text-gray-500">|</span>
                                             <span class="text-xs text-gray-400" x-text="`Ukuran: ${item.size}`"></span>
+                                            <span class="text-gray-500">|</span>
+                                            <span class="text-xs text-gray-400" x-text="`Kode: ${item.unit_code}`"></span>
                                         </div>
                                         <div class="flex justify-between items-center mt-3">
-                                            <div class="flex items-center border border-brand-neon-teal/20 rounded-lg overflow-hidden">
-                                                <button type="button" @click="decrementQuantity(index)" class="bg-brand-dark-700 hover:bg-brand-dark-600 px-2 py-1 transition-colors">
-                                                    <svg class="h-3 w-3 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                                                    </svg>
-                                                </button>
-                                                <input type="number" x-model.number="item.quantity" min="1" :max="item.stock" class="w-10 text-center bg-brand-dark-800 text-white py-1 text-xs" @change="updateQuantity(index)">
-                                                <button type="button" @click="incrementQuantity(index)" class="bg-brand-dark-700 hover:bg-brand-dark-600 px-2 py-1 transition-colors">
-                                                    <svg class="h-3 w-3 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                            <p class="font-medium text-white text-xs" x-text="formatRupiah(item.selling_price * item.quantity)"></p>
+                                            <p class="font-medium text-white text-xs" x-text="formatRupiah(item.selling_price)"></p>
                                         </div>
-                                        <input type="hidden" :name="'products['+index+'][id]'" x-model="item.id">
-                                        <input type="hidden" :name="'products['+index+'][quantity]'" x-model="item.quantity">
+                                        <input type="hidden" :name="'products['+index+'][product_id]'" x-model="item.product_id">
+                                        <input type="hidden" :name="'products['+index+'][unit_code]'" x-model="item.unit_code">
                                     </li>
                                 </template>
                             </ul>
@@ -530,7 +519,7 @@
     <script>
         function transactionApp() {
             return {
-                availableProducts: @json($products),
+                availableUnits: @json($availableUnits),
                 searchQuery: '',
                 searchResults: [],
                 cart: [],
@@ -543,7 +532,7 @@
                 popupTitle: '',
                 popupMessage: '',
                 popupType: 'success',
-                scannedProductIds: [],
+                scannedUnitCodes: [],
 
                 formatRupiah(amount) {
                     return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
@@ -567,36 +556,36 @@
                     return colorMap[color] || '#9ca3af';
                 },
 
-                searchProducts() {
+                searchUnits() {
                     this.searchResults = this.searchQuery.trim() ?
-                        this.availableProducts.filter(p =>
-                            p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            p.color.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            p.size.toLowerCase().includes(this.searchQuery.toLowerCase())
+                        this.availableUnits.filter(u =>
+                            u.product_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                            u.color.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                            u.size.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                            u.unit_code.toLowerCase().includes(this.searchQuery.toLowerCase())
                         ) : [];
                 },
 
-                addToCart(product) {
-                    const index = this.cart.findIndex(item => item.id === product.id);
+                addToCart(unit) {
+                    const index = this.cart.findIndex(item => item.unit_code === unit.unit_code);
                     if (index >= 0) {
-                        this.popupTitle = 'Produk Sudah Ada';
-                        this.popupMessage = `Produk "${product.name}" sudah ada di keranjang.`;
+                        this.popupTitle = 'Unit Sudah Ada';
+                        this.popupMessage = `Unit "${unit.unit_code}" sudah ada di keranjang.`;
                         this.popupType = 'error';
                         this.showPopup = true;
                         return;
                     }
                     this.cart.push({
-                        id: product.id,
-                        name: product.name,
-                        color: product.color,
-                        size: product.size,
-                        selling_price: product.selling_price,
-                        quantity: 1,
-                        stock: product.stock
+                        product_id: unit.product_id,
+                        name: unit.product_name,
+                        color: unit.color,
+                        size: unit.size,
+                        selling_price: unit.selling_price,
+                        unit_code: unit.unit_code,
                     });
-                    this.scannedProductIds.push(product.id);
-                    this.popupTitle = 'Produk Ditambahkan';
-                    this.popupMessage = `Produk "${product.name}" berhasil ditambahkan ke keranjang!`;
+                    this.scannedUnitCodes.push(unit.unit_code);
+                    this.popupTitle = 'Unit Ditambahkan';
+                    this.popupMessage = `Unit "${unit.unit_code}" berhasil ditambahkan ke keranjang!`;
                     this.popupType = 'success';
                     this.showPopup = true;
                     this.searchQuery = '';
@@ -605,41 +594,14 @@
                 },
 
                 removeItem(index) {
-                    const productId = this.cart[index].id;
-                    this.scannedProductIds = this.scannedProductIds.filter(id => id !== productId);
+                    const unitCode = this.cart[index].unit_code;
+                    this.scannedUnitCodes = this.scannedUnitCodes.filter(code => code !== unitCode);
                     this.cart.splice(index, 1);
                     this.$forceUpdate();
                 },
 
-                incrementQuantity(index) {
-                    if (this.cart[index].quantity < this.cart[index].stock) {
-                        this.cart[index].quantity++;
-                    } else {
-                        alert('Stok tidak mencukupi!');
-                    }
-                    this.$forceUpdate();
-                },
-
-                decrementQuantity(index) {
-                    if (this.cart[index].quantity > 1) {
-                        this.cart[index].quantity--;
-                    }
-                    this.$forceUpdate();
-                },
-
-                updateQuantity(index) {
-                    let qty = this.cart[index].quantity;
-                    if (qty < 1) {
-                        this.cart[index].quantity = 1;
-                    } else if (qty > this.cart[index].stock) {
-                        this.cart[index].quantity = this.cart[index].stock;
-                        alert('Kuantitas disesuaikan dengan stok tersedia');
-                    }
-                    this.$forceUpdate();
-                },
-
                 calculateSubtotal() {
-                    return this.cart.reduce((total, item) => total + (item.selling_price * item.quantity), 0);
+                    return this.cart.reduce((total, item) => total + item.selling_price, 0);
                 },
 
                 calculateTotal() {
@@ -649,7 +611,7 @@
                 validateForm(event) {
                     if (this.cart.length === 0) {
                         event.preventDefault();
-                        alert('Keranjang masih kosong! Tambahkan produk terlebih dahulu.');
+                        alert('Keranjang masih kosong! Tambahkan unit produk terlebih dahulu.');
                         return false;
                     }
                     if (!document.getElementById('payment_method').value) {
@@ -712,35 +674,42 @@
 
                 async handleQrScan(decodedText) {
                     this.scanError = '';
-                    let productId;
+                    let unitCode;
                     try {
                         const url = new URL(decodedText);
                         const pathSegments = url.pathname.split('/');
-                        productId = pathSegments[pathSegments.length - 1];
-                        if (!productId || isNaN(productId)) {
-                            throw new Error('Invalid product ID');
+                        unitCode = pathSegments[pathSegments.length - 1];
+                        if (!unitCode || !unitCode.startsWith('UNIT-')) {
+                            throw new Error('Invalid unit code');
                         }
                     } catch (e) {
-                        this.scanError = 'QR code tidak valid. Harus berisi URL produk.';
+                        this.scanError = 'QR code tidak valid. Harus berisi URL unit produk.';
                         return;
                     }
 
-                    if (this.scannedProductIds.includes(parseInt(productId))) {
-                        this.scanError = 'Produk ini sudah discan sebelumnya.';
+                    if (this.scannedUnitCodes.includes(unitCode)) {
+                        this.scanError = 'Unit ini sudah discan sebelumnya.';
                         return;
                     }
 
                     try {
-                        const response = await fetch(`/transactions/add-product/${productId}`);
+                        const response = await fetch(`/transactions/add-product/${unitCode}`);
                         const data = await response.json();
                         if (!data.success) {
                             this.scanError = data.message;
                             return;
                         }
-                        this.addToCart(data.product);
+                        this.addToCart({
+                            product_id: data.unit.product_id,
+                            product_name: data.unit.product_name,
+                            color: data.unit.color,
+                            size: data.unit.size,
+                            selling_price: data.unit.selling_price,
+                            unit_code: data.unit.unit_code,
+                        });
                         this.closeScanner();
                     } catch (err) {
-                        this.scanError = 'Gagal memuat produk. Coba lagi.';
+                        this.scanError = 'Gagal memuat unit produk. Coba lagi.';
                         console.error('Fetch error:', err);
                     }
                 },
@@ -748,38 +717,45 @@
                 async handleHardwareQrScan() {
                     if (!this.qrInput) return;
                     this.scanError = '';
-                    let productId;
+                    let unitCode;
                     try {
                         const url = new URL(this.qrInput);
                         const pathSegments = url.pathname.split('/');
-                        productId = pathSegments[pathSegments.length - 1];
-                        if (!productId || isNaN(productId)) {
-                            throw new Error('Invalid product ID');
+                        unitCode = pathSegments[pathSegments.length - 1];
+                        if (!unitCode || !unitCode.startsWith('UNIT-')) {
+                            throw new Error('Invalid unit code');
                         }
                     } catch (e) {
-                        this.scanError = 'QR code tidak valid. Harus berisi URL produk.';
+                        this.scanError = 'QR code tidak valid. Harus berisi URL unit produk.';
                         this.qrInput = '';
                         return;
                     }
 
-                    if (this.scannedProductIds.includes(parseInt(productId))) {
-                        this.scanError = 'Produk ini sudah discan sebelumnya.';
+                    if (this.scannedUnitCodes.includes(unitCode)) {
+                        this.scanError = 'Unit ini sudah discan sebelumnya.';
                         this.qrInput = '';
                         return;
                     }
 
                     try {
-                        const response = await fetch(`/transactions/add-product/${productId}`);
+                        const response = await fetch(`/transactions/add-product/${unitCode}`);
                         const data = await response.json();
                         if (!data.success) {
                             this.scanError = data.message;
                             this.qrInput = '';
                             return;
                         }
-                        this.addToCart(data.product);
+                        this.addToCart({
+                            product_id: data.unit.product_id,
+                            product_name: data.unit.product_name,
+                            color: data.unit.color,
+                            size: data.unit.size,
+                            selling_price: data.unit.selling_price,
+                            unit_code: data.unit.unit_code,
+                        });
                         this.qrInput = '';
                     } catch (err) {
-                        this.scanError = 'Gagal memuat produk. Coba lagi.';
+                        this.scanError = 'Gagal memuat unit produk. Coba lagi.';
                         console.error('Fetch error:', err);
                         this.qrInput = '';
                     }

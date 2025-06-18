@@ -12,6 +12,7 @@ class TransactionItem extends Model
     protected $fillable = [
         'transaction_id',
         'product_id',
+        'product_unit_id', // Tambah kolom ini
         'quantity',
         'price',
         'discount',
@@ -26,5 +27,10 @@ class TransactionItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function productUnit()
+    {
+        return $this->belongsTo(ProductUnit::class);
     }
 }
