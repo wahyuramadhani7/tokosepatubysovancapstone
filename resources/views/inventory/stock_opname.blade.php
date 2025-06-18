@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 @section('content')
@@ -22,6 +23,7 @@
 
             <div id="scanner-container" class="hidden mt-4">
                 <div id="qr-scanner" class="w-full max-w-md mx-auto rounded-lg"></div>
+                <input type="text" id="barcode-input" style="opacity: 0; position: absolute; width: 0; height: 0;" />
                 <button id="stop-scanner" type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors mt-2 w-full md:w-auto">
                     Stop Scan
                 </button>
@@ -103,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const startScannerBtn = document.getElementById('start-scanner');
     const stopScannerBtn = document.getElementById('stop-scanner');
     const scannerContainer = document.getElementById('scanner-container');
+    const barcodeInput = document.getElementById('barcode-input');
     const productInfo = document.getElementById('product-info');
     const productDetails = document.getElementById('product-details');
     const stockStatus = document.getElementById('stock-status');
@@ -110,23 +113,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const physicalStockInput = document.getElementById('physical_stock');
     let html5QrCode = null;
     let currentProductId = null;
-    let scannedQRCodes = new Set(); // Menggunakan Set untuk menghindari duplikat
+    let scannedQRCodes = new Set();
     let scannedCount = 0;
     let systemStock = 0;
-    const scannedList = document.createElement('div'); // Container untuk daftar QR yang dipindai
-
-    // Tambahkan container daftar QR ke DOM
+    const scannedList = document.createElement('div');
     scannerContainer.parentNode.insertBefore(scannedList, scannerContainer.nextSibling);
     scannedList.className = 'mt-4';
 
     // Initialize QR scanner
     startScannerBtn.addEventListener('click', async () => {
         try {
-            // Check camera permission
+            // Check camera permission for QR camera scanner
             const permission = await navigator.permissions.query({ name: 'camera' });
             if (permission.state === 'denied') {
-                showAlert('error', 'Izin kamera ditolak. Silakan izinkan akses kamera di pengaturan browser.');
-                return;
+                showAlert('error', 'Izin kamera ditolak. Silakan izinkan akses kamera di pengaturan browser untuk menggunakan kamera, atau gunakan scanner fisik.');
             }
 
             scannerContainer.classList.remove('hidden');
@@ -137,39 +137,46 @@ document.addEventListener('DOMContentLoaded', function() {
             systemStock = 0;
             physicalStockInput.value = scannedCount;
             stockStatus.innerHTML = '';
-            scannedList.innerHTML = ''; // Bersihkan daftar QR sebelum memulai
+            scannedList.innerHTML = '';
             currentProductId = null;
 
-            // Initialize scanner
-            html5QrCode = new Html5Qrcode("qr-scanner");
-
-            // Get available cameras
-            const cameras = await Html5Qrcode.getCameras();
-            if (cameras.length === 0) {
-                showAlert('error', 'Tidak ada kamera yang ditemukan di perangkat Anda.');
-                resetScanner();
-                return;
+            // Start camera-based QR scanner if available
+            if (permission.state !== 'denied') {
+                html5QrCode = new Html5Qrcode("qr-scanner");
+                const cameras = await Html5Qrcode.getCameras();
+                if (cameras.length === 0) {
+                    showAlert('warning', 'Tidak ada kamera yang ditemukan. Anda masih dapat menggunakan scanner fisik.');
+                } else {
+                    const cameraId = cameras.find(cam => cam.label.toLowerCase().includes('back'))?.id || cameras[0].id;
+                    await html5QrCode.start(
+                        cameraId,
+                        {
+                            fps: 10,
+                            qrbox: { width: 250, height: 250 },
+                            aspectRatio: 1.0,
+                            disableFlip: false
+                        },
+                        onScanSuccess,
+                        onScanError
+                    );
+                }
             }
 
-            // Prefer back camera (environment) if available
-            const cameraId = cameras.find(cam => cam.label.toLowerCase().includes('back'))?.id || cameras[0].id;
-
-            // Start scanner
-            await html5QrCode.start(
-                cameraId,
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0,
-                    disableFlip: false
-                },
-                onScanSuccess,
-                onScanError
-            );
+            // Fokuskan input untuk scanner fisik
+            barcodeInput.focus();
         } catch (err) {
             console.error('Error starting QR scanner:', err);
             showAlert('error', 'Gagal memulai scanner: ' + err.message);
             resetScanner();
+        }
+    });
+
+    // Tangani input dari scanner fisik
+    barcodeInput.addEventListener('input', function(e) {
+        const decodedText = e.target.value.trim();
+        if (decodedText) {
+            onScanSuccess(decodedText);
+            barcodeInput.value = ''; // Kosongkan input setelah diproses
         }
     });
 
@@ -178,14 +185,13 @@ document.addEventListener('DOMContentLoaded', function() {
         resetScanner();
     });
 
-    // Handle successful QR scan
+    // Handle successful QR scan (baik dari kamera atau scanner fisik)
     function onScanSuccess(decodedText) {
         if (!decodedText.includes('inventory')) {
             showAlert('error', 'QR code tidak valid untuk inventory.');
             return;
         }
 
-        // Extract productId and unitCode from URL
         const urlParts = decodedText.split('/');
         const productIndex = urlParts.indexOf('inventory');
         if (productIndex === -1 || productIndex + 1 >= urlParts.length) {
@@ -197,39 +203,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const isUnitQR = urlParts[productIndex + 2] === 'unit';
         const unitCode = isUnitQR ? urlParts[productIndex + 3]?.split('?')[0] : null;
 
-        // Validate productId as a number
         if (!/^\d+$/.test(productId)) {
             showAlert('error', 'ID produk tidak valid.');
             return;
         }
 
         if (!currentProductId) {
-            // First scan, set product and fetch data
             currentProductId = productId;
             scannedCount = 1;
             scannedQRCodes.add(decodedText);
             physicalStockInput.value = scannedCount;
             fetchProductData(productId);
             productInfo.classList.remove('hidden');
-            addScannedItem(decodedText, true); // Tambah item dengan status baru
+            addScannedItem(decodedText, true);
             showAlert('success', 'QR code dipindai. Update stok: ' + scannedCount);
         } else if (productId === currentProductId) {
-            // Same product, different QR code
             if (!scannedQRCodes.has(decodedText)) {
                 scannedCount++;
                 scannedQRCodes.add(decodedText);
                 physicalStockInput.value = scannedCount;
                 updateStockStatus();
-                addScannedItem(decodedText, true); // Tambah item dengan status baru
+                addScannedItem(decodedText, true);
                 showAlert('success', 'QR code dipindai. Update stok: ' + scannedCount);
             } else {
-                // QR code sudah dipindai, tambahkan ke daftar tanpa notifikasi berulang
                 if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
-                    addScannedItem(decodedText, false); // Tambah item tanpa status baru
+                    addScannedItem(decodedText, false);
                 }
             }
         } else {
-            // Different product
             showAlert('error', 'QR code dari produk lain. Silakan pindai QR code untuk produk yang sama.');
         }
     }
@@ -335,8 +336,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 systemStock = 0;
                 physicalStockInput.value = scannedCount;
                 stockStatus.innerHTML = '';
-                scannedList.innerHTML = ''; // Bersihkan daftar QR
+                scannedList.innerHTML = '';
                 currentProductId = null;
+                barcodeInput.blur();
             }).catch(err => {
                 console.error('Error stopping scanner:', err);
             });
@@ -349,15 +351,16 @@ document.addEventListener('DOMContentLoaded', function() {
             systemStock = 0;
             physicalStockInput.value = scannedCount;
             stockStatus.innerHTML = '';
-            scannedList.innerHTML = ''; // Bersihkan daftar QR
+            scannedList.innerHTML = '';
             currentProductId = null;
+            barcodeInput.blur();
         }
     }
 
     // Show alert message
     function showAlert(type, message) {
         const alertDiv = document.createElement('div');
-        alertDiv.className = `bg-${type === 'success' ? 'green' : 'red'}-100 border border-${type === 'success' ? 'green' : 'red'}-400 text-${type === 'success' ? 'green' : 'red'}-700 px-4 py-3 rounded relative mb-4 animate-fade-in`;
+        alertDiv.className = `bg-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-100 border border-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-400 text-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-700 px-4 py-3 rounded relative mb-4 animate-fade-in`;
         alertDiv.innerHTML = `
             <span class="block sm:inline">${message}</span>
             <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
@@ -387,7 +390,6 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             scannedList.appendChild(item);
 
-            // Hapus item dari Set jika dihapus manual
             item.querySelector('button').addEventListener('click', () => {
                 scannedQRCodes.delete(decodedText);
                 scannedCount = scannedQRCodes.size;
@@ -395,7 +397,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateStockStatus();
             });
 
-            // Perbarui hitungan stok setelah menambahkan item baru
             if (isNew) {
                 scannedCount = scannedQRCodes.size;
                 physicalStockInput.value = scannedCount;

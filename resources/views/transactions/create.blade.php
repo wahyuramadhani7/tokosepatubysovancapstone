@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -308,7 +309,7 @@
                                     Scan Hardware
                                 </button>
                             </div>
-                            <input type="text" x-model="qrInput" @change="handleHardwareQrScan" x-ref="qrInput" class="hidden" placeholder="Pindai dengan perangkat keras">
+                            <input type="text" x-model="qrInput" @input="handleHardwareQrScan" x-ref="qrInput" class="hidden" placeholder="Pindai dengan perangkat keras">
                         </div>
 
                         <!-- QR Scanner Modal -->
@@ -576,6 +577,7 @@
                     this.showPopup = true;
                     this.searchQuery = '';
                     this.searchResults = [];
+                    this.qrInput = ''; // Clear hardware input after successful addition
                 },
 
                 removeItem(index) {
@@ -586,7 +588,6 @@
 
                 calculateSubtotal() {
                     return this.cart.reduce((total, item) => {
-                        // Use discount_price if available and not null, otherwise use selling_price
                         return total + (item.discount_price !== null ? item.discount_price : item.selling_price);
                     }, 0);
                 },
@@ -619,6 +620,7 @@
                     this.isScannerOpen = true;
                     this.scanError = '';
                     this.qrInput = '';
+                    this.$refs.qrInput.blur(); // Remove focus from hardware input
                     this.$nextTick(() => {
                         try {
                             this.qrScanner = new Html5QrcodeScanner(
@@ -649,6 +651,7 @@
                     }
                     this.isScannerOpen = false;
                     this.scanError = '';
+                    this.$refs.qrInput.focus(); // Restore focus to hardware input
                 },
 
                 closePopup() {
@@ -656,6 +659,7 @@
                     this.popupTitle = '';
                     this.popupMessage = '';
                     this.popupType = 'success';
+                    this.$refs.qrInput.focus(); // Restore focus to hardware input
                 },
 
                 focusHardwareInput() {
@@ -663,6 +667,10 @@
                     this.scanError = '';
                     this.qrInput = '';
                     this.$refs.qrInput.focus();
+                    this.popupTitle = 'Scanner Fisik Siap';
+                    this.popupMessage = 'Pindai kode QR menggunakan perangkat scanner fisik.';
+                    this.popupType = 'success';
+                    this.showPopup = true;
                 },
 
                 async handleQrScan(decodedText) {
@@ -716,13 +724,19 @@
                             throw new Error('Invalid unit code');
                         }
                     } catch (e) {
-                        this.scanError = 'QR code tidak valid. Harus berisi URL unit produk.';
+                        this.popupTitle = 'QR Code Tidak Valid';
+                        this.popupMessage = 'QR code harus berisi URL unit produk yang valid.';
+                        this.popupType = 'error';
+                        this.showPopup = true;
                         this.qrInput = '';
                         return;
                     }
 
                     if (this.scannedUnitCodes.includes(unitCode)) {
-                        this.scanError = 'Unit ini sudah discan sebelumnya.';
+                        this.popupTitle = 'Unit Sudah Discan';
+                        this.popupMessage = `Unit "${unitCode}" sudah ada di keranjang.`;
+                        this.popupType = 'error';
+                        this.showPopup = true;
                         this.qrInput = '';
                         return;
                     }
@@ -735,14 +749,24 @@
                         });
                         const data = await response.json();
                         if (!data.success) {
-                            this.scanError = data.message;
+                            this.popupTitle = 'Gagal Menambahkan Unit';
+                            this.popupMessage = data.message;
+                            this.popupType = 'error';
+                            this.showPopup = true;
                             this.qrInput = '';
                             return;
                         }
                         this.addToCart(data.unit);
                         this.qrInput = '';
+                        this.popupTitle = 'Unit Ditambahkan';
+                        this.popupMessage = `Unit "${unitCode}" berhasil ditambahkan ke keranjang!`;
+                        this.popupType = 'success';
+                        this.showPopup = true;
                     } catch (err) {
-                        this.scanError = 'Gagal memuat unit produk. Coba lagi.';
+                        this.popupTitle = 'Gagal Memuat Unit';
+                        this.popupMessage = 'Gagal memuat unit produk. Coba lagi.';
+                        this.popupType = 'error';
+                        this.showPopup = true;
                         console.error('Fetch error:', err);
                         this.qrInput = '';
                     }
@@ -754,6 +778,8 @@
                         this.cart = @json(old('products'));
                         this.scannedUnitCodes = this.cart.map(item => item.unit_code);
                     @endif
+                    // Auto-focus hardware input on page load
+                    this.$refs.qrInput.focus();
                 }
             };
         }
