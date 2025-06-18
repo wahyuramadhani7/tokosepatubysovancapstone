@@ -55,9 +55,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
         Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-        Route::get('inventory/search', [InventoryController::class, 'search'])->name('inventory.search');
+        Route::get('/inventorysearch', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
         Route::post('/{product}/physical-stock', [InventoryController::class, 'updatePhysicalStock'])->name('inventory.updatePhysicalStock');
+        Route::get('inventory/stock-opname', [InventoryController::class, 'stockOpname'])->name('inventory.stock_opname');
+        Route::post('inventory/update-stock', [InventoryController::class, 'updateStock'])->name('inventory.update_stock');
     });
 
     // Transactions Routes

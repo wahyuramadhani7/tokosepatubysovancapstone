@@ -8,20 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('stock_verifications', function (Blueprint $table) {
+        Schema::create('product_units', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->integer('system_stock');
-            $table->integer('physical_stock');
-            $table->integer('discrepancy');
-            $table->text('notes')->nullable();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('unit_code')->unique(); // Kode unik untuk setiap unit
+            $table->string('qr_code')->unique(); // QR code untuk unit ini
+            $table->boolean('is_active')->default(true); // Status unit (misal untuk tracking jika sudah terjual)
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('stock_verifications');
+        Schema::dropIfExists('product_units');
     }
 };
