@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Detail produk {{ $product->name ?? 'tidak tersedia' }} di Toko Sepatu by Sovan.">
     <title>Detail Produk - Toko Sepatu by Sovan</title>
     <style>
         body {
@@ -145,13 +146,13 @@
             font-weight: 600;
         }
 
-        .stock-status, .price-info, .additional-info, .unit-list {
+        .stock-status, .price-info, .unit-list, .product-details {
             background: #3f3f3f;
             border-radius: 0.75rem;
             padding: 1.5rem;
         }
 
-        .stock-status h3, .price-info h2, .additional-info h3, .unit-list h3 {
+        .stock-status h3, .price-info h2, .unit-list h3, .product-details h3 {
             font-size: 1.125rem;
             font-weight: 600;
             color: #fff;
@@ -202,22 +203,11 @@
             color: #f97316;
         }
 
-        .additional-info .info-item {
+        .product-details .info-item {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .additional-info .info-item svg {
-            width: 1.25rem;
-            height: 1.25rem;
-            color: #f97316;
-            margin-right: 0.75rem;
-        }
-
-        .additional-info .info-item p {
-            color: #d1d5db;
-            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
         }
 
         .unit-list .unit-item {
@@ -237,6 +227,20 @@
 
         .unit-list .unit-item p {
             color: #d1d5db;
+            font-size: 0.875rem;
+        }
+
+        .alert-deleted {
+            background: #ef4444;
+            color: #fff;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .alert-deleted p {
+            margin: 0;
             font-size: 0.875rem;
         }
 
@@ -273,6 +277,15 @@
             .qr-code img {
                 max-width: 7.5rem;
             }
+
+            .product-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
     </style>
 </head>
@@ -289,14 +302,21 @@
             <p>Detail Produk</p>
         </div>
 
+        <!-- Alert jika produk dihapus -->
+        @if (($product->name ?? '') === 'Produk Tidak Ditemukan')
+            <div class="alert-deleted">
+                <p>Produk ini telah dihapus dari database, tetapi masih tersedia melalui cache. Informasi mungkin tidak up-to-date.</p>
+            </div>
+        @endif
+
         <!-- Main Product Card -->
         <div class="product-card">
             <!-- Product Header -->
             <div class="product-header">
-                <h2>{{ $product->name ?? 'Nama Produk' }}</h2>
+                <h2>{{ $product->name ?? 'Produk Tidak Ditemukan' }}</h2>
                 <div class="tags">
-                    <span class="tag">{{ $product->size ?? 'Ukuran' }}</span>
-                    <span class="tag">{{ $product->color ?? 'Warna' }}</span>
+                    <span class="tag">{{ $product->size ?? 'Ukuran Tidak Tersedia' }}</span>
+                    <span class="tag">{{ $product->color ?? 'Warna Tidak Tersedia' }}</span>
                 </div>
             </div>
 
@@ -304,9 +324,9 @@
             <div class="product-content">
                 <!-- Left Column - QR Code and Product ID -->
                 <div>
-                    <!-- QR Code Display (Representative for Product) -->
+                    <!-- QR Code Display -->
                     <div class="qr-code">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode(route('inventory.show', $product->id)) }}" alt="QR Code for {{ $product->name ?? '-' }}" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode(isset($product->id) ? route('inventory.show', $product->id) : url('/')) }}" alt="QR Code untuk produk {{ $product->name ?? '-' }}" aria-label="QR Code untuk produk {{ $product->name ?? '-' }}" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
                         <p>QR Code Produk</p>
                     </div>
 
@@ -319,7 +339,7 @@
                         </div>
                         <div>
                             <p>Product ID</p>
-                            <p><strong>#{{ str_pad($product->id ?? '001', 3, '0', STR_PAD_LEFT) }}</strong></p>
+                            <p><strong>#{{ str_pad($product->id ?? '000', 3, '0', STR_PAD_LEFT) }}</strong></p>
                         </div>
                     </div>
 
@@ -328,7 +348,7 @@
                         <h3>Status Stok</h3>
                         <div class="status">
                             <span>Unit Aktif</span>
-                            <span class="badge {{ $product->stock < 5 ? 'bg-red-400 text-white' : 'bg-green-400 text-black' }}">
+                            <span class="badge {{ ($product->stock ?? 0) < 5 ? 'bg-red-400 text-white' : 'bg-green-400 text-black' }}">
                                 {{ $product->stock ?? 0 }}
                             </span>
                         </div>
@@ -336,7 +356,7 @@
                             <p class="text-gray-400">Stok Rendah: < 5 unit</p>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress" style="width: {{ min(($product->stock / 50) * 100, 100) }}%;"></div>
+                            <div class="progress" style="width: {{ min((($product->stock ?? 0) / 50) * 100, 100) }}%;"></div>
                         </div>
                     </div>
                 </div>
@@ -354,25 +374,42 @@
                             <span style="color: #d1d5db;">Harga Diskon</span>
                             <span>{{ $product->discount_price ? 'Rp ' . number_format($product->discount_price, 0, ',', '.') : '-' }}</span>
                         </div>
-                        <div class="price">
-                            <span style="color: #d1d5db;">Harga Beli</span>
-                            <span>Rp {{ number_format($product->purchase_price ?? 0, 0, ',', '.') }}</span>
+                        @auth
+                            <div class="price">
+                                <span style="color: #d1d5db;">Harga Beli</span>
+                                <span>Rp {{ number_format($product->purchase_price ?? 0, 0, ',', '.') }}</span>
+                            </div>
+                        @endauth
+                    </div>
+
+                    <!-- Product Details -->
+                    <div class="product-details">
+                        <h3>Detail Produk</h3>
+                        <div class="info-item">
+                            <span style="color: #d1d5db;">Warna</span>
+                            <span>{{ $product->color ?? 'Warna Tidak Tersedia' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span style="color: #d1d5db;">Ukuran</span>
+                            <span>{{ $product->size ?? 'Ukuran Tidak Tersedia' }}</span>
                         </div>
                     </div>
 
                     <!-- Unit List -->
                     <div class="unit-list">
                         <h3>Daftar Unit Aktif</h3>
-                        @forelse ($product->productUnits as $unit)
+                        @forelse ($product->productUnits ?? collect([]) as $unit)
                             <div class="unit-item">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data={{ urlencode($unit->qr_code) }}" alt="QR Code for Unit {{ $unit->unit_code }}" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data={{ urlencode($unit->qr_code ?? '') }}" alt="QR Code untuk unit {{ $unit->unit_code ?? '-' }}" aria-label="QR Code untuk unit {{ $unit->unit_code ?? '-' }}" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
                                 <div>
-                                    <p>Kode Unit: <strong>{{ $unit->unit_code }}</strong></p>
+                                    <p>Kode Unit: <strong>{{ $unit->unit_code ?? 'Tidak Tersedia' }}</strong></p>
                                     <p>Status: <span class="{{ $unit->is_active ? 'text-green-400' : 'text-red-400' }}">{{ $unit->is_active ? 'Aktif' : 'Non-Aktif' }}</span></p>
                                 </div>
                             </div>
                         @empty
-                            <p class="text-gray-400">Tidak ada unit aktif untuk produk ini.</p>
+                            <p class="text-gray-400">
+                                {{ ($product->name ?? '') === 'Produk Tidak Ditemukan' ? 'Produk ini telah dihapus, tidak ada unit tersedia.' : 'Tidak ada unit aktif untuk produk ini.' }}
+                            </p>
                         @endforelse
                     </div>
                 </div>
@@ -393,15 +430,6 @@
                 stockElement.parentElement.style.animation = 'pulse 2s infinite';
             }
         });
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.7; }
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 </body>
 </html>

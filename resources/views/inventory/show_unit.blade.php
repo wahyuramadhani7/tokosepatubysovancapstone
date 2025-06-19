@@ -200,11 +200,11 @@
         <div class="unit-card">
             <!-- Unit Header -->
             <div class="unit-header">
-                <h2>{{ $product->name ?? 'Nama Produk' }}</h2>
+                <h2>{{ $product->name ?? 'Produk Tidak Ditemukan' }}</h2>
                 <div class="tags">
-                    <span class="tag">Unit: {{ $unit->unit_code }}</span>
-                    <span class="tag">{{ $product->size ?? 'Ukuran' }}</span>
-                    <span class="tag">{{ $product->color ?? 'Warna' }}</span>
+                    <span class="tag">Unit: {{ $unit->unit_code ?? 'Tidak Tersedia' }}</span>
+                    <span class="tag">{{ $product->size ?? 'Ukuran Tidak Tersedia' }}</span>
+                    <span class="tag">{{ $product->color ?? 'Warna Tidak Tersedia' }}</span>
                 </div>
             </div>
 
@@ -214,7 +214,7 @@
                 <div>
                     <!-- QR Code Display -->
                     <div class="qr-code">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($unit->qr_code) }}" alt="QR Code for Unit {{ $unit->unit_code }}" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($unit->qr_code) }}" alt="QR Code for Unit {{ $unit->unit_code ?? '-' }}" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
                         <p>QR Code Unit</p>
                     </div>
                 </div>
@@ -228,7 +228,7 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                             </svg>
-                            <p>Kode Unit: <strong>{{ $unit->unit_code }}</strong></p>
+                            <p>Kode Unit: <strong>{{ $unit->unit_code ?? 'Tidak Tersedia' }}</strong></p>
                         </div>
                         <div class="info-item">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,19 +245,19 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4m-4 4h16l-2 6H6l-2-6z" />
                             </svg>
-                            <p>Nama: {{ $product->name ?? '-' }}</p>
+                            <p>Nama: {{ $product->name ?? 'Tidak Tersedia' }}</p>
                         </div>
                         <div class="info-item">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
-                            <p>Ukuran: {{ $product->size ?? '-' }}</p>
+                            <p>Ukuran: {{ $product->size ?? 'Tidak Tersedia' }}</p>
                         </div>
                         <div class="info-item">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
-                            <p>Warna: {{ $product->color ?? '-' }}</p>
+                            <p>Warna: {{ $product->color ?? 'Tidak Tersedia' }}</p>
                         </div>
                         <div class="info-item">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

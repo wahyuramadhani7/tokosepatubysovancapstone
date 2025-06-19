@@ -56,7 +56,7 @@ Route::middleware(['auth'])->group(function () {
     // Inventory Routes
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::get('inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
         Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
@@ -64,8 +64,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
         Route::post('/{product}/physical-stock', [InventoryController::class, 'updatePhysicalStock'])->name('inventory.updatePhysicalStock');
-        Route::get('/stock-opname', [InventoryController::class, 'stockOpname'])->name('inventory.stock_opname');
-        Route::post('/update-stock', [InventoryController::class, 'updateStock'])->name('inventory.update_stock');
+        Route::get('inventory/stock-opname', [InventoryController::class, 'stockOpname'])->name('inventory.stock_opname');
+        Route::post('inventory/update-stock', [InventoryController::class, 'updateStock'])->name('inventory.update_stock');
     });
 
     // Transactions Routes

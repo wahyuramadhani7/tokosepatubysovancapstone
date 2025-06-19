@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -555,8 +554,8 @@
 
                 addToCart(unit) {
                     if (this.scannedUnitCodes.includes(unit.unit_code)) {
-                        this.popupTitle = 'Unit Sudah Ada';
-                        this.popupMessage = `Unit "${unit.unit_code}" sudah ada di keranjang.`;
+                        this.popupTitle = 'Unit Sudah Discan';
+                        this.popupMessage = `Unit dengan kode "${unit.unit_code}" sudah ada di keranjang.`;
                         this.popupType = 'error';
                         this.showPopup = true;
                         return;
@@ -566,9 +565,9 @@
                         name: unit.product_name,
                         color: unit.color,
                         size: unit.size,
-                        selling_price: unit.selling_price,
-                        discount_price: unit.discount_price || null,
-                        unit_code: unit.unit_code,
+                        selling_price: parseFloat(unit.selling_price) || 0,
+                        discount_price: unit.discount_price ? parseFloat(unit.discount_price) : null,
+                        unit_code: unit.unit_code
                     });
                     this.scannedUnitCodes.push(unit.unit_code);
                     this.popupTitle = 'Unit Ditambahkan';
@@ -588,12 +587,13 @@
 
                 calculateSubtotal() {
                     return this.cart.reduce((total, item) => {
-                        return total + (item.discount_price !== null ? item.discount_price : item.selling_price);
+                        const price = item.discount_price !== null ? item.discount_price : item.selling_price;
+                        return total + (parseFloat(price) || 0);
                     }, 0);
                 },
 
                 calculateTotal() {
-                    return Math.max(0, this.calculateSubtotal() - this.discount);
+                    return Math.max(0, this.calculateSubtotal() - (parseFloat(this.discount) || 0));
                 },
 
                 validateForm(event) {
@@ -689,7 +689,7 @@
                     }
 
                     if (this.scannedUnitCodes.includes(unitCode)) {
-                        this.scanError = 'Unit ini sudah discan sebelumnya.';
+                        this.scanError = `Unit dengan kode "${unitCode}" sudah discan.`;
                         return;
                     }
 
@@ -734,7 +734,7 @@
 
                     if (this.scannedUnitCodes.includes(unitCode)) {
                         this.popupTitle = 'Unit Sudah Discan';
-                        this.popupMessage = `Unit "${unitCode}" sudah ada di keranjang.`;
+                        this.popupMessage = `Unit dengan kode "${unitCode}" sudah ada di keranjang.`;
                         this.popupType = 'error';
                         this.showPopup = true;
                         this.qrInput = '';
@@ -775,7 +775,11 @@
                 initialize() {
                     // Restore cart from old input if available
                     @if(old('products'))
-                        this.cart = @json(old('products'));
+                        this.cart = @json(old('products')).map(item => ({
+                            ...item,
+                            selling_price: parseFloat(item.selling_price) || 0,
+                            discount_price: item.discount_price ? parseFloat(item.discount_price) : null
+                        }));
                         this.scannedUnitCodes = this.cart.map(item => item.unit_code);
                     @endif
                     // Auto-focus hardware input on page load
