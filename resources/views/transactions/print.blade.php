@@ -184,7 +184,7 @@
                 <span>
                     @switch($transaction->payment_method)
                         @case('cash') Tunai @break
-                        @case('credit_card') Kartu Kredit @break
+                        @case('credit_card') QRIS @break
                         @case('transfer') Transfer Bank @break
                         @default {{ $transaction->payment_method }}
                     @endswitch
