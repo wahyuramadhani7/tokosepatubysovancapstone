@@ -53,7 +53,7 @@ class InventoryController extends Controller
             'stock' => 'required|integer|min:0',
             'selling_price' => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lte:selling_price',
-            'purchase_price' => 'required|numeric|min:0',
+        
         ]);
 
         DB::beginTransaction();
@@ -63,7 +63,6 @@ class InventoryController extends Controller
                 'name' => trim($validated['brand'] . ' ' . $validated['model']),
                 'size' => $validated['size'],
                 'color' => $validated['color'],
-                'purchase_price' => $validated['purchase_price'],
                 'selling_price' => $validated['selling_price'],
                 'discount_price' => $validated['discount_price'] ?? null,
             ]);
@@ -88,7 +87,6 @@ class InventoryController extends Controller
                 'name' => $product->name,
                 'size' => $product->size,
                 'color' => $product->color,
-                'purchase_price' => $product->purchase_price,
                 'selling_price' => $product->selling_price,
                 'discount_price' => $product->discount_price,
                 'stock' => $validated['stock'],
@@ -136,7 +134,6 @@ class InventoryController extends Controller
                     'name' => 'Produk Tidak Ditemukan',
                     'size' => 'N/A',
                     'color' => 'N/A',
-                    'purchase_price' => 0,
                     'selling_price' => 0,
                     'discount_price' => null,
                     'stock' => 0,
@@ -246,7 +243,6 @@ class InventoryController extends Controller
             'model' => 'required|string|max:255',
             'size' => 'required|string|max:50',
             'stock' => 'required|integer|min:0',
-            'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lte:selling_price',
             'color' => 'required|string|max:255',
@@ -259,7 +255,6 @@ class InventoryController extends Controller
                 'name' => trim($validated['brand'] . ' ' . $validated['model']),
                 'size' => $validated['size'],
                 'color' => $validated['color'],
-                'purchase_price' => $validated['purchase_price'],
                 'selling_price' => $validated['selling_price'],
                 'discount_price' => $validated['discount_price'] ?? null,
             ]);
@@ -307,7 +302,6 @@ class InventoryController extends Controller
                 'name' => $product->name,
                 'size' => $product->size,
                 'color' => $product->color,
-                'purchase_price' => $product->purchase_price,
                 'selling_price' => $product->selling_price,
                 'discount_price' => $product->discount_price,
                 'stock' => $desiredStock,
@@ -504,7 +498,6 @@ class InventoryController extends Controller
                 'name' => $product->name,
                 'size' => $product->size,
                 'color' => $product->color,
-                'purchase_price' => $product->purchase_price,
                 'selling_price' => $product->selling_price,
                 'discount_price' => $product->discount_price,
                 'stock' => $desiredStock,

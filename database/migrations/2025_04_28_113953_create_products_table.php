@@ -19,7 +19,6 @@ return new class extends Migration
                 $table->string('name');
                 $table->string('size');
                 $table->integer('stock')->default(0);
-                $table->decimal('purchase_price', 10, 2);
                 $table->decimal('selling_price', 10, 2);
                 $table->decimal('discount_price', 10, 2)->nullable()->after('selling_price');
                 $table->string('color');

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
@@ -21,14 +22,12 @@ class TransactionController extends Controller
 
     public function create()
     {
-        // Fetch products with active product units
         $products = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })->with(['productUnits' => function ($query) {
             $query->where('is_active', true);
         }])->get();
 
-        // Prepare available units data for the view
         $availableUnits = $products->flatMap(function ($product) {
             return $product->productUnits->map(function ($unit) use ($product) {
                 return [
@@ -84,14 +83,12 @@ class TransactionController extends Controller
                     ->where('is_active', true)
                     ->firstOrFail();
 
-                // Use discount_price if provided and not null, otherwise use selling_price
                 $price = isset($item['discount_price']) && $item['discount_price'] !== null 
                     ? $item['discount_price'] 
                     : $product->selling_price;
                 $subtotal = $price;
                 $totalAmount += $subtotal;
 
-                // Deactivate the product unit
                 $unit->update(['is_active' => false]);
 
                 $transactionItems[] = new TransactionItem([
@@ -99,7 +96,7 @@ class TransactionController extends Controller
                     'product_unit_id' => $unit->id,
                     'quantity' => 1,
                     'price' => $price,
-                    'discount' => 0, // Per-item discount is not used here
+                    'discount' => 0,
                     'subtotal' => $subtotal,
                 ]);
             }
@@ -166,11 +163,10 @@ class TransactionController extends Controller
 
     public function report(Request $request)
     {
-        $dateStart = $request->date_start ?? now()->startOfMonth()->format('Y-m-d');
-        $dateEnd = $request->date_end ?? now()->format('Y-m-d');
+        $date = $request->input('date', now()->format('Y-m-d'));
 
         $query = Transaction::with(['user', 'items.productUnit'])
-            ->whereBetween('created_at', [$dateStart . ' 00:00:00', $dateEnd . ' 23:59:59']);
+            ->whereDate('created_at', $date);
 
         if (Auth::user()->role === 'employee') {
             $query->where('user_id', Auth::id());
@@ -182,7 +178,7 @@ class TransactionController extends Controller
         $totalSales = $transactions->sum('final_amount');
         $totalTransactions = $transactions->count();
 
-        return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'dateStart', 'dateEnd'));
+        return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'date'));
     }
 
     public function addProductByQr($unitCode)

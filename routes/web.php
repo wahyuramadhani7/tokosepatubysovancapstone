@@ -76,7 +76,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
         Route::get('/{transaction}/print', [TransactionController::class, 'print'])->name('transactions.print');
         Route::delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
-        Route::get('/report', [TransactionController::class, 'report'])->name('transactions.report');
+        Route::get('transaction/report', [TransactionController::class, 'report'])->name('transactions.report');
         Route::get('/add-product/{unitCode}', [TransactionController::class, 'addProductByQr'])->name('transactions.add_product');
     });
 

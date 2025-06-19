@@ -81,15 +81,7 @@
                         <p class="text-gray-400 text-sm mt-1">Harga diskon harus lebih kecil atau sama dengan harga jual.</p>
                     </div>
 
-                    <!-- Harga Beli (Purchase Price) -->
-                    <div>
-                        <label for="purchase_price" class="block text-sm font-medium text-white mb-1">Harga Beli</label>
-                        <input type="number" step="0.01" name="purchase_price" id="purchase_price" class="block w-full p-3 border-0 rounded-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('purchase_price') border-red-500 @enderror" value="{{ old('purchase_price') }}">
-                        @error('purchase_price')
-                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
+                    
 
                 <!-- Tombol Simpan dan Kembali -->
                 <div class="mt-6 flex justify-end space-x-3">

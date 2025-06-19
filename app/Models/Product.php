@@ -13,7 +13,6 @@ class Product extends Model
         'name',
         'color',
         'size',
-        'purchase_price',
         'selling_price',
         'discount_price',
     ];
