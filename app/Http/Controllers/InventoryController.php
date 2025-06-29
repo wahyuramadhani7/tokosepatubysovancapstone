@@ -5,37 +5,80 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\ProductUnit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class InventoryController extends Controller
 {
-    // Cache keys
-    private function getProductCacheKey($id)
+    public function index(Request $request)
     {
-        return "product_{$id}";
-    }
-
-    private function getUnitCacheKey($productId, $unitCode)
-    {
-        return "unit_{$productId}_{$unitCode}";
-    }
-
-    public function index()
-    {
+        // Mengambil produk dengan stok > 0, diurutkan berdasarkan nama dan ukuran
         $products = Product::withCount(['productUnits' => function ($query) {
             $query->where('is_active', true);
-        }])->paginate(10);
-        $totalProducts = Product::count();
+        }])
+        ->whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })
+        ->having('product_units_count', '>', 0)
+        ->orderBy('name')
+        ->orderBy('size')
+        ->paginate(10);
+
+        // Statistik inventaris (total produk, stok menipis, total unit)
+        // Catatan: Statistik ini mencakup semua produk, termasuk stok 0
+        $totalProducts = Product::whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })->count();
+
         $lowStockProducts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
-        }, '<=', 10)->count();
+        })
+        ->withCount(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])
+        ->having('product_units_count', '>=', 1)
+        ->having('product_units_count', '<=', 10)
+        ->count();
+
         $totalStock = ProductUnit::where('is_active', true)->count();
 
-        Log::info('Loaded products for inventory index: ' . $products->count());
-        return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock'));
+        // Mengambil session untuk badge "Baru" dan "Diperbarui"
+        $newProducts = session('new_products', []);
+        $updatedProducts = session('updated_products', []);
+
+        return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock', 'newProducts', 'updatedProducts'));
+    }
+
+    public function search(Request $request)
+    {
+        $keyword = $request->input('search');
+        if (strlen($keyword) < 2) {
+            return response()->json(['error' => true, 'message' => 'Kata kunci minimal 2 karakter.']);
+        }
+
+        // Pencarian produk dengan stok > 0
+        $products = Product::where('name', 'like', "%{$keyword}%")
+            ->orWhere('size', 'like', "%{$keyword}%")
+            ->orWhere('color', 'like', "%{$keyword}%")
+            ->withCount(['productUnits' => function ($query) {
+                $query->where('is_active', true);
+            }])
+            ->whereHas('productUnits', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->having('product_units_count', '>', 0)
+            ->orderBy('name')
+            ->orderBy('size')
+            ->paginate(10);
+
+        return response()->json([
+            'products' => $products->items(),
+            'pagination' => [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+            ],
+        ]);
     }
 
     public function create()
@@ -46,494 +89,182 @@ class InventoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'brand' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'color' => 'required|string|max:255',
-            'size' => 'required|string|max:50',
-            'stock' => 'required|integer|min:0',
+            'name' => 'required|string|max:255',
+            'size' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:50',
             'selling_price' => 'required|numeric|min:0',
-            'discount_price' => 'nullable|numeric|min:0|lte:selling_price',
-        
+            'discount_price' => 'nullable|numeric|min:0',
+            'stock' => 'required|integer|min:0',
         ]);
 
         DB::beginTransaction();
-
         try {
             $product = Product::create([
-                'name' => trim($validated['brand'] . ' ' . $validated['model']),
+                'name' => $validated['name'],
                 'size' => $validated['size'],
                 'color' => $validated['color'],
                 'selling_price' => $validated['selling_price'],
-                'discount_price' => $validated['discount_price'] ?? null,
+                'discount_price' => $validated['discount_price'],
             ]);
 
-            $units = [];
+            // Tambahkan unit produk sesuai stok
             for ($i = 0; $i < $validated['stock']; $i++) {
-                $unitCode = 'UNIT-' . strtoupper(Str::random(8));
-                $unit = ProductUnit::create([
+                ProductUnit::create([
                     'product_id' => $product->id,
-                    'unit_code' => $unitCode,
-                    'qr_code' => '',
                     'is_active' => true,
                 ]);
-                $qrCode = route('inventory.show_unit', ['product' => $product->id, 'unitCode' => $unit->unit_code]);
-                $unit->update(['qr_code' => $qrCode]);
-                $units[] = $unit;
             }
-
-            // Cache product data
-            Cache::forever($this->getProductCacheKey($product->id), [
-                'id' => $product->id,
-                'name' => $product->name,
-                'size' => $product->size,
-                'color' => $product->color,
-                'selling_price' => $product->selling_price,
-                'discount_price' => $product->discount_price,
-                'stock' => $validated['stock'],
-            ]);
-
-            // Cache unit data
-            foreach ($units as $unit) {
-                Cache::forever($this->getUnitCacheKey($product->id, $unit->unit_code), [
-                    'product_id' => $product->id,
-                    'unit_code' => $unit->unit_code,
-                    'qr_code' => $unit->qr_code,
-                    'is_active' => $unit->is_active,
-                ]);
-            }
-
-            Log::info('Product created: ID ' . $product->id . ' with ' . $validated['stock'] . ' units');
 
             DB::commit();
-            return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil ditambahkan');
+
+            // Simpan ID produk baru ke session untuk badge "Baru"
+            $newProducts = session('new_products', []);
+            $newProducts[] = $product->id;
+            session(['new_products' => $newProducts]);
+
+            return redirect()->route('inventory.index')->with('success', 'Produk berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error storing product: ' . $e->getMessage());
-            return redirect()->route('inventory.index')->with('error', 'Terjadi kesalahan, produk gagal ditambahkan: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menambahkan produk: ' . $e->getMessage());
         }
-    }
-
-    public function show($id)
-    {
-        // Try to get product from database
-        $product = Product::with(['productUnits' => function ($query) {
-            $query->where('is_active', true);
-        }])->find($id);
-
-        if (!$product) {
-            // Try to get from cache
-            $cachedProduct = Cache::get($this->getProductCacheKey($id));
-            if ($cachedProduct) {
-                $product = (object) $cachedProduct;
-                $product->productUnits = collect([]);
-                Log::info('Product loaded from cache: ID ' . $id);
-            } else {
-                // Fallback data
-                $product = (object) [
-                    'id' => $id,
-                    'name' => 'Produk Tidak Ditemukan',
-                    'size' => 'N/A',
-                    'color' => 'N/A',
-                    'selling_price' => 0,
-                    'discount_price' => null,
-                    'stock' => 0,
-                    'productUnits' => collect([]),
-                ];
-                Log::warning('Product not found for show: ID ' . $id);
-            }
-        }
-
-        return view('inventory.show', compact('product'));
-    }
-
-    public function showUnit($productId, $unitCode)
-    {
-        // Try to get product from database
-        $product = Product::find($productId);
-        $unit = ProductUnit::where('product_id', $productId)->where('unit_code', $unitCode)->first();
-
-        if (!$product || !$unit) {
-            // Try to get from cache
-            $cachedProduct = Cache::get($this->getProductCacheKey($productId));
-            $cachedUnit = Cache::get($this->getUnitCacheKey($productId, $unitCode));
-
-            if ($cachedProduct && $cachedUnit) {
-                $product = (object) $cachedProduct;
-                $unit = (object) $cachedUnit;
-                Log::info('Product and unit loaded from cache: Product ID ' . $productId . ', Unit ' . $unitCode);
-            } else {
-                // Fallback data
-                $product = (object) [
-                    'id' => $productId,
-                    'name' => 'Produk Tidak Ditemukan',
-                    'size' => 'N/A',
-                    'color' => 'N/A',
-                    'selling_price' => 0,
-                    'discount_price' => null,
-                ];
-                $unit = (object) [
-                    'unit_code' => $unitCode,
-                    'qr_code' => route('inventory.show_unit', ['product' => $productId, 'unitCode' => $unitCode]),
-                    'is_active' => false,
-                ];
-                Log::warning('Unit not found for show: Product ID ' . $productId . ', Unit ' . $unitCode);
-            }
-        }
-
-        return view('inventory.show_unit', compact('product', 'unit'));
-    }
-
-    public function json($id)
-    {
-        $product = Product::find($id);
-
-        if (!$product) {
-            $cachedProduct = Cache::get($this->getProductCacheKey($id));
-            if ($cachedProduct) {
-                $product = (object) $cachedProduct;
-                $product->productUnits = collect([]);
-            } else {
-                Log::warning('Product not found for JSON: ID ' . $id);
-                return response()->json(['error' => 'Produk tidak ditemukan'], 404);
-            }
-        }
-
-        Log::debug('JSON response for product ID ' . $id);
-
-        return response()->json([
-            'id' => $product->id,
-            'name' => $product->name,
-            'color' => $product->color,
-            'size' => $product->size,
-            'selling_price' => $product->selling_price,
-            'discount_price' => $product->discount_price,
-            'stock' => $product->stock ?? 0,
-            'units' => isset($product->productUnits) ? $product->productUnits->map(function ($unit) {
-                return [
-                    'unit_code' => $unit->unit_code,
-                    'qr_code' => $unit->qr_code,
-                    'is_active' => $unit->is_active,
-                ];
-            }) : [],
-        ], 200);
     }
 
     public function edit($id)
     {
-        $product = Product::find($id);
-
-        if (!$product) {
-            Log::warning('Product not found for edit: ID ' . $id);
-            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
-        }
+        $product = Product::withCount(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])->findOrFail($id);
         return view('inventory.edit', compact('product'));
     }
 
     public function update(Request $request, $id)
     {
-        $product = Product::find($id);
-
-        if (!$product) {
-            Log::warning('Product not found for update: ID ' . $id);
-            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
-        }
-
         $validated = $request->validate([
-            'brand' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'size' => 'required|string|max:50',
-            'stock' => 'required|integer|min:0',
+            'name' => 'required|string|max:255',
+            'size' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:50',
             'selling_price' => 'required|numeric|min:0',
-            'discount_price' => 'nullable|numeric|min:0|lte:selling_price',
-            'color' => 'required|string|max:255',
+            'discount_price' => 'nullable|numeric|min:0',
+            'stock' => 'required|integer|min:0',
         ]);
 
         DB::beginTransaction();
-
         try {
+            $product = Product::findOrFail($id);
+            $currentStock = $product->productUnits()->where('is_active', true)->count();
+
             $product->update([
-                'name' => trim($validated['brand'] . ' ' . $validated['model']),
+                'name' => $validated['name'],
                 'size' => $validated['size'],
                 'color' => $validated['color'],
                 'selling_price' => $validated['selling_price'],
-                'discount_price' => $validated['discount_price'] ?? null,
+                'discount_price' => $validated['discount_price'],
             ]);
 
-            $currentStock = $product->productUnits()->where('is_active', true)->count();
-            $desiredStock = $validated['stock'];
-
-            if ($desiredStock > $currentStock) {
-                for ($i = $currentStock; $i < $desiredStock; $i++) {
-                    $unitCode = 'UNIT-' . strtoupper(Str::random(8));
-                    $unit = ProductUnit::create([
+            // Sesuaikan stok
+            if ($validated['stock'] > $currentStock) {
+                // Tambah unit baru
+                for ($i = $currentStock; $i < $validated['stock']; $i++) {
+                    ProductUnit::create([
                         'product_id' => $product->id,
-                        'unit_code' => $unitCode,
-                        'qr_code' => '',
                         'is_active' => true,
                     ]);
-                    $qrCode = route('inventory.show_unit', ['product' => $product->id, 'unitCode' => $unit->unit_code]);
-                    $unit->update(['qr_code' => $qrCode]);
-
-                    // Cache unit data
-                    Cache::forever($this->getUnitCacheKey($product->id, $unit->unit_code), [
-                        'product_id' => $product->id,
-                        'unit_code' => $unit->unit_code,
-                        'qr_code' => $qrCode,
-                        'is_active' => $unit->is_active,
-                    ]);
                 }
-            } elseif ($desiredStock < $currentStock) {
-                $unitsToDeactivate = $product->productUnits()->where('is_active', true)->take($currentStock - $desiredStock)->get();
-                foreach ($unitsToDeactivate as $unit) {
-                    $unit->update(['is_active' => false]);
-                    // Update cache
-                    Cache::forever($this->getUnitCacheKey($product->id, $unit->unit_code), [
-                        'product_id' => $product->id,
-                        'unit_code' => $unit->unit_code,
-                        'qr_code' => $unit->qr_code,
-                        'is_active' => false,
-                    ]);
-                }
+            } elseif ($validated['stock'] < $currentStock) {
+                // Nonaktifkan unit berlebih
+                $unitsToDeactivate = $currentStock - $validated['stock'];
+                $product->productUnits()->where('is_active', true)
+                    ->take($unitsToDeactivate)
+                    ->update(['is_active' => false]);
             }
 
-            // Update product cache
-            Cache::forever($this->getProductCacheKey($product->id), [
-                'id' => $product->id,
-                'name' => $product->name,
-                'size' => $product->size,
-                'color' => $product->color,
-                'selling_price' => $product->selling_price,
-                'discount_price' => $product->discount_price,
-                'stock' => $desiredStock,
-            ]);
-
-            Log::info('Product updated: ID ' . $product->id . ' with ' . $desiredStock . ' units');
-
             DB::commit();
-            return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil diperbarui');
+
+            // Simpan ID produk yang diperbarui ke session untuk badge "Diperbarui"
+            $updatedProducts = session('updated_products', []);
+            $updatedProducts[] = $product->id;
+            session(['updated_products' => $updatedProducts]);
+
+            return redirect()->route('inventory.index')->with('success', 'Produk berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error updating product: ' . $e->getMessage());
-            return redirect()->route('inventory.index')->with('error', 'Terjadi kesalahan, produk gagal diperbarui: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperbarui produk: ' . $e->getMessage());
         }
     }
 
     public function destroy($id)
     {
-        $product = Product::find($id);
-
-        if (!$product) {
-            Log::warning('Product not found for destroy: ID ' . $id);
-            return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
-        }
-
         DB::beginTransaction();
-
         try {
-            $product->productUnits()->delete();
+            $product = Product::findOrFail($id);
+            $product->productUnits()->update(['is_active' => false]);
             $product->delete();
-            // Keep cache intact to allow QR codes to work
-            Log::info('Product deleted: ID ' . $id);
-
             DB::commit();
-            return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil dihapus');
+            return redirect()->route('inventory.index')->with('success', 'Produk berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error deleting product: ' . $e->getMessage());
-            return redirect()->route('inventory.index')->with('error', 'Terjadi kesalahan, produk gagal dihapus: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghapus produk: ' . $e->getMessage());
         }
     }
 
-    public function search(Request $request)
+    public function show($id)
     {
-        $keyword = $request->input('search');
+        $product = Product::withCount(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])->findOrFail($id);
+        return view('inventory.show', compact('product'));
+    }
 
-        if (empty($keyword)) {
-            return response()->json(['products' => []], 200);
-        }
+    public function print_qr($id)
+    {
+        $product = Product::findOrFail($id);
+        $qrCode = QrCode::size(200)->generate(route('inventory.show', $product->id));
+        return view('inventory.print_qr', compact('product', 'qrCode'));
+    }
 
+    public function stock_opname(Request $request)
+    {
         $products = Product::withCount(['productUnits' => function ($query) {
             $query->where('is_active', true);
         }])
-            ->where('name', 'like', "%{$keyword}%")
-            ->orWhere('color', 'like', "%{$keyword}%")
-            ->orWhere('size', 'like', "%{$keyword}%")
-            ->select('id', 'name', 'size', 'color', 'selling_price', 'discount_price')
-            ->paginate(10);
-
-        Log::info('Search performed with keyword: ' . $keyword . ', found: ' . $products->count());
-
-        return response()->json([
-            'products' => $products->items()->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'size' => $product->size,
-                    'color' => $product->color,
-                    'stock' => $product->product_units_count,
-                    'selling_price' => $product->selling_price,
-                    'discount_price' => $product->discount_price,
-                ];
-            }),
-            'pagination' => [
-                'total' => $products->total(),
-                'per_page' => $products->perPage(),
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'from' => $products->firstItem(),
-                'to' => $products->lastItem(),
-            ]
-        ], 200);
-    }
-
-    public function printQr($id)
-    {
-        $product = Product::find($id);
-
-        if (!$product) {
-            $cachedProduct = Cache::get($this->getProductCacheKey($id));
-            if ($cachedProduct) {
-                $product = (object) $cachedProduct;
-                $product->productUnits = collect([]);
-            } else {
-                Log::warning('Product not found for print QR: ID ' . $id);
-                return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
-            }
-        }
-
-        $product->load(['productUnits' => function ($query) {
+        ->whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
-        }]);
+        })
+        ->having('product_units_count', '>', 0)
+        ->get();
 
-        Log::info('Preparing to print QR codes for product ID ' . $id);
-
-        return view('inventory.print_qr', compact('product'));
-    }
-
-    public function stockOpname()
-    {
-        Log::info('Stock opname page accessed');
-        return view('inventory.stock_opname');
-    }
-
-    public function updatePhysicalStock(Request $request, $id)
-    {
-        $product = Product::find($id);
-
-        if (!$product) {
-            Log::warning('Product not found for stock opname: ID ' . $id);
-            return response()->json(['error' => 'Produk tidak ditemukan'], 404);
-        }
-
-        $validated = $request->validate([
-            'physical_stock' => 'required|integer|min:0',
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            $currentStock = $product->productUnits()->where('is_active', true)->count();
-            $desiredStock = $validated['physical_stock'];
-            $difference = $desiredStock - $currentStock;
-            $stockMessage = '';
-            $stockMismatch = null;
-
-            if ($difference > 0) {
-                $stockMessage = "Produk terdapat selisih: lebih {$difference} unit";
-                $stockMismatch = [
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'message' => "Stok tidak sesuai, lebih {$difference} unit",
-                    'difference' => $difference
-                ];
-            } elseif ($difference < 0) {
-                $stockMessage = "Produk terdapat selisih: kurang " . abs($difference) . " unit";
-                $stockMismatch = [
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'message' => "Stok tidak sesuai, kurang " . abs($difference) . " unit",
-                    'difference' => $difference
-                ];
-            } else {
-                $stockMessage = "Stok sesuai dengan sistem";
-            }
-
-            if ($desiredStock > $currentStock) {
-                for ($i = $currentStock; $i < $desiredStock; $i++) {
-                    $unitCode = 'UNIT-' . strtoupper(Str::random(8));
-                    $unit = ProductUnit::create([
-                        'product_id' => $product->id,
-                        'unit_code' => $unitCode,
-                        'qr_code' => '',
-                        'is_active' => true,
-                    ]);
-                    $qrCode = route('inventory.show_unit', ['product' => $product->id, 'unitCode' => $unit->unit_code]);
-                    $unit->update(['qr_code' => $qrCode]);
-
-                    // Cache unit data
-                    Cache::forever($this->getUnitCacheKey($product->id, $unit->unit_code), [
-                        'product_id' => $product->id,
-                        'unit_code' => $unit->unit_code,
-                        'qr_code' => $qrCode,
-                        'is_active' => $unit->is_active,
-                    ]);
-                }
-            } elseif ($desiredStock < $currentStock) {
-                $unitsToDeactivate = $product->productUnits()->where('is_active', true)->take($currentStock - $desiredStock)->get();
-                foreach ($unitsToDeactivate as $unit) {
-                    $unit->update(['is_active' => false]);
-                    // Update cache
-                    Cache::forever($this->getUnitCacheKey($product->id, $unit->unit_code), [
-                        'product_id' => $product->id,
-                        'unit_code' => $unit->unit_code,
-                        'qr_code' => $unit->qr_code,
-                        'is_active' => false,
-                    ]);
-                }
-            }
-
-            // Update product cache
-            Cache::forever($this->getProductCacheKey($product->id), [
-                'id' => $product->id,
-                'name' => $product->name,
-                'size' => $product->size,
-                'color' => $product->color,
-                'selling_price' => $product->selling_price,
-                'discount_price' => $product->discount_price,
-                'stock' => $desiredStock,
+        if ($request->isMethod('post')) {
+            $validated = $request->validate([
+                'physical_stock' => 'required|array',
+                'physical_stock.*' => 'required|integer|min:0',
             ]);
 
-            Log::info("Stock opname updated for product ID {$product->id}: Old stock {$currentStock}, New stock {$desiredStock}, Message: {$stockMessage}");
+            $stockMismatches = [];
+            foreach ($validated['physical_stock'] as $productId => $physicalStock) {
+                $product = Product::withCount(['productUnits' => function ($query) {
+                    $query->where('is_active', true);
+                }])->findOrFail($productId);
+                $systemStock = $product->product_units_count;
 
-            if ($stockMismatch) {
-                $existingMismatches = session('stock_mismatches', []);
-                $existingMismatches[$product->id] = $stockMismatch;
-                session(['stock_mismatches' => $existingMismatches]);
-            } else {
-                $existingMismatches = session('stock_mismatches', []);
-                unset($existingMismatches[$product->id]);
-                session(['stock_mismatches' => $existingMismatches]);
+                if ($physicalStock != $systemStock) {
+                    $difference = $physicalStock - $systemStock;
+                    $stockMismatches[$productId] = [
+                        'message' => "Ketidaksesuaian stok: Fisik ($physicalStock) vs Sistem ($systemStock)",
+                        'difference' => $difference,
+                        'physical_stock' => $physicalStock,
+                    ];
+                }
             }
 
-            DB::commit();
+            if (!empty($stockMismatches)) {
+                session(['stock_mismatches' => $stockMismatches]);
+                return redirect()->route('inventory.index')->with('error', 'Terdapat ketidaksesuaian stok.');
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Stok fisik berhasil diperbarui',
-                'stock_message' => $stockMessage,
-                'product' => [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'stock' => $desiredStock,
-                ]
-            ], 200);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error updating physical stock: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+            return redirect()->route('inventory.index')->with('success', 'Stock opname selesai, tidak ada ketidaksesuaian.');
         }
+
+        return view('inventory.stock_opname', compact('products'));
     }
 }
+?>

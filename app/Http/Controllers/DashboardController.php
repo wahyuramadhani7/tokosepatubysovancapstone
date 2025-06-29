@@ -9,19 +9,27 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     // Dashboard untuk Owner
     public function owner()
     {
-        $today = now()->format('Y-m-d');
+        $today = Carbon::today('Asia/Jakarta');
 
         // Ringkasan transaksi harian
-        $recentTransactions = Transaction::with('user')
+        $recentTransactions = Transaction::with([
+            'user' => function ($query) {
+                $query->select('id', 'name');
+            },
+            'items.product' => function ($query) {
+                $query->select('id', 'name');
+            }
+        ])
             ->whereDate('created_at', $today)
             ->latest()
-            ->take(5)
             ->get();
         $totalTransactions = Transaction::whereDate('created_at', $today)->count();
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
@@ -85,13 +93,19 @@ class DashboardController extends Controller
     // Dashboard untuk Employee
     public function employee()
     {
-        $today = now()->format('Y-m-d');
+        $today = Carbon::today('Asia/Jakarta');
 
         // Ringkasan transaksi harian
-        $recentTransactions = Transaction::with('user')
+        $recentTransactions = Transaction::with([
+            'user' => function ($query) {
+                $query->select('id', 'name');
+            },
+            'items.product' => function ($query) {
+                $query->select('id', 'name');
+            }
+        ])
             ->whereDate('created_at', $today)
             ->latest()
-            ->take(5)
             ->get();
         $totalTransactions = Transaction::whereDate('created_at', $today)->count();
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');

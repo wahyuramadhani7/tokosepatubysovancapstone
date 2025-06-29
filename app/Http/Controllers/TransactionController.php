@@ -16,8 +16,75 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $transactions = Transaction::with(['items.product', 'items.productUnit', 'user'])->latest()->paginate(10);
-        return view('transactions.index', compact('transactions'));
+        return view('transactions.index');
+    }
+
+    public function fetch(Request $request)
+    {
+        try {
+            $request->validate([
+                'date' => 'nullable|date_format:Y-m-d',
+                'payment_method' => 'nullable|in:cash,credit_card,debit,transfer',
+                'status' => 'nullable|in:paid,pending,cancelled',
+            ]);
+
+            $date = $request->input('date', Carbon::today('Asia/Jakarta')->format('Y-m-d'));
+            $paymentMethod = $request->input('payment_method');
+            $status = $request->input('status');
+
+            $query = Transaction::with(['items.product', 'items.productUnit', 'user'])
+                ->whereDate('created_at', $date);
+
+            if ($paymentMethod) {
+                $query->where('payment_method', $paymentMethod);
+            }
+
+            if ($status) {
+                $query->where('payment_status', $status);
+            }
+
+            $transactions = $query->latest()->get();
+
+            return response()->json([
+                'success' => true,
+                'transactions' => $transactions->map(function ($transaction) {
+                    return [
+                        'id' => $transaction->id,
+                        'invoice_number' => $transaction->invoice_number,
+                        'created_at' => $transaction->created_at,
+                        'customer_name' => $transaction->customer_name,
+                        'customer_phone' => $transaction->customer_phone,
+                        'payment_method' => $transaction->payment_method,
+                        'payment_status' => $transaction->payment_status,
+                        'total_amount' => $transaction->total_amount,
+                        'discount_amount' => $transaction->discount_amount,
+                        'final_amount' => $transaction->final_amount,
+                        'items' => $transaction->items->map(function ($item) {
+                            return [
+                                'product_id' => $item->product_id,
+                                'product' => $item->product ? ['name' => $item->product->name] : null,
+                                'quantity' => $item->quantity,
+                                'price' => $item->price,
+                                'subtotal' => $item->subtotal,
+                            ];
+                        }),
+                    ];
+                }),
+                'total' => $transactions->count(),
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation failed: ' . json_encode($e->errors()));
+            return response()->json([
+                'success' => false,
+                'message' => 'Input filter tidak valid: ' . implode(', ', $e->errors()['date'] ?? []),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Fetch transactions failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data transaksi: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function create()
@@ -52,12 +119,12 @@ class TransactionController extends Controller
                 'customer_name' => 'nullable|string|max:255',
                 'customer_phone' => 'nullable|string|max:20',
                 'customer_email' => 'nullable|email|max:255',
-                'payment_method' => 'required|string|in:cash,credit_card,transfer',
+                'payment_method' => 'required|string|in:cash,credit_card,debit,transfer',
                 'products' => 'required|array|min:1',
                 'products.*.product_id' => 'required|exists:products,id',
                 'products.*.unit_code' => 'required|exists:product_units,unit_code,is_active,1',
                 'products.*.discount_price' => 'nullable|numeric|min:0',
-                'discount_amount' => 'nullable|numeric|min:0',
+                'discount_amount' => 'required|numeric|min:0', // new_total
                 'notes' => 'nullable|string',
             ]);
 
@@ -72,6 +139,8 @@ class TransactionController extends Controller
             $transaction->customer_email = $request->customer_email;
             $transaction->notes = $request->notes;
             $transaction->payment_status = 'paid';
+            $transaction->created_at = Carbon::now('Asia/Jakarta');
+            $transaction->updated_at = Carbon::now('Asia/Jakarta');
 
             $totalAmount = 0;
             $transactionItems = [];
@@ -86,7 +155,7 @@ class TransactionController extends Controller
                 $price = isset($item['discount_price']) && $item['discount_price'] !== null 
                     ? $item['discount_price'] 
                     : $product->selling_price;
-                $subtotal = $price;
+                $subtotal = $price; // quantity selalu 1
                 $totalAmount += $subtotal;
 
                 $unit->update(['is_active' => false]);
@@ -101,8 +170,12 @@ class TransactionController extends Controller
                 ]);
             }
 
-            $discountAmount = (float)($request->discount_amount ?? 0);
-            $finalAmount = max(0, $totalAmount - $discountAmount);
+            $newTotal = (float)$request->discount_amount; // Harga baru (new_total) dari form
+            if ($newTotal > $totalAmount) {
+                throw new \Exception('Harga akhir tidak boleh melebihi subtotal.');
+            }
+            $discountAmount = $totalAmount - $newTotal; // Diskon sebenarnya
+            $finalAmount = $newTotal; // Harga akhir adalah new_total
 
             $transaction->total_amount = $totalAmount;
             $transaction->discount_amount = $discountAmount;
@@ -163,14 +236,12 @@ class TransactionController extends Controller
 
     public function report(Request $request)
     {
-        $date = $request->input('date', now()->format('Y-m-d'));
+        $date = $request->input('date', Carbon::today('Asia/Jakarta')->format('Y-m-d'));
 
-        $query = Transaction::with(['user', 'items.productUnit'])
+        $query = Transaction::with(['user', 'items.product', 'items.productUnit'])
             ->whereDate('created_at', $date);
 
-        if (Auth::user()->role === 'employee') {
-            $query->where('user_id', Auth::id());
-        } elseif ($request->user_id && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')) {
+        if ($request->user_id && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')) {
             $query->where('user_id', $request->user_id);
         }
 

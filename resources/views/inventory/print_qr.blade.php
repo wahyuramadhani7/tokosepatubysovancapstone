@@ -22,6 +22,7 @@
             border: 2px solid #7c3aed;
             border-radius: 12px;
             overflow: hidden;
+            word-break: break-word;
         }
 
         .print-item:hover {
@@ -69,14 +70,14 @@
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 50mm;
+                width: 45mm;
                 background: #ffffff !important;
             }
             .print-item {
-                width: 50mm !important;
-                height: 60mm !important;
+                width: 45mm !important;
+                height: 45mm !important;
                 border: 1px solid #000000 !important;
-                padding: 2mm !important;
+                padding: 1mm !important;
                 margin: 0 !important;
                 page-break-after: always;
                 break-inside: avoid;
@@ -86,10 +87,11 @@
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
+                align-items: center !important;
             }
             img {
-                width: 24mm !important;
-                height: 24mm !important;
+                width: 20mm !important;
+                height: 20mm !important;
                 filter: contrast(100%) brightness(100%) !important;
             }
             .text-red-500 {
@@ -97,22 +99,24 @@
             }
             p {
                 margin: 0 !important;
-                line-height: 1.2 !important;
-                font-size: 0.75rem !important;
+                line-height: 1.1 !important;
+                font-size: 0.5rem !important;
+                text-align: center !important;
+                word-break: break-word !important;
+                max-width: 40mm !important;
             }
             .text-sm.font-bold.text-red-600 {
-                font-size: 0.875rem !important;
+                font-size: 0.6rem !important;
                 font-weight: 700 !important;
                 color: #dc2626 !important;
             }
             .text-xs.font-bold.text-black {
-                font-size: 0.75rem !important;
+                font-size: 0.5rem !important;
                 font-weight: 700 !important;
                 color: #000000 !important;
-                text-decoration: line-through !important;
             }
             @page {
-                size: 50mm 60mm;
+                size: 45mm 45mm;
                 margin: 0;
             }
             button, a, h1, p:not(.print-item p) {
@@ -127,27 +131,34 @@
             <!-- Header -->
             <div class="text-center mb-8 animate__animated animate__fadeInDown">
                 <h1 class="text-4xl font-extrabold header-title">Cetak QR Code</h1>
-                <p class="text-lg text-gray-700 mt-2 animate__animated animate__fadeIn">Produk: {{ $product->name ?? 'Tidak Diketahui' }} - Toko Sepatu By Sovan</p>
+                <p class="text-lg text-gray-700 mt-2 animate__animated animate__fadeIn">
+                    Produk: {{ $product->name ?? 'Tidak Diketahui' }} - Toko Sepatu By Sovan
+                </p>
+                @if(count($product->productUnits) < $product->productUnits()->where('is_active', true)->count())
+                    <p class="text-sm text-blue-600 mt-2">
+                        Mencetak {{ count($product->productUnits) }} unit baru dari total {{ $product->productUnits()->where('is_active', true)->count() }} unit aktif.
+                    </p>
+                @endif
             </div>
 
             <!-- QR Code Print Area -->
             <div class="print-area grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @forelse ($product->productUnits as $unit)
-                    <div class="print-item bg-white shadow-lg rounded-lg animate__animated animate__zoomIn" style="width: 50mm; height: 60mm; page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 2mm; box-sizing: border-box;">
+                    <div class="print-item bg-white shadow-lg rounded-lg animate__animated animate__zoomIn" style="width: 60mm; height: 60mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 2mm; box-sizing: border-box;">
                         <div class="text-center w-full">
-                            <p class="text-xs font-bold text-purple-900 m-0 uppercase tracking-wide" style="line-height: 1.2;">Toko Sepatu By Sovan</p>
+                            <p class="text-xs font-bold text-purple-900 m-0 uppercase tracking-wide" style="line-height: 1.2; word-break: break-word;">Toko Sepatu By Sovan</p>
                         </div>
-                        <div class="flex justify-center w-full" style="margin: 2mm 0;">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($unit->qr_code ?? 'https://example.com') }}" alt="QR Code for Unit {{ $unit->unit_code }}" class="qr-code-img" style="width: 24mm; height: 24mm;" onerror="this.nextElementSibling.style.display='block';">
+                        <div class="flex justify-center w-full" style="margin: 1mm 0;">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ urlencode($unit->qr_code ?? 'https://example.com') }}" alt="QR Code for Unit {{ $unit->unit_code }}" class="qr-code-img" style="width: 28mm; height: 28mm;" onerror="this.nextElementSibling.style.display='block';">
                             <div class="text-xs text-red-500 text-center font-medium" style="display: none;">Gagal Memuat QR</div>
                         </div>
                         <div class="text-center w-full">
-                            <p class="text-xs font-semibold text-gray-800 m-0" style="line-height: 1.2;">{{ Str::limit($product->name ?? '-', 18) }}</p>
+                            <p class="text-xs font-semibold text-gray-800 m-0" style="line-height: 1.2; word-break: break-word;">{{ $product->name ?? '-' }}</p>
                             <p class="text-xs text-gray-600 m-0" style="line-height: 1.2;">Unit: {{ $unit->unit_code ?? '-' }}</p>
                             <p class="text-xs text-gray-600 m-0" style="line-height: 1.2;">Ukuran: {{ $product->size ?? '-' }} | Warna: {{ $product->color ?? '-' }}</p>
                             @if ($product->discount_price)
                                 <p class="text-sm font-bold text-red-600 m-0" style="line-height: 1.2;">Harga Diskon: Rp {{ number_format($product->discount_price, 0, ',', '.') }}</p>
-                                <p class="text-xs font-bold text-black m-0" style="line-height: 1.2; text-decoration: line-through;">Harga Asli: Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</p>
+                                <p class="text-sm font-bold text-black m-0" style="line-height: 1.2;"><s>Harga Asli: Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</s></p>
                             @else
                                 <p class="text-xs font-medium text-gray-900 m-0" style="line-height: 1.2;">Harga: Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</p>
                             @endif
@@ -155,7 +166,7 @@
                     </div>
                 @empty
                     <div class="text-center p-6 bg-white rounded-lg shadow-lg animate__animated animate__shakeX">
-                        <p class="text-sm font-medium text-gray-700">Tidak ada unit aktif untuk produk ini. Silakan tambah stok terlebih dahulu.</p>
+                        <p class="text-sm font-medium text-gray-700">Tidak ada unit baru untuk dicetak.</p>
                     </div>
                 @endforelse
             </div>

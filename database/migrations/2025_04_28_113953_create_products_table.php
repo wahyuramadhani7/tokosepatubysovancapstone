@@ -12,31 +12,46 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Create or modify products table
         if (!Schema::hasTable('products')) {
             Schema::create('products', function (Blueprint $table) {
                 $table->id();
-                $table->string('qr_code')->unique()->nullable();
                 $table->string('name');
                 $table->string('size');
-                $table->integer('stock')->default(0);
-                $table->decimal('selling_price', 10, 2);
-                $table->decimal('discount_price', 10, 2)->nullable()->after('selling_price');
                 $table->string('color');
+                $table->decimal('selling_price', 10, 2);
+                $table->decimal('discount_price', 10, 2)->nullable();
                 $table->timestamps();
             });
+            Log::info('Created products table.');
         } else {
-            if (!Schema::hasColumn('products', 'qr_code')) {
-                Schema::table('products', function (Blueprint $table) {
-                    $table->string('qr_code')->unique()->nullable()->after('id');
-                });
-                Log::info('Added qr_code column to products table.');
-            }
-            if (!Schema::hasColumn('products', 'discount_price')) {
-                Schema::table('products', function (Blueprint $table) {
+            Schema::table('products', function (Blueprint $table) {
+                if (Schema::hasColumn('products', 'qr_code')) {
+                    $table->dropColumn('qr_code');
+                    Log::info('Dropped qr_code column from products table.');
+                }
+                if (Schema::hasColumn('products', 'stock')) {
+                    $table->dropColumn('stock');
+                    Log::info('Dropped stock column from products table.');
+                }
+                if (!Schema::hasColumn('products', 'discount_price')) {
                     $table->decimal('discount_price', 10, 2)->nullable()->after('selling_price');
-                });
-                Log::info('Added discount_price column to products table.');
-            }
+                    Log::info('Added discount_price column to products table.');
+                }
+            });
+        }
+
+        // Create or modify product_units table
+        if (!Schema::hasTable('product_units')) {
+            Schema::create('product_units', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('product_id')->constrained()->onDelete('cascade');
+                $table->string('unit_code')->unique();
+                $table->string('qr_code')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+            Log::info('Created product_units table.');
         }
     }
 
@@ -45,8 +60,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn(['qr_code', 'discount_price']);
-        });
+        Schema::dropIfExists('product_units');
+        Schema::dropIfExists('products');
     }
 };

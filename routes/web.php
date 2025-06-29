@@ -61,7 +61,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/{product}', [InventoryController::class, 'update'])->name('inventory.update');
         Route::delete('/{product}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-        Route::get('/search', [InventoryController::class, 'search'])->name('inventory.search');
+        Route::get('inventory/search', [InventoryController::class, 'search'])->name('inventory.search');
         Route::get('/{product}/print-qr', [InventoryController::class, 'printQr'])->name('inventory.print_qr');
         Route::post('/{product}/physical-stock', [InventoryController::class, 'updatePhysicalStock'])->name('inventory.updatePhysicalStock');
         Route::get('inventory/stock-opname', [InventoryController::class, 'stockOpname'])->name('inventory.stock_opname');
@@ -76,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
         Route::get('/{transaction}/print', [TransactionController::class, 'print'])->name('transactions.print');
         Route::delete('/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+        Route::get('/transactions/fetch', [TransactionController::class, 'fetch'])->name('transactions.fetch');
         Route::get('transaction/report', [TransactionController::class, 'report'])->name('transactions.report');
         Route::get('/add-product/{unitCode}', [TransactionController::class, 'addProductByQr'])->name('transactions.add_product');
     });

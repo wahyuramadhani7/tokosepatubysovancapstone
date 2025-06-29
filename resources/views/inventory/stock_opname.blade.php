@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('content')
@@ -29,20 +28,12 @@
                 </button>
             </div>
 
-            <div id="product-info" class="hidden mt-4 bg-gray-800 p-4 rounded-lg">
-                <h2 class="text-lg font-semibold text-white mb-3">Informasi Produk</h2>
-                <div id="product-details" class="text-white"></div>
-                <div id="stock-status" class="text-white mt-2"></div>
-                <form id="stock-opname-form" class="mt-4">
-                    @csrf
-                    <div class="mb-4">
-                        <label for="physical_stock" class="block text-sm font-medium text-white">Update Stok</label>
-                        <input type="number" id="physical_stock" name="physical_stock" min="0" value="0" class="mt-1 p-2 w-full rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none" readonly required>
-                    </div>
-                    <button type="submit" class="bg-orange-500 text-black px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
-                        Update Stok
-                    </button>
-                </form>
+            <div id="products-list" class="mt-4">
+                <h2 class="text-lg font-semibold text-white mb-3">Daftar Produk yang Dipindai</h2>
+                <div id="products-table" class="bg-gray-800 p-4 rounded-lg text-white"></div>
+                <button id="save-report" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors mt-4 hidden">
+                    Simpan Laporan
+                </button>
             </div>
         </div>
 
@@ -73,10 +64,6 @@
         height: auto;
         border-radius: 0.5rem;
     }
-    input[readonly] {
-        background-color: #4b5563 !important; /* bg-gray-600 */
-        cursor: not-allowed;
-    }
     .scanned-item {
         display: flex;
         justify-content: space-between;
@@ -97,6 +84,26 @@
         cursor: pointer;
         font-size: 16px;
     }
+    #products-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    #products-table th, #products-table td {
+        padding: 8px;
+        border: 1px solid #4b5563;
+        text-align: left;
+    }
+    #products-table th {
+        background-color: #374151;
+    }
+    #products-table input {
+        background-color: #4b5563;
+        color: white;
+        padding: 4px;
+        border: none;
+        border-radius: 4px;
+        width: 80px;
+    }
 </style>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -106,46 +113,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const stopScannerBtn = document.getElementById('stop-scanner');
     const scannerContainer = document.getElementById('scanner-container');
     const barcodeInput = document.getElementById('barcode-input');
-    const productInfo = document.getElementById('product-info');
-    const productDetails = document.getElementById('product-details');
-    const stockStatus = document.getElementById('stock-status');
-    const stockOpnameForm = document.getElementById('stock-opname-form');
-    const physicalStockInput = document.getElementById('physical_stock');
-    let html5QrCode = null;
-    let currentProductId = null;
-    let scannedQRCodes = new Set();
-    let scannedCount = 0;
-    let systemStock = 0;
+    const productsTable = document.getElementById('products-table');
+    const saveReportBtn = document.getElementById('save-report');
     const scannedList = document.createElement('div');
     scannerContainer.parentNode.insertBefore(scannedList, scannerContainer.nextSibling);
     scannedList.className = 'mt-4';
 
+    let html5QrCode = null;
+    let scannedProducts = {}; // Menyimpan data produk yang discan
+    let scannedQRCodes = new Set();
+
     // Initialize QR scanner
     startScannerBtn.addEventListener('click', async () => {
         try {
-            // Check camera permission for QR camera scanner
+            // Check camera permission
             const permission = await navigator.permissions.query({ name: 'camera' });
             if (permission.state === 'denied') {
-                showAlert('error', 'Izin kamera ditolak. Silakan izinkan akses kamera di pengaturan browser untuk menggunakan kamera, atau gunakan scanner fisik.');
+                showAlert('error', 'Izin kamera ditolak. Silakan izinkan akses kamera atau gunakan scanner fisik.');
             }
 
             scannerContainer.classList.remove('hidden');
-            productInfo.classList.add('hidden');
             startScannerBtn.classList.add('hidden');
-            scannedCount = 0;
+            scannedProducts = {};
             scannedQRCodes.clear();
-            systemStock = 0;
-            physicalStockInput.value = scannedCount;
-            stockStatus.innerHTML = '';
-            scannedList.innerHTML = '';
-            currentProductId = null;
+            updateProductsTable();
+            barcodeInput.focus();
 
             // Start camera-based QR scanner if available
             if (permission.state !== 'denied') {
                 html5QrCode = new Html5Qrcode("qr-scanner");
                 const cameras = await Html5Qrcode.getCameras();
                 if (cameras.length === 0) {
-                    showAlert('warning', 'Tidak ada kamera yang ditemukan. Anda masih dapat menggunakan scanner fisik.');
+                    showAlert('warning', 'Tidak ada kamera yang ditemukan. Gunakan scanner fisik.');
                 } else {
                     const cameraId = cameras.find(cam => cam.label.toLowerCase().includes('back'))?.id || cameras[0].id;
                     await html5QrCode.start(
@@ -161,9 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     );
                 }
             }
-
-            // Fokuskan input untuk scanner fisik
-            barcodeInput.focus();
         } catch (err) {
             console.error('Error starting QR scanner:', err);
             showAlert('error', 'Gagal memulai scanner: ' + err.message);
@@ -171,12 +167,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Tangani input dari scanner fisik
+    // Handle input from physical scanner
     barcodeInput.addEventListener('input', function(e) {
         const decodedText = e.target.value.trim();
         if (decodedText) {
             onScanSuccess(decodedText);
-            barcodeInput.value = ''; // Kosongkan input setelah diproses
+            barcodeInput.value = '';
         }
     });
 
@@ -185,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetScanner();
     });
 
-    // Handle successful QR scan (baik dari kamera atau scanner fisik)
+    // Handle successful QR scan
     function onScanSuccess(decodedText) {
         if (!decodedText.includes('inventory')) {
             showAlert('error', 'QR code tidak valid untuk inventory.');
@@ -200,38 +196,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const productId = urlParts[productIndex + 1];
-        const isUnitQR = urlParts[productIndex + 2] === 'unit';
-        const unitCode = isUnitQR ? urlParts[productIndex + 3]?.split('?')[0] : null;
-
         if (!/^\d+$/.test(productId)) {
             showAlert('error', 'ID produk tidak valid.');
             return;
         }
 
-        if (!currentProductId) {
-            currentProductId = productId;
-            scannedCount = 1;
+        const isNewScan = !scannedQRCodes.has(decodedText);
+        if (isNewScan) {
             scannedQRCodes.add(decodedText);
-            physicalStockInput.value = scannedCount;
-            fetchProductData(productId);
-            productInfo.classList.remove('hidden');
             addScannedItem(decodedText, true);
-            showAlert('success', 'QR code dipindai. Update stok: ' + scannedCount);
-        } else if (productId === currentProductId) {
-            if (!scannedQRCodes.has(decodedText)) {
-                scannedCount++;
-                scannedQRCodes.add(decodedText);
-                physicalStockInput.value = scannedCount;
-                updateStockStatus();
-                addScannedItem(decodedText, true);
-                showAlert('success', 'QR code dipindai. Update stok: ' + scannedCount);
-            } else {
-                if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
-                    addScannedItem(decodedText, false);
-                }
+
+            if (!scannedProducts[productId]) {
+                scannedProducts[productId] = {
+                    count: 0,
+                    systemStock: 0,
+                    name: '-',
+                    size: '-',
+                    color: '-',
+                    qrCodes: new Set()
+                };
+                fetchProductData(productId);
             }
-        } else {
-            showAlert('error', 'QR code dari produk lain. Silakan pindai QR code untuk produk yang sama.');
+            scannedProducts[productId].count++;
+            scannedProducts[productId].qrCodes.add(decodedText);
+            updateProductsTable();
+            showAlert('success', `QR code dipindai untuk produk ID ${productId}.`);
+        } else if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
+            addScannedItem(decodedText, false);
+            showAlert('warning', 'QR code ini sudah dipindai.');
         }
     }
 
@@ -239,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('QR scan error:', errorMessage);
     }
 
-    // Fetch product data by productId
+    // Fetch product data
     function fetchProductData(productId) {
         fetch(`/inventory/${productId}/json`, {
             headers: {
@@ -251,75 +243,141 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.error) {
                 showAlert('error', data.error);
-                resetScanner();
                 return;
             }
-
-            systemStock = data.stock || 0;
-            productDetails.innerHTML = `
-                <p><strong>Nama:</strong> ${data.name || '-'}</p>
-                <p><strong>Ukuran:</strong> ${data.size || '-'}</p>
-                <p><strong>Warna:</strong> ${data.color || '-'}</p>
-                <p><strong>Stok Sistem:</strong> ${systemStock}</p>
-            `;
-            stockOpnameForm.action = `/inventory/${data.id}/physical-stock`;
-            updateStockStatus();
+            scannedProducts[productId] = {
+                ...scannedProducts[productId],
+                name: data.name || '-',
+                size: data.size || '-',
+                color: data.color || '-',
+                systemStock: data.stock || 0
+            };
+            updateProductsTable();
         })
         .catch(error => {
             console.error('Error fetching product:', error);
             showAlert('error', 'Gagal mengambil data produk');
-            resetScanner();
         });
     }
 
-    // Update stock status message
-    function updateStockStatus() {
-        const difference = scannedCount - systemStock;
-        let statusMessage = '';
-        let statusClass = '';
-
-        if (difference === 0) {
-            statusMessage = 'Stok sesuai dengan sistem.';
-            statusClass = 'text-green-400';
-        } else if (difference > 0) {
-            statusMessage = `Produk tidak sesuai, lebih ${difference} unit.`;
-            statusClass = 'text-yellow-400';
-        } else {
-            statusMessage = `Produk tidak sesuai, kurang ${Math.abs(difference)} unit.`;
-            statusClass = 'text-red-400';
+    // Update products table
+    function updateProductsTable() {
+        let html = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produk</th>
+                        <th>Ukuran</th>
+                        <th>Warna</th>
+                        <th>Stok Sistem</th>
+                        <th>Stok Fisik</th>
+                        <th>Selisih</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        for (const [productId, product] of Object.entries(scannedProducts)) {
+            const difference = product.count - product.systemStock;
+            let statusMessage = '';
+            let statusClass = '';
+            if (difference === 0) {
+                statusMessage = 'Sesuai';
+                statusClass = 'text-green-400';
+            } else if (difference > 0) {
+                statusMessage = `Lebih ${difference}`;
+                statusClass = 'text-yellow-400';
+            } else {
+                statusMessage = `Kurang ${Math.abs(difference)}`;
+                statusClass = 'text-red-400';
+            }
+            html += `
+                <tr>
+                    <td>${product.name}</td>
+                    <td>${product.size}</td>
+                    <td>${product.color}</td>
+                    <td>${product.systemStock}</td>
+                    <td>
+                        <input type="number" min="0" value="${product.count}" data-product-id="${productId}" class="physical-stock-input">
+                    </td>
+                    <td class="${statusClass}">${statusMessage}</td>
+                    <td>
+                        <button class="update-stock-btn bg-orange-500 text-black px-2 py-1 rounded hover:bg-orange-600" data-product-id="${productId}">Update</button>
+                    </td>
+                </tr>
+            `;
         }
+        html += `
+                </tbody>
+            </table>
+        `;
+        productsTable.innerHTML = html;
 
-        stockStatus.innerHTML = `<p class="${statusClass}"><strong>Status Stok:</strong> ${statusMessage}</p>`;
+        // Show/hide save report button
+        saveReportBtn.classList.toggle('hidden', Object.keys(scannedProducts).length === 0);
+
+        // Add event listeners for stock inputs and update buttons
+        document.querySelectorAll('.physical-stock-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const productId = this.dataset.productId;
+                scannedProducts[productId].count = parseInt(this.value) || 0;
+                updateProductsTable();
+            });
+        });
+
+        document.querySelectorAll('.update-stock-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                updateStock(productId);
+            });
+        });
     }
 
-    // Handle stock opname form submission
-    stockOpnameForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
+    // Update stock for a product
+    function updateStock(productId) {
+        const formData = new FormData();
+        formData.append('physical_stock', scannedProducts[productId].count);
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
-        fetch(this.action, {
+        fetch(`/inventory/${productId}/physical-stock`, {
             method: 'POST',
             body: formData,
             headers: {
                 'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
             }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 showAlert('success', data.message);
-                setTimeout(() => {
-                    window.location.href = '{{ route('inventory.index') }}';
-                }, 2000);
+                delete scannedProducts[productId];
+                scannedQRCodes = new Set([...scannedQRCodes].filter(qr => !qr.includes(`/inventory/${productId}`)));
+                updateProductsTable();
+                scannedList.innerHTML = '';
+                [...scannedQRCodes].forEach(qr => addScannedItem(qr, false));
             } else {
                 showAlert('error', data.message);
             }
         })
         .catch(error => {
             console.error('Error updating stock:', error);
-            showAlert('error', 'Gagal memperbarui stok: ' + error.message);
+            showAlert('error', 'Gagal mencatat stok fisik: ' + error.message);
         });
+    }
+
+    // Save report (optional)
+    saveReportBtn.addEventListener('click', () => {
+        const report = Object.entries(scannedProducts).map(([productId, product]) => ({
+            product_id: productId,
+            name: product.name,
+            size: product.size,
+            color: product.color,
+            system_stock: product.systemStock,
+            physical_stock: product.count,
+            difference: product.count - product.systemStock
+        }));
+        console.log('Stock Opname Report:', report);
+        showAlert('success', 'Laporan stok opname disimpan di konsol.'); // Bisa diganti dengan fetch ke endpoint baru
     });
 
     // Reset scanner state
@@ -329,30 +387,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 html5QrCode.clear();
                 html5QrCode = null;
                 scannerContainer.classList.add('hidden');
-                productInfo.classList.add('hidden');
                 startScannerBtn.classList.remove('hidden');
-                scannedCount = 0;
+                scannedProducts = {};
                 scannedQRCodes.clear();
-                systemStock = 0;
-                physicalStockInput.value = scannedCount;
-                stockStatus.innerHTML = '';
+                productsTable.innerHTML = '';
                 scannedList.innerHTML = '';
-                currentProductId = null;
+                saveReportBtn.classList.add('hidden');
                 barcodeInput.blur();
             }).catch(err => {
                 console.error('Error stopping scanner:', err);
             });
         } else {
             scannerContainer.classList.add('hidden');
-            productInfo.classList.add('hidden');
             startScannerBtn.classList.remove('hidden');
-            scannedCount = 0;
+            scannedProducts = {};
             scannedQRCodes.clear();
-            systemStock = 0;
-            physicalStockInput.value = scannedCount;
-            stockStatus.innerHTML = '';
+            productsTable.innerHTML = '';
             scannedList.innerHTML = '';
-            currentProductId = null;
+            saveReportBtn.classList.add('hidden');
             barcodeInput.blur();
         }
     }
@@ -378,30 +430,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
-    // Tambahkan item ke daftar QR yang dipindai
+    // Add scanned item to list
     function addScannedItem(decodedText, isNew) {
         if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
             const item = document.createElement('div');
             item.className = `scanned-item ${isNew ? 'new' : ''}`;
             item.setAttribute('data-qr', decodedText);
             item.innerHTML = `
-                ${isNew ? 'QR code dipindai. ' : 'QR code ini sudah dipindai. '}
+                ${isNew ? 'QR code dipindai.' : 'QR code ini sudah dipindai.'}
                 <button onclick="this.parentElement.remove()">×</button>
             `;
             scannedList.appendChild(item);
 
             item.querySelector('button').addEventListener('click', () => {
                 scannedQRCodes.delete(decodedText);
-                scannedCount = scannedQRCodes.size;
-                physicalStockInput.value = scannedCount;
-                updateStockStatus();
+                const productId = decodedText.split('/').find((part, index, arr) => arr[index - 1] === 'inventory');
+                if (productId && scannedProducts[productId]) {
+                    scannedProducts[productId].qrCodes.delete(decodedText);
+                    scannedProducts[productId].count = scannedProducts[productId].qrCodes.size;
+                    if (scannedProducts[productId].count === 0) {
+                        delete scannedProducts[productId];
+                    }
+                    updateProductsTable();
+                }
             });
-
-            if (isNew) {
-                scannedCount = scannedQRCodes.size;
-                physicalStockInput.value = scannedCount;
-                updateStockStatus();
-            }
         }
     }
 });

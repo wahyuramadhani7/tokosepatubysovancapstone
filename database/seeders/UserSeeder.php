@@ -13,22 +13,12 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Akun Karyawan
-        User::create([
-            'name' => 'Karyawan Test',
-            'email' => 'karyawan@test.com',
-            'password' => Hash::make('password123'),
-            'role' => 'employee',
-            'email_verified_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
 
         // Akun Pemilik
         User::create([
-            'name' => 'Pemilik Test',
-            'email' => 'pemilik@test.com',
-            'password' => Hash::make('password123'),
+            'name' => 'Mas Sovan',
+            'email' => 'ownertoko@gmail.com',
+            'password' => Hash::make('superadmintoko'),
             'role' => 'owner',
             'email_verified_at' => now(),
             'created_at' => now(),

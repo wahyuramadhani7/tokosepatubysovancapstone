@@ -33,7 +33,7 @@
                             <h3 class="text-gray-800 font-medium">Total Produk</h3>
                         </div>
                         <div class="flex">
-                            <div class="p-4 bg-white flex items-center justify-center" style="width: 80px;">
+                            <div class="p-4 bg-white flex items-center justify-center" style="width: 5rem;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#FF4500">
                                     <path d="M4 11c0 0 0.5-8 9-8s8.5 10 8.5 10l1.5 1v4c0 1.5-1 2-2 2h-17c-1 0-2-0.5-2-2v-4l2-3z"/>
                                     <rect x="2" y="14" width="20" height="2" fill="#FF4500"/>
@@ -51,7 +51,7 @@
                             <h3 class="text-gray-800 font-medium">Transaksi Hari Ini</h3>
                         </div>
                         <div class="flex">
-                            <div class="p-4 bg-white flex items-center justify-center" style="width: 80px;">
+                            <div class="p-4 bg-white flex items-center justify-center" style="width: 5rem;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#FF4500">
                                     <circle cx="9" cy="21" r="1.5"/>
                                     <circle cx="15" cy="21" r="1.5"/>
@@ -70,7 +70,7 @@
                             <h3 class="text-gray-800 font-medium">Penjualan Hari Ini</h3>
                         </div>
                         <div class="flex">
-                            <div class="p-4 bg-white flex items-center justify-center" style="width: 80px;">
+                            <div class="p-4 bg-white flex items-center justify-center" style="width: 5rem;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#FF4500">
                                     <rect x="2" y="4" width="20" height="16" rx="2"/>
                                     <circle cx="12" cy="12" r="3"/>
@@ -92,7 +92,7 @@
                     <h3 class="text-lg font-semibold mb-1">Transaksi Harian</h3>
                     <p class="text-xs text-gray-400 mb-4">Laporan Transaksi Per Jam Hari Ini (hingga {{ now()->format('H:i') }} WIB)</p>
                     @php
-                        $currentHour = now()->hour; // Dapatkan jam saat ini (misalnya, 21 untuk 21:00)
+                        $currentHour = now()->hour;
                     @endphp
                     @if(empty($hourlyData) || array_sum(array_slice($hourlyData, 0, $currentHour + 1)) == 0)
                         <div class="no-data-message">Tidak ada transaksi hari ini hingga {{ now()->format('H:i') }} WIB</div>
@@ -106,7 +106,7 @@
                             </thead>
                             <tbody>
                                 @foreach(array_slice($labels, 0, $currentHour + 1) as $index => $label)
-                                    @if($hourlyData[$index] > 0) <!-- Hanya tampilkan jam dengan transaksi -->
+                                    @if($hourlyData[$index] > 0)
                                         <tr>
                                             <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $label }}</td>
                                             <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $hourlyData[$index] }} transaksi</td>
@@ -154,7 +154,8 @@
                             <tr>
                                 <th class="px-6 py-3 bg-gray-800 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border border-gray-700">ID</th>
                                 <th class="px-6 py-3 bg-gray-800 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border border-gray-700">Tanggal</th>
-                                <th class="px-6 py-3 bg-gray-800 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border border-gray-700">Customer</th>
+                                <th class="px-6 py-3 bg-gray-800 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border border-gray-700">Kasir</th>
+                                <th class="px-6 py-3 bg-gray-800 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border border-gray-700">Produk</th>
                                 <th class="px-6 py-3 bg-gray-800 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border border-gray-700">Total</th>
                                 <th class="px-6 py-3 bg-gray-800 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border border-gray-700">Status</th>
                             </tr>
@@ -165,12 +166,19 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">{{ $transaction->id }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">{{ $transaction->created_at->format('d-m-Y H:i') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">{{ $transaction->user->name ?? 'Unknown' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-300 bg-gray-700 border border-gray-600">
+                                        @if($transaction->items->isEmpty())
+                                            -
+                                        @else
+                                            {{ $transaction->items->map(fn($item) => $item->product->name ?? '-')->implode(', ') }}
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">Selesai</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600 text-center">Tidak ada transaksi hari ini</td>
+                                    <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600 text-center">Tidak ada transaksi hari ini</td>
                                 </tr>
                             @endforelse
                         </tbody>
