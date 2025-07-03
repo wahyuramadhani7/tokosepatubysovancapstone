@@ -49,7 +49,7 @@
                         <label for="selling_price" class="block text-sm font-medium text-white mb-1">Harga Jual</label>
                         <div class="flex">
                             <span class="inline-flex items-center px-3 rounded-l-lg border-0 bg-gray-200 text-gray-900 text-sm">Rp</span>
-                            <input type="text" name="selling_price" id="selling_price" class="block w-full p-3 border-0 rounded-r-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('selling_price') border-red-500 @enderror" value="{{ old('selling_price') ? number_format(old('selling_price'), 0, ',', '.') : '' }}" placeholder="1.234.567">
+                            <input type="text" inputmode="numeric" name="selling_price" id="selling_price" class="block w-full p-3 border-0 rounded-r-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('selling_price') border-red-500 @enderror" value="{{ old('selling_price') ? number_format(old('selling_price'), 0, ',', '.') : '' }}" placeholder="1.234.567">
                         </div>
                         @error('selling_price')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -61,7 +61,7 @@
                         <label for="discount_price" class="block text-sm font-medium text-white mb-1">Harga Diskon (Opsional)</label>
                         <div class="flex">
                             <span class="inline-flex items-center px-3 rounded-l-lg border-0 bg-gray-200 text-gray-900 text-sm">Rp</span>
-                            <input type="text" name="discount_price" id="discount_price" class="block w-full p-3 border-0 rounded-r-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('discount_price') border-red-500 @enderror" value="{{ old('discount_price') ? number_format(old('discount_price'), 0, ',', '.') : '' }}" placeholder="1.234.567">
+                            <input type="text" inputmode="numeric" name="discount_price" id="discount_price" class="block w-full p-3 border-0 rounded-r-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('discount_price') border-red-500 @enderror" value="{{ old('discount_price') ? number_format(old('discount_price'), 0, ',', '.') : '' }}" placeholder="1.234.567">
                         </div>
                         @error('discount_price')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let number = parseFloat(cleanValue);
         return number.toLocaleString('id-ID', {
             minimumFractionDigits: 0,
-            maximumFractionDigits: 2
+            maximumFractionDigits: 0
         }).replace('Rp', '').trim();
     }
 

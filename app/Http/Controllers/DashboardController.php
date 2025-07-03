@@ -206,11 +206,26 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
 
-        $user->update($validated);
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
 
-        return redirect()->route('owner.employee-accounts')->with('success', 'Employee updated successfully.');
+        $newPassword = null;
+        if (!empty($validated['password'])) {
+            $newPassword = $validated['password'];
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        $message = 'Employee updated successfully.';
+        if ($newPassword) {
+            $message .= ' New password: ' . $newPassword . ' (Please share this securely with the employee and ensure they change it after login.)';
+        }
+
+        return redirect()->route('owner.employee-accounts')->with('success', $message);
     }
 
     public function deleteEmployee(User $user)

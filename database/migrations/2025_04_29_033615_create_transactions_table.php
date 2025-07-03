@@ -32,6 +32,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('transaction_id')->constrained()->onDelete('cascade');
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
+
+            // ✅ Tambahkan kolom product_unit_id jika memang digunakan
+            $table->foreignId('product_unit_id')->nullable()->constrained()->onDelete('set null');
+
             $table->integer('quantity');
             $table->decimal('price', 12, 2);
             $table->decimal('discount', 12, 2)->default(0);

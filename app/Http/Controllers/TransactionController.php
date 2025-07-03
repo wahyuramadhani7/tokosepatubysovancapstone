@@ -24,7 +24,7 @@ class TransactionController extends Controller
         try {
             $request->validate([
                 'date' => 'nullable|date_format:Y-m-d',
-                'payment_method' => 'nullable|in:cash,credit_card,debit,transfer',
+                'payment_method' => 'nullable|in:cash,qris,debit,transfer,debit_mandiri,debit_bri,debit_bca',
                 'status' => 'nullable|in:paid,pending,cancelled',
             ]);
 
@@ -36,7 +36,11 @@ class TransactionController extends Controller
                 ->whereDate('created_at', $date);
 
             if ($paymentMethod) {
-                $query->where('payment_method', $paymentMethod);
+                if (in_array($paymentMethod, ['debit_mandiri', 'debit_bri', 'debit_bca'])) {
+                    $query->where('payment_method', $paymentMethod);
+                } else {
+                    $query->where('payment_method', $paymentMethod);
+                }
             }
 
             if ($status) {
@@ -48,13 +52,24 @@ class TransactionController extends Controller
             return response()->json([
                 'success' => true,
                 'transactions' => $transactions->map(function ($transaction) {
+                    // Parse payment_method to extract card_type for debit
+                    $paymentMethod = $transaction->payment_method;
+                    $cardType = null;
+                    if (strpos($paymentMethod, 'debit_') === 0) {
+                        $cardType = ucfirst(str_replace('debit_', '', $paymentMethod));
+                        $paymentMethod = 'debit';
+                    } elseif ($paymentMethod === 'qris') {
+                        $paymentMethod = 'QRIS';
+                    }
+
                     return [
                         'id' => $transaction->id,
                         'invoice_number' => $transaction->invoice_number,
                         'created_at' => $transaction->created_at,
                         'customer_name' => $transaction->customer_name,
                         'customer_phone' => $transaction->customer_phone,
-                        'payment_method' => $transaction->payment_method,
+                        'payment_method' => $paymentMethod,
+                        'card_type' => $cardType,
                         'payment_status' => $transaction->payment_status,
                         'total_amount' => $transaction->total_amount,
                         'discount_amount' => $transaction->discount_amount,
@@ -62,14 +77,20 @@ class TransactionController extends Controller
                         'items' => $transaction->items->map(function ($item) {
                             return [
                                 'product_id' => $item->product_id,
-                                'product' => $item->product ? ['name' => $item->product->name] : null,
+                                'product' => $item->product ? [
+                                    'name' => $item->product->name,
+                                    'size' => $item->product->size ?? '-',
+                                    'color' => $item->product->color ?? '-',
+                                ] : null,
+                                'product_unit_id' => $item->product_unit_id,
+                                'unit_code' => $item->productUnit ? $item->productUnit->unit_code : null,
                                 'quantity' => $item->quantity,
                                 'price' => $item->price,
                                 'subtotal' => $item->subtotal,
                             ];
-                        }),
+                        })->toArray(),
                     ];
-                }),
+                })->toArray(),
                 'total' => $transactions->count(),
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -119,12 +140,13 @@ class TransactionController extends Controller
                 'customer_name' => 'nullable|string|max:255',
                 'customer_phone' => 'nullable|string|max:20',
                 'customer_email' => 'nullable|email|max:255',
-                'payment_method' => 'required|string|in:cash,credit_card,debit,transfer',
+                'payment_method' => 'required|string|in:cash,qris,debit,transfer',
+                'card_type' => 'required_if:payment_method,debit|in:Mandiri,BRI,BCA|nullable',
                 'products' => 'required|array|min:1',
                 'products.*.product_id' => 'required|exists:products,id',
                 'products.*.unit_code' => 'required|exists:product_units,unit_code,is_active,1',
                 'products.*.discount_price' => 'nullable|numeric|min:0',
-                'discount_amount' => 'required|numeric|min:0', // new_total
+                'discount_amount' => 'required|numeric|min:0',
                 'notes' => 'nullable|string',
             ]);
 
@@ -133,7 +155,9 @@ class TransactionController extends Controller
             $transaction = new Transaction();
             $transaction->invoice_number = Transaction::generateInvoiceNumber();
             $transaction->user_id = Auth::id();
-            $transaction->payment_method = $request->payment_method;
+            $transaction->payment_method = $request->payment_method === 'debit' 
+                ? 'debit_' . strtolower($request->card_type) 
+                : $request->payment_method;
             $transaction->customer_name = $request->customer_name;
             $transaction->customer_phone = $request->customer_phone;
             $transaction->customer_email = $request->customer_email;
@@ -155,7 +179,7 @@ class TransactionController extends Controller
                 $price = isset($item['discount_price']) && $item['discount_price'] !== null 
                     ? $item['discount_price'] 
                     : $product->selling_price;
-                $subtotal = $price; // quantity selalu 1
+                $subtotal = $price;
                 $totalAmount += $subtotal;
 
                 $unit->update(['is_active' => false]);
@@ -170,12 +194,12 @@ class TransactionController extends Controller
                 ]);
             }
 
-            $newTotal = (float)$request->discount_amount; // Harga baru (new_total) dari form
+            $newTotal = (float)$request->discount_amount;
             if ($newTotal > $totalAmount) {
                 throw new \Exception('Harga akhir tidak boleh melebihi subtotal.');
             }
-            $discountAmount = $totalAmount - $newTotal; // Diskon sebenarnya
-            $finalAmount = $newTotal; // Harga akhir adalah new_total
+            $discountAmount = $totalAmount - $newTotal;
+            $finalAmount = $newTotal;
 
             $transaction->total_amount = $totalAmount;
             $transaction->discount_amount = $discountAmount;

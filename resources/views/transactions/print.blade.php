@@ -174,6 +174,10 @@
 
         <div class="summary">
             <div class="invoice-row">
+                <span>Total Quantity:</span>
+                <span>{{ $transaction->items->sum('quantity') }}</span>
+            </div>
+            <div class="invoice-row">
                 <span>Subtotal:</span>
                 <span>Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</span>
             </div>
@@ -283,6 +287,7 @@
             content += '-'.repeat(48) + '\n';
 
             // Summary
+            content += `${padRight('Total Quantity:', 15)}{{ $transaction->items->sum('quantity') }}\n`;
             content += `${padRight('Subtotal:', 15)}Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}\n`;
             @if($transaction->discount_amount > 0)
             content += `${padRight('Discount:', 15)}Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}\n`;

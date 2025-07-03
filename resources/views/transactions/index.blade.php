@@ -2,19 +2,19 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Daftar Transaksi - Sepatu by Sovan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         [x-cloak] { display: none !important; }
         body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #f3f4f6 0%, #fef3c7 100%);
-            color: #1f2937;
+            font-family: 'Lora', serif;
+            background: linear-gradient(135deg, #FAFAFA 0%, #F3F4F6 100%);
+            color: #1F2937;
             min-height: 100vh;
-            padding-top: 4rem;
+            padding-top: 5rem;
             position: relative;
             overflow-x: hidden;
         }
@@ -25,28 +25,35 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.3);
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"%3E%3Cg fill="%23D4AF37" fill-opacity="0.05"%3E%3Ccircle cx="75" cy="75" r="75"/%3E%3C/g%3E%3C/svg%3E');
             z-index: -1;
+            animation: particleMove 30s linear infinite;
+        }
+        @keyframes particleMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 150px 150px; }
         }
         .hover-scale:hover {
-            transform: scale(1.05);
-            transition: transform 0.2s ease;
+            transform: scale(1.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .btn-primary {
-            background: linear-gradient(90deg, #10b981, #34d399);
-            color: #ffffff;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 600;
-            border-radius: 6px;
+            background: linear-gradient(90deg, #065F46, #10b981);
+            color: #FAFAFA;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            border-radius: 12px;
             padding: 0.75rem 1.5rem;
-            border: none;
+            border: 1px solid #D4AF37;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
         }
         .btn-primary:hover {
-            background: linear-gradient(90deg, #059669, #22c55e);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(90deg, #064E3B, #059669);
+            box-shadow: 0 6px 16px rgba(212, 175, 55, 0.5);
+            transform: translateY(-2px);
         }
         .btn-primary::after {
             content: '';
@@ -55,94 +62,95 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
             transition: 0.4s;
         }
         .btn-primary:hover::after {
             left: 100%;
         }
         .header {
-            background: rgba(255, 255, 255, 0.95);
-            border-bottom: 1px solid rgba(16, 185, 129, 0.3);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.98);
+            border-bottom: 1px solid rgba212, 175, 55, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         .card {
-            background: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            background: #FFFFFF;
+            border: 1px solid #D4AF37;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(212, 175, 55, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-6px);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.25);
         }
         .badge {
             padding: 0.5rem 1.25rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
             font-weight: 500;
             transition: all 0.3s ease;
         }
         .badge-success {
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(6, 95, 70, 0.15);
             color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            border: 1px solid rgba(6, 95, 70, 0.3);
         }
         .badge-warning {
-            background: rgba(234, 179, 8, 0.2);
+            background: rgba(234, 179, 8, 0.15);
             color: #eab308;
             border: 1px solid rgba(234, 179, 8, 0.3);
         }
         .badge-danger {
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.15);
             color: #ef4444;
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
         .badge-neutral {
-            background: rgba(107, 114, 128, 0.2);
+            background: rgba(107, 114, 128, 0.15);
             color: #9ca3af;
             border: 1px solid rgba(107, 114, 128, 0.3);
         }
         .badge-info {
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(6, 95, 70, 0.15);
             color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            border: 1px solid rgba(6, 95, 70, 0.3);
         }
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: #e5e7eb;
-            border-radius: 10px;
+            background: #F3F4F6;
+            border-radius: 12px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #10b981;
-            border-radius: 10px;
+            background: #D4AF37;
+            border-radius: 12px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #34d399;
+            background: #B8972F;
         }
         input, select {
-            background: #f9fafb;
-            border: 1px solid #6b7280;
-            color: #1f2937;
-            border-radius: 6px;
+            background: #F9FAFB;
+            border: 1px solid #D4AF37;
+            color: #1F2937;
+            border-radius: 10px;
             padding: 0.75rem;
             transition: all 0.3s ease;
         }
         input:focus, select:focus {
-            border-color: #10b981;
-            box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+            border-color: #D4AF37;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
             outline: none;
         }
         tbody tr:hover {
-            background: rgba(16, 185, 129, 0.05) !important;
+            background: rgba(212, 175, 55, 0.1) !important;
         }
         .fade-in {
-            animation: fadeIn 0.6s ease-out;
+            animation: fadeIn 0.4s ease-out;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
         @media print {
@@ -151,6 +159,104 @@
             .print-section { position: absolute; left: 0; top: 0; width: 100%; }
             .no-print { display: none !important; }
         }
+        .glow:hover {
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+        }
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            max-height: 120px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #D4AF37 #F3F4F6;
+        }
+        .product-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .product-list::-webkit-scrollbar-track {
+            background: #F3F4F6;
+            border-radius: 8px;
+        }
+        .product-list::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 8px;
+        }
+        .product-list::-webkit-scrollbar-thumb:hover {
+            background: #B8972F;
+        }
+        @media (max-width: 640px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .grid {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .btn-primary {
+                padding: 0.65rem 1.25rem;
+                font-size: 0.95rem;
+            }
+            input, select {
+                padding: 0.65rem;
+                font-size: 0.95rem;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            h2 {
+                font-size: 1.25rem;
+            }
+            th, td {
+                font-size: 0.85rem;
+                padding: 0.5rem;
+            }
+            .product-list {
+                max-height: 100px;
+            }
+        }
+        @media (min-width: 641px) {
+            .desktop-mode .container {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+            .desktop-mode .grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.5rem;
+            }
+            .desktop-mode .btn-primary {
+                padding: 0.75rem 1.5rem;
+                font-size: 1rem;
+            }
+            .desktop-mode input,
+            .desktop-mode select {
+                padding: 0.75rem;
+                font-size: 1rem;
+            }
+            .desktop-mode .card {
+                padding: 2rem;
+            }
+            .desktop-mode h1 {
+                font-size: 2.25rem;
+            }
+            .desktop-mode h2 {
+                font-size: 1.5rem;
+            }
+            .desktop-mode th,
+            .desktop-mode td {
+                font-size: 0.875rem;
+                padding: 1rem;
+            }
+            .desktop-mode .product-list {
+                max-height: 120px;
+            }
+        }
     </style>
     <script>
         tailwind.config = {
@@ -158,18 +264,19 @@
                 extend: {
                     colors: {
                         brand: {
-                            primary: '#10b981',
-                            secondary: '#34d399',
+                            primary: '#065F46',
+                            secondary: '#10b981',
+                            gold: '#D4AF37',
                             dark: {
-                                50: '#f9fafb',
-                                100: '#f3f4f6',
-                                200: '#e5e7eb',
-                                300: '#d1d5db',
-                                400: '#9ca3af',
-                                500: '#6b7280',
-                                600: '#4b5563',
+                                50: '#F9FAFB',
+                                100: '#F3F4F6',
+                                200: '#E5E7EB',
+                                300: '#D1D5DB',
+                                400: '#9CA3AF',
+                                500: '#6B7280',
+                                600: '#4B5563',
                                 700: '#374151',
-                                800: '#1f2937',
+                                800: '#1F2937',
                                 900: '#111827',
                             },
                         }
@@ -181,50 +288,60 @@
 </head>
 <body class="min-h-screen custom-scrollbar" x-data="transactionListApp()" x-init="init()">
     <!-- Header -->
-    <header class="fixed top-0 w-full header text-gray-900 z-50">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <header class="fixed top-0 w-full header text-brand-dark-800 z-50">
+        <div class="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-brand-primary rounded-lg p-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="bg-brand-primary rounded-lg p-2 glow hover-scale">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-brand-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                 </div>
                 <div>
-                    <h1 class="font-['Montserrat'] font-bold text-xl text-gray-900">Sepatu by Sovan</h1>
-                    <p class="text-xs text-gray-600">Premium Footwear</p>
+                    <h1 class="font-['Cinzel'] font-bold text-2xl sm:text-3xl text-brand-dark-800">Sepatu by Sovan</h1>
+                    <p class="text-sm text-brand-dark-600">Luxury Footwear Collection</p>
                 </div>
             </div>
-            <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="p-2 bg-brand-dark-100 rounded-lg text-gray-900 hover:bg-brand-primary hover-scale" title="Dashboard">
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7m-7-7v14" />
-                </svg>
-            </a>
+            <div class="flex items-center space-x-3">
+                <button x-show="isMobile()" @click="toggleDesktopMode" class="sm:hidden p-2 bg-brand-dark-100 rounded-lg text-brand-dark-800 hover:bg-brand-primary hover:text-brand-gold hover-scale glow" :title="desktopMode ? 'Kembali ke Mode Mobile' : 'Mode Desktop'">
+                    <svg x-show="!desktopMode" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <svg x-show="desktopMode" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                </button>
+                <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="p-2 bg-brand-dark-100 rounded-lg text-brand-dark-800 hover:bg-brand-primary hover:text-brand-gold hover-scale glow" title="Dashboard">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7m-7-7v14" />
+                    </svg>
+                </a>
+            </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-10 max-w-6xl">
+    <main class="container mx-auto px-4 sm:px-6 py-10 max-w-7xl">
         <!-- Success Alert -->
         @if(session('success'))
-        <div class="mb-6 bg-green-100 border border-green-300 text-gray-900 p-4 rounded-lg fade-in flex items-center justify-between" role="alert" x-ref="successAlert">
+        <div class="mb-8 bg-green-50 border border-green-200 text-brand-dark-800 p-5 rounded-xl fade-in flex items-center justify-between" role="alert" x-ref="successAlert">
             <div class="flex items-center">
-                <div class="bg-brand-primary rounded-full p-1.5 mr-3">
-                    <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <div class="bg-brand-primary rounded-full p-2 mr-4">
+                    <svg class="h-6 w-6 text-brand-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                     </svg>
                 </div>
-                <p class="font-medium text-sm">{{ session('success') }}</p>
+                <p class="font-semibold text-base font-['Cinzel']">{{ session('success') }}</p>
             </div>
             @if(session('transaction_id'))
-            <a href="{{ route('transactions.print', session('transaction_id')) }}" class="text-sm text-white bg-brand-primary hover:bg-brand-secondary px-4 py-1.5 rounded-lg flex items-center font-medium hover-scale">
-                <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <a href="{{ route('transactions.print', session('transaction_id')) }}" class="btn-primary px-5 py-2 text-base sm:text-lg flex items-center hover-scale ripple">
+                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
                 Cetak Struk
             </a>
             @endif
-            <button @click="dismissAlert" class="text-gray-600 hover:text-brand-primary p-1.5 rounded-full hover:bg-brand-dark-100">
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <button @click="dismissAlert" class="text-brand-dark-600 hover:text-brand-gold p-2 rounded-full hover:bg-brand-dark-100 hover-scale glow">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
             </button>
@@ -232,43 +349,43 @@
         @endif
 
         <!-- Error Alert -->
-        <div x-show="errorMessage" class="mb-6 bg-red-100 border border-red-300 text-gray-900 p-4 rounded-lg fade-in flex items-center justify-between" role="alert" x-ref="errorAlert">
+        <div x-show="errorMessage" class="mb-8 bg-red-50 border border-red-200 text-brand-dark-800 p-5 rounded-xl fade-in flex items-center justify-between" role="alert" x-ref="errorAlert">
             <div class="flex items-center">
-                <div class="bg-red-500 rounded-full p-1.5 mr-3">
-                    <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="bg-red-500 rounded-full p-2 mr-4">
+                    <svg class="h-6 w-6 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                 </div>
-                <p class="font-medium text-sm" x-text="errorMessage"></p>
+                <p class="font-semibold text-base font-['Cinzel']" x-text="errorMessage"></p>
             </div>
-            <button @click="dismissAlert" class="text-gray-600 hover:text-brand-primary p-1.5 rounded-full hover:bg-brand-dark-100">
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <button @click="dismissAlert" class="text-brand-dark-600 hover:text-brand-gold p-2 rounded-full hover:bg-brand-dark-100 hover-scale glow">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
             </button>
         </div>
 
         <!-- Page Header -->
-        <div class="card rounded-lg mb-6 p-6 fade-in">
-            <div class="flex flex-col md:flex-row Magnetron: The Ultimate Guide to Magnet Fishing in 2025 row justify-between items-start md:items-center">
+        <div class="card rounded-xl mb-8 p-6 sm:p-8 fade-in">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div class="mb-4 md:mb-0">
-                    <h1 class="font-['Montserrat'] text-2xl font-bold text-gray-900 flex items-center">
-                        <svg class="h-6 w-6 mr-2 text-brand-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <h1 class="font-['Cinzel'] text-2xl sm:text-3xl font-bold text-brand-dark-800 flex items-center">
+                        <svg class="h-8 w-8 mr-3 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                         Sistem Kasir
                     </h1>
-                    <p class="text-gray-600 text-sm">Daftar Transaksi</p>
+                    <p class="text-base text-brand-dark-600 mt-2">Daftar Transaksi</p>
                 </div>
-                <div class="flex gap-3">
-                    <a href="{{ route('transactions.create') }}" class="btn-primary text-sm flex items-center hover-scale">
-                        <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a href="{{ route('transactions.create') }}" class="btn-primary px-5 py-2 text-base sm:text-lg flex items-center hover-scale ripple">
+                        <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         Transaksi Baru
                     </a>
-                    <a href="{{ route('transactions.report') }}" class="btn-primary text-sm flex items-center hover-scale">
-                        <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <a href="{{ route('transactions.report') }}" class="btn-primary px-5 py-2 text-base sm:text-lg flex items-center hover-scale ripple">
+                        <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m6 2v-6m6 6v-8m-6 8H9m12 0H3" />
                         </svg>
                         Laporan Penjualan
@@ -278,32 +395,32 @@
         </div>
 
         <!-- Filter Card -->
-        <div x-data="{ showFilters: true }" class="card rounded-lg mb-6 fade-in">
-            <div class="px-4 py-3 flex justify-between items-center border-b border-brand-primary/10">
-                <h2 class="text-base font-medium text-gray-900 flex items-center">
-                    <svg class="h-4 w-4 mr-1.5 text-brand-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div x-data="{ showFilters: true }" class="card rounded-xl mb-8 fade-in">
+            <div class="px-6 py-4 flex justify-between items-center border-b border-brand-gold/20">
+                <h2 class="text-xl sm:text-2xl font-semibold text-brand-dark-800 flex items-center font-['Cinzel']">
+                    <svg class="h-6 w-6 mr-3 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                     </svg>
                     Filter Transaksi
                 </h2>
-                <button @click="showFilters = !showFilters" class="text-gray-600 hover:text-brand-primary p-1 rounded-full hover:bg-brand-dark-100">
-                    <svg x-show="showFilters" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button @click="showFilters = !showFilters" class="text-brand-dark-600 hover:text-brand-gold p-2 rounded-full hover:bg-brand-dark-100 hover-scale glow">
+                    <svg x-show="showFilters" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                     </svg>
-                    <svg x-show="!showFilters" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
+                    <svg x-show="!showFilters" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </button>
             </div>
-            <div x-show="showFilters" class="p-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div x-show="showFilters" class="p-6" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Tanggal</label>
-                        <input type="date" x-model="dateFilter" @change="fetchTransactions" class="w-full text-sm">
+                        <label class="block text-sm sm:text-base font-medium text-brand-dark-600 mb-2">Tanggal</label>
+                        <input type="date" x-model="dateFilter" @change="fetchTransactions" class="w-full text-base sm:text-lg">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Metode Pembayaran</label>
-                        <select x-model="paymentMethodFilter" @change="fetchTransactions" class="w-full text-sm">
+                        <label class="block text-sm sm:text-base font-medium text-brand-dark-600 mb-2">Metode Pembayaran</label>
+                        <select x-model="paymentMethodFilter" @change="fetchTransactions" class="w-full text-base sm:text-lg">
                             <option value="">Semua Metode</option>
                             <option value="cash">Tunai</option>
                             <option value="credit_card">QRIS</option>
@@ -312,8 +429,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Status Pembayaran</label>
-                        <select x-model="statusFilter" @change="fetchTransactions" class="w-full text-sm">
+                        <label class="block text-sm sm:text-base font-medium text-brand-dark-600 mb-2">Status Pembayaran</label>
+                        <select x-model="statusFilter" @change="fetchTransactions" class="w-full text-base sm:text-lg">
                             <option value="">Semua Status</option>
                             <option value="paid">Lunas</option>
                             <option value="pending">Pending</option>
@@ -321,9 +438,9 @@
                         </select>
                     </div>
                 </div>
-                <div class="mt-4 flex justify-end">
-                    <button @click="resetFilters" class="px-4 py-1 text-sm bg-brand-dark-100 border border-brand-primary/20 rounded-lg text-gray-600 hover:bg-brand-dark-200 hover:text-gray-900 flex items-center hover-scale">
-                        <svg class="h-3 w-3 mr-1 text-brand-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="mt-6 flex justify-end">
+                    <button @click="resetFilters" class="btn-primary px-5 py-2 text-base sm:text-lg flex items-center hover-scale ripple">
+                        <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                         Reset Filter
@@ -333,89 +450,89 @@
         </div>
 
         <!-- Transactions Table -->
-        <div class="card rounded-lg overflow-hidden fade-in">
+        <div class="card rounded-xl overflow-hidden fade-in">
             <div class="overflow-x-auto custom-scrollbar">
-                <table class="min-w-full divide-y divide-brand-primary/10">
+                <table class="min-w-full divide-y divide-brand-gold/20">
                     <thead>
                         <tr class="bg-brand-dark-50">
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer" @click="sortBy('id')">
+                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 uppercase tracking-wider cursor-pointer font-['Cinzel']" @click="sortBy('id')">
                                 <div class="flex items-center">
                                     ID
                                     <span x-show="sortColumn === 'id'" x-text="sortDirection === 'asc' ? '▲' : '▼'" class="ml-1"></span>
                                 </div>
                             </th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase cursor-pointer" @click="sortBy('date')">
+                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 uppercase cursor-pointer font-['Cinzel']" @click="sortBy('date')">
                                 <div class="flex items-center">
                                     Jam
                                     <span x-show="sortColumn === 'date'" x-text="sortDirection === 'asc' ? '▲' : '▼'" class="ml-1"></span>
                                 </div>
                             </th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Pelanggan</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Produk</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Metode</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Diskon</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase cursor-pointer" @click="sortBy('total')">
+                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 uppercase font-['Cinzel']">Pelanggan</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 uppercase font-['Cinzel']">Produk</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 uppercase font-['Cinzel']">Metode</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 uppercase font-['Cinzel']">Diskon</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 uppercase cursor-pointer font-['Cinzel']" @click="sortBy('total')">
                                 <div class="flex items-center">
                                     Total
                                     <span x-show="sortColumn === 'total'" x-text="sortDirection === 'asc' ? '▲' : '▼'" class="ml-1"></span>
                                 </div>
                             </th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Status</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase">Aksi</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 uppercase font-['Cinzel']">Status</th>
+                            <th class="px-6 py-4 text-right text-sm font-medium text-brand-dark-600 uppercase font-['Cinzel']">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody x-show="loading" class="text-center py-8">
+                    <tbody x-show="loading" class="text-center py-12">
                         <tr>
                             <td colspan="9">
                                 <div class="flex justify-center items-center">
-                                    <svg class="animate-spin h-6 w-6 text-brand-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <svg class="animate-spin h-8 w-8 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V1l4 4-4 4z"></path>
                                     </svg>
-                                    <span class="ml-2 text-gray-600">Memuat transaksi...</span>
+                                    <span class="ml-3 text-brand-dark-600 text-base">Memuat transaksi...</span>
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                     <tbody x-show="!loading && filteredTransactions.length > 0">
                         <template x-for="transaction in paginatedTransactions" :key="transaction.id">
-                            <tr :class="{'bg-brand-dark-100/20': isNewTransaction(transaction.id)}" class="transition-colors duration-200">
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span class="text-sm font-medium text-gray-900" x-text="transaction.invoice_number"></span>
+                            <tr :class="{'bg-brand-gold/10': isNewTransaction(transaction.id)}" class="transition-colors duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-base font-medium text-brand-dark-800" x-text="transaction.invoice_number"></span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span class="text-sm text-gray-600" x-text="formatTime(transaction.created_at)"></span>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-brand-dark-600" x-text="formatTime(transaction.created_at)"></span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900" x-text="transaction.customer_name || 'Tanpa Nama'"></div>
-                                    <div class="text-xs text-gray-600" x-text="transaction.customer_phone || '-'"></div>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-base font-medium text-brand-dark-800" x-text="transaction.customer_name || 'Tanpa Nama'"></div>
+                                    <div class="text-sm text-brand-dark-600" x-text="transaction.customer_phone || '-'"></div>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900" x-text="getProductNames(transaction.items)"></div>
+                                <td class="px-6 py-4" aria-label="Daftar Produk">
+                                    <div class="product-list" x-html="getProductNames(transaction.items)"></div>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="badge" :class="{
                                         'badge-success': transaction.payment_method === 'cash',
                                         'badge-neutral': transaction.payment_method === 'credit_card',
                                         'badge-info': transaction.payment_method === 'transfer' || transaction.payment_method === 'debit'
-                                    }" x-text="translatePaymentMethod(transaction.payment_method)"></span>
+                                    }" x-text="translatePaymentMethod(transaction.payment_method, transaction.card_type)"></span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span class="text-sm font-medium text-brand-primary" x-text="formatRupiah(calculateDiscount(transaction))"></span>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-base font-medium text-brand-gold" x-text="formatRupiah(calculateDiscount(transaction))"></span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span class="text-sm font-medium text-brand-primary" x-text="formatRupiah(transaction.final_amount)"></span>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-base font-medium text-brand-gold" x-text="formatRupiah(transaction.final_amount)"></span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="badge" :class="{
-                                        'badge-success': transaction.payment_status 'paid',
+                                        'badge-success': transaction.payment_status === 'paid',
                                         'badge-warning': transaction.payment_status === 'pending',
                                         'badge-danger': transaction.payment_status === 'cancelled'
                                     }" x-text="translateStatus(transaction.payment_status)"></span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-right space-x-2">
-                                    <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id)" class="inline-flex items-center p-1.5 bg-brand-dark-100 text-gray-600 rounded-md hover:bg-brand-primary hover:text-white hover-scale" title="Cetak Struk">
-                                        <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <td class="px-6 py-4 whitespace-nowrap text-right space-x-3">
+                                    <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id)" class="inline-flex items-center p-2 bg-brand-dark-100 text-brand-dark-800 rounded-lg hover:bg-brand-primary hover:text-brand-gold hover-scale glow" title="Cetak Struk">
+                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                         </svg>
                                     </a>
@@ -424,19 +541,19 @@
                         </template>
                     </tbody>
                     <!-- Empty State -->
-                    <tbody x-show="!loading && filteredTransactions.length === 0" class="text-center py-8">
+                    <tbody x-show="!loading && filteredTransactions.length === 0" class="text-center py-12">
                         <tr>
                             <td colspan="9">
-                                <div class="bg-brand-dark-100 rounded-lg inline-block p-4">
-                                    <svg class="h-6 w-6 text-gray-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="bg-brand-dark-100 rounded-xl inline-block p-6">
+                                    <svg class="h-12 w-12 text-brand-gold/50 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                 </div>
-                                <h3 class="text-lg font-medium text-gray-900 mb-2">Tidak Ada Transaksi</h3>
-                                <p class="text-gray-600 text-sm max-w-sm mx-auto">Belum ada transaksi untuk filter yang dipilih.</p>
-                                <div class="mt-4">
-                                    <a href="{{ route('transactions.create') }}" class="btn-primary text-sm flex items-center mx-auto hover-scale">
-                                        <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <h3 class="text-lg sm:text-xl font-semibold text-brand-dark-800 font-['Cinzel'] mt-4">Tidak Ada Transaksi</h3>
+                                <p class="text-base text-brand-dark-600 max-w-sm mx-auto">Belum ada transaksi untuk filter yang dipilih.</p>
+                                <div class="mt-6">
+                                    <a href="{{ route('transactions.create') }}" class="btn-primary px-5 py-2 text-base sm:text-lg flex items-center mx-auto hover-scale ripple">
+                                        <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                         </svg>
                                         Buat Transaksi Baru
@@ -448,30 +565,30 @@
                 </table>
             </div>
             <!-- Pagination -->
-            <div x-show="!loading && filteredTransactions.length > 0" class="flex items-center justify-between p-4 bg-brand-dark-50 border-t border-brand-primary/10">
-                <div class="text-sm text-gray-600">
-                    Menampilkan <span class="font-medium text-gray-900" x-text="paginationFrom()"></span> - <span x-text="paginationTo()"></span> dari <span class="font-medium text-gray-900" x-text="filteredTransactions.length"></span> transaksi
+            <div x-show="!loading && filteredTransactions.length > 0" class="flex items-center justify-between p-6 bg-brand-dark-50 border-t border-brand-gold/20">
+                <div class="text-base text-brand-dark-600">
+                    Menampilkan <span class="font-medium text-brand-dark-800" x-text="paginationFrom()"></span> - <span x-text="paginationTo()"></span> dari <span class="font-medium text-brand-dark-800" x-text="filteredTransactions.length"></span> transaksi
                 </div>
-                <div class="flex items-center gap-x-2">
-                    <select x-model.number="perPage" @change="fetchTransactions" class="px-2 py-1 text-sm rounded-lg bg-brand-dark-100 border border-gray-200/20 text-gray-600">
+                <div class="flex items-center gap-x-3">
+                    <select x-model.number="perPage" @change="fetchTransactions" class="px-3 py-2 text-base rounded-lg bg-brand-dark-100 border border-brand-gold/20 text-brand-dark-600">
                         <option value="10">10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
                     </select>
-                    <div class="flex space-x-1">
-                        <button @click="prevPage" :disabled="currentPage === 1" class="px-2 py-1 rounded-lg bg-brand-dark-100 hover:bg-brand-primary text-gray-600 hover:text-white" :class="{'opacity-50 cursor-not-allowed': currentPage === 1}">
-                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="flex space-x-2">
+                        <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-2 rounded-lg bg-brand-dark-100 hover:bg-brand-primary hover:text-brand-gold" :class="{'opacity-50 cursor-not-allowed': currentPage === 1}">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
                         <template x-for="page in displayedPages()" :key="page">
-                            <button x-show="page !== '…'" @click="goToPage(page)" class="px-3 py-1 rounded-lg bg-brand-dark-100 hover:bg-brand-primary text-gray-600 hover:text-white" :class="{'bg-brand-primary text-white': page === currentPage}">
+                            <button x-show="page !== '…'" @click="goToPage(page)" class="px-4 py-2 rounded-lg bg-brand-dark-100 hover:bg-brand-primary hover:text-brand-gold" :class="{'bg-brand-primary text-brand-gold': page === currentPage}">
                                 <span x-text="page"></span>
                             </button>
-                            <span x-show="page === '…'" class="px-3 py-1 text-gray-600">…</span>
+                            <span x-show="page === '…'" class="px-4 py-2 text-brand-dark-600">…</span>
                         </template>
-                        <button @click="nextPage" :disabled="currentPage >= totalPages" class="px-2 py-1 rounded-lg bg-brand-dark-100 hover:bg-brand-primary text-gray-600 hover:text-white" :class="{'opacity-50 cursor-not-allowed': currentPage >= totalPages}">
-                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <button @click="nextPage" :disabled="currentPage >= totalPages" class="px-3 py-2 rounded-lg bg-brand-dark-100 hover:bg-brand-primary hover:text-brand-gold" :class="{'opacity-50 cursor-not-allowed': currentPage >= totalPages}">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
@@ -481,9 +598,9 @@
         </div>
 
         <!-- Floating Print Button -->
-        <div x-show="newTransactionId" class="fixed bottom-4 right-4" x-cloak>
-            <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', newTransactionId)" class="flex items-center justify-center h-10 w-10 bg-brand-primary text-white rounded-full hover:bg-brand-secondary hover-scale">
-                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div x-show="newTransactionId" class="fixed bottom-6 right-6" x-cloak>
+            <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', newTransactionId)" class="flex items-center justify-center h-12 w-12 bg-brand-primary text-brand-gold rounded-full hover:bg-brand-secondary hover-scale glow">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
             </a>
@@ -504,6 +621,7 @@
                     newTransactionId: @json(session('transaction_id')),
                     errorMessage: '',
                     loading: false,
+                    desktopMode: false,
 
                     init() {
                         // Set default date to today in Asia/Jakarta timezone
@@ -514,6 +632,22 @@
                             this.$nextTick(() => {
                                 this.highlightNewTransaction();
                             });
+                        }
+                    },
+
+                    isMobile() {
+                        return window.innerWidth <= 640;
+                    },
+
+                    toggleDesktopMode() {
+                        this.desktopMode = !this.desktopMode;
+                        const viewport = document.getElementById('viewport');
+                        if (this.desktopMode) {
+                            viewport.setAttribute('content', 'width=1024, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes');
+                            document.body.classList.add('desktop-mode');
+                        } else {
+                            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+                            document.body.classList.remove('desktop-mode');
                         }
                     },
 
@@ -563,7 +697,7 @@
                         if (index >= 0) {
                             this.goToPage(Math.floor(index / this.perPage) + 1);
                             this.$nextTick(() => {
-                                const newRow = document.querySelector(`tr.bg-brand-dark-100/20`);
+                                const newRow = document.querySelector(`tr.bg-brand-gold/10`);
                                 if (newRow) {
                                     newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 }
@@ -584,13 +718,14 @@
                         return new Date(dateString).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
                     },
 
-                    translatePaymentMethod(method) {
-                        return {
+                    translatePaymentMethod(method, cardType) {
+                        const methods = {
                             cash: 'Tunai',
                             credit_card: 'QRIS',
-                            debit: 'Debit',
+                            debit: cardType ? `Debit (${cardType})` : 'Debit',
                             transfer: 'Transfer Bank'
-                        }[method] || method;
+                        };
+                        return methods[method] || method;
                     },
 
                     translateStatus(status) {
@@ -602,8 +737,18 @@
                     },
 
                     getProductNames(items) {
-                        if (!items || !items.length) return '-';
-                        return items.map(item => item.product ? item.product.name : '-').join(', ');
+                        console.log('Items:', items); // Untuk debugging
+                        if (!items || !items.length) return '<span class="text-base text-brand-dark-600">-</span>';
+                        return items.map(item => `
+                            <div class="flex items-center space-x-2">
+                                <span class="text-base text-brand-dark-800 whitespace-normal overflow-wrap-break-word">
+                                    ${item.product && item.product.name ? item.product.name : '-'}
+                                </span>
+                                <span class="text-sm text-brand-dark-600">
+                                    (${item.product && item.product.size ? item.product.size : '-'}${item.product && item.product.color ? ', ' + item.product.color : ''})
+                                </span>
+                            </div>
+                        `).join('');
                     },
 
                     resetFilters() {
