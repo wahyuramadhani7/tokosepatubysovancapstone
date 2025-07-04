@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" x-data="{ darkMode: false }" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,6 +19,10 @@
             position: relative;
             overflow-x: hidden;
         }
+        .dark body {
+            background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+            color: #F3F4F6;
+        }
         body::before {
             content: '';
             position: absolute;
@@ -29,6 +33,9 @@
             background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"%3E%3Cg fill="%23D4AF37" fill-opacity="0.05"%3E%3Ccircle cx="75" cy="75" r="75"/%3E%3C/g%3E%3C/svg%3E');
             z-index: -1;
             animation: particleMove 30s linear infinite;
+        }
+        .dark body::before {
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"%3E%3Cg fill="%23D4AF37" fill-opacity="0.02"%3E%3Ccircle cx="75" cy="75" r="75"/%3E%3C/g%3E%3C/svg%3E');
         }
         @keyframes particleMove {
             0% { background-position: 0 0; }
@@ -51,10 +58,18 @@
             overflow: hidden;
             box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
         }
+        .dark .btn-primary {
+            background: linear-gradient(90deg, #047857, #34d399);
+            border: 1px solid #FBBF24;
+        }
         .btn-primary:hover {
             background: linear-gradient(90deg, #064E3B, #059669);
             box-shadow: 0 6px 16px rgba(212, 175, 55, 0.5);
             transform: translateY(-2px);
+        }
+        .dark .btn-primary:hover {
+            background: linear-gradient(90deg, #065F46, #10b981);
+            box-shadow: 0 6px 16px rgba(251, 191, 36, 0.5);
         }
         .btn-primary::after {
             content: '';
@@ -66,6 +81,9 @@
             background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
             transition: 0.4s;
         }
+        .dark .btn-primary::after {
+            background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.3), transparent);
+        }
         .btn-primary:hover::after {
             left: 100%;
         }
@@ -74,6 +92,10 @@
             border-bottom: 1px solid rgba(212, 175, 55, 0.2);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
+        .dark .header {
+            background: rgba(31, 41, 55, 0.98);
+            border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+        }
         .card {
             background: #FFFFFF;
             border: 1px solid #D4AF37;
@@ -81,9 +103,17 @@
             box-shadow: 0 6px 16px rgba(212, 175, 55, 0.15);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        .dark .card {
+            background: #1F2937;
+            border: 1px solid #FBBF24;
+            box-shadow: 0 6px 16px rgba(251, 191, 36, 0.15);
+        }
         .card:hover {
             transform: translateY(-6px);
             box-shadow: 0 8px 20px rgba(212, 175, 55, 0.25);
+        }
+        .dark .card:hover {
+            box-shadow: 0 8px 20px rgba(251, 191, 36, 0.25);
         }
         .badge {
             padding: 0.5rem 1.25rem;
@@ -97,14 +127,26 @@
             color: #10b981;
             border: 1px solid rgba(6, 95, 70, 0.3);
         }
+        .dark .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
         .badge-warning {
             background: rgba(234, 179, 8, 0.15);
             color: #eab308;
             border: 1px solid rgba(234, 179, 8, 0.3);
         }
+        .dark .badge-warning {
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
         .badge-danger {
             background: rgba(239, 68, 68, 0.15);
             color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .dark .badge-danger {
+            background: rgba(239, 68, 68, 0.15);
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
         .custom-scrollbar::-webkit-scrollbar {
@@ -114,12 +156,21 @@
             background: #F3F4F6;
             border-radius: 12px;
         }
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+        }
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #D4AF37;
             border-radius: 12px;
         }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #FBBF24;
+        }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #B8972F;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #F59E0B;
         }
         input, select, textarea {
             background: #F9FAFB;
@@ -129,14 +180,26 @@
             padding: 0.75rem;
             transition: all 0.3s ease;
         }
+        .dark input, .dark select, .dark textarea {
+            background: #374151;
+            border: 1px solid #FBBF24;
+            color: #F3F4F6;
+        }
         input:focus, select:focus, textarea:focus {
             border-color: #D4AF37;
             box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
             outline: none;
         }
+        .dark input:focus, .dark select:focus, .dark textarea:focus {
+            border-color: #FBBF24;
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+        }
         li:hover {
             background: rgba(212, 175, 55, 0.1);
             transform: translateX(4px);
+        }
+        .dark li:hover {
+            background: rgba(251, 191, 36, 0.1);
         }
         .fade-in {
             animation: fadeIn 0.4s ease-out;
@@ -151,6 +214,9 @@
             margin: 0 auto;
             border-radius: 10px;
             border: 2px solid #D4AF37;
+        }
+        .dark #qr-reader {
+            border: 2px solid #FBBF24;
         }
         .modal-overlay {
             position: fixed;
@@ -186,6 +252,9 @@
         }
         .glow:hover {
             box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+        }
+        .dark .glow:hover {
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
         }
         @media (max-width: 640px) {
             .container {
@@ -243,13 +312,14 @@
                         }
                     }
                 }
-            }
+            },
+            darkMode: 'class'
         }
     </script>
 </head>
 <body class="min-h-screen custom-scrollbar" x-data="transactionApp()" x-init="initialize()">
     <!-- Header -->
-    <header class="fixed top-0 w-full header text-brand-dark-800 z-50">
+    <header class="fixed top-0 w-full header text-brand-dark-800 dark:text-brand-dark-50 z-50">
         <div class="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="bg-brand-primary rounded-lg p-2 glow hover-scale">
@@ -258,17 +328,25 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="font-['Cinzel'] font-bold text-2xl sm:text-3xl text-brand-dark-800">Sepatu by Sovan</h1>
-                    <p class="text-sm text-brand-dark-600">Luxury Footwear Collection</p>
+                    <h1 class="font-['Cinzel'] font-bold text-2xl sm:text-3xl text-brand-dark-800 dark:text-brand-dark-50">Sepatu by Sovan</h1>
+                    <p class="text-sm text-brand-dark-600 dark:text-brand-dark-400">Luxury Footwear Collection</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                <a href="{{ route('transactions.index') }}" class="p-2 bg-brand-dark-100 rounded-lg text-brand-dark-800 hover:bg-brand-primary hover:text-brand-gold hover-scale glow" title="Kembali ke Daftar Transaksi">
+                <button @click="darkMode = !darkMode" class="p-2 bg-brand-dark-100 rounded-lg text-brand-dark-800 dark:text-brand-dark-50 hover:bg-brand-primary hover:text-brand-gold hover-scale glow" :title="darkMode ? 'Mode Terang' : 'Mode Gelap'">
+                    <svg x-show="!darkMode" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg x-show="darkMode" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+                <a href="{{ route('transactions.index') }}" class="p-2 bg-brand-dark-100 rounded-lg text-brand-dark-800 dark:text-brand-dark-50 hover:bg-brand-primary hover:text-brand-gold hover-scale glow" title="Kembali ke Daftar Transaksi">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                 </a>
-                <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="p-2 bg-brand-dark-100 rounded-lg text-brand-dark-800 hover:bg-brand-primary hover:text-brand-gold hover-scale glow" title="Dashboard">
+                <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="p-2 bg-brand-dark-100 rounded-lg text-brand-dark-800 dark:text-brand-dark-50 hover:bg-brand-primary hover:text-brand-gold hover-scale glow" title="Dashboard">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7m-7-7v14" />
                     </svg>
@@ -281,7 +359,7 @@
     <main class="container mx-auto px-4 sm:px-6 py-12 max-w-7xl">
         <!-- Error Messages -->
         @if ($errors->any())
-            <div class="mb-8 bg-red-50 border border-red-200 text-brand-dark-800 p-5 rounded-xl fade-in flex items-center justify-between">
+            <div class="mb-8 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-brand-dark-800 dark:text-brand-dark-100 p-5 rounded-xl fade-in flex items-center justify-between">
                 <div class="flex items-center">
                     <div class="bg-red-500 rounded-full p-2 mr-4">
                         <svg class="h-6 w-6 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -290,7 +368,7 @@
                     </div>
                     <div>
                         <p class="font-semibold text-base font-['Cinzel']">Terjadi kesalahan:</p>
-                        <ul class="list-disc list-inside text-sm text-red-600">
+                        <ul class="list-disc list-inside text-sm text-red-600 dark:text-red-400">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
@@ -301,21 +379,21 @@
         @endif
 
         <div class="mb-10 card rounded-xl p-6 sm:p-8 fade-in">
-            <h1 class="font-['Cinzel'] text-2xl sm:text-3xl font-bold text-brand-dark-800 flex items-center">
+            <h1 class="font-['Cinzel'] text-2xl sm:text-3xl font-bold text-brand-dark-800 dark:text-brand-dark-50 flex items-center">
                 <svg class="h-8 w-8 mr-3 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
                 Buat Transaksi Baru
             </h1>
-            <p class="text-base text-brand-dark-600 mt-2">Pilih unit produk premium dengan pengalaman transaksi yang elegan</p>
+            <p class="text-base text-brand-dark-600 dark:text-brand-dark-400 mt-2">Pilih unit produk premium dengan pengalaman transaksi yang elegan</p>
         </div>
 
         <!-- Success/Error Popup Modal -->
         <div x-show="showPopup" class="modal-overlay" x-cloak x-transition:enter="popup-enter" @click.self="closePopup">
             <div class="card rounded-xl p-6 sm:p-8 w-full max-w-md sm:max-w-lg">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg sm:text-xl font-semibold text-brand-dark-800 font-['Cinzel']" x-text="popupTitle"></h3>
-                    <button type="button" @click="closePopup" class="text-brand-dark-600 hover:text-brand-gold p-2 rounded-full hover:bg-brand-dark-100 hover-scale glow">
+                    <h3 class="text-lg sm:text-xl font-semibold text-brand-dark-800 dark:text-brand-dark-50 font-['Cinzel']" x-text="popupTitle"></h3>
+                    <button type="button" @click="closePopup" class="text-brand-dark-600 dark:text-brand-dark-300 hover:text-brand-gold p-2 rounded-full hover:bg-brand-dark-100 dark:hover:bg-brand-dark-700 hover-scale glow">
                         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -325,7 +403,7 @@
                     <svg class="h-16 w-16 mx-auto mb-4" :class="popupType === 'success' ? 'text-brand-gold' : 'text-red-500'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="popupType === 'success' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'" />
                     </svg>
-                    <p class="text-brand-dark-800 text-base sm:text-lg" x-text="popupMessage"></p>
+                    <p class="text-brand-dark-800 dark:text-brand-dark-100 text-base sm:text-lg" x-text="popupMessage"></p>
                     <button type="button" @click="closePopup" class="mt-6 btn-primary px-5 py-2 text-base sm:text-lg hover-scale ripple">
                         OK
                     </button>
@@ -339,7 +417,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 <!-- Product Selection -->
                 <div class="card rounded-xl p-6 sm:p-8 fade-in">
-                    <h2 class="text-xl sm:text-2xl font-semibold text-brand-dark-800 mb-6 flex items-center font-['Cinzel']">
+                    <h2 class="text-xl sm:text-2xl font-semibold text-brand-dark-800 dark:text-brand-dark-50 mb-6 flex items-center font-['Cinzel']">
                         <svg class="h-6 w-6 mr-3 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0l-2-4H7a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2z" />
                         </svg>
@@ -349,7 +427,7 @@
                     <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
                         <div class="relative flex-grow w-full">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-brand-dark-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg class="h-5 w-5 text-brand-dark-600 dark:text-brand-dark-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
@@ -376,38 +454,38 @@
                     <div x-show="isScannerOpen" class="modal-overlay" x-cloak @click.self="closeScanner">
                         <div class="card rounded-xl p-6 sm:p-8 w-full max-w-md">
                             <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-lg sm:text-xl font-semibold text-brand-dark-800 font-['Cinzel']">Scan QR Code Unit</h3>
-                                <button type="button" @click="closeScanner" class="text-brand-dark-600 hover:text-brand-gold p-2 rounded-full hover:bg-brand-dark-100 hover-scale glow">
+                                <h3 class="text-lg sm:text-xl font-semibold text-brand-dark-800 dark:text-brand-dark-50 font-['Cinzel']">Scan QR Code Unit</h3>
+                                <button type="button" @click="closeScanner" class="text-brand-dark-600 dark:text-brand-dark-300 hover:text-brand-gold p-2 rounded-full hover:bg-brand-dark-100 dark:hover:bg-brand-dark-700 hover-scale glow">
                                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
                             </div>
                             <div id="qr-reader"></div>
-                            <p class="text-sm text-brand-dark-600 mt-4 text-center">Arahkan kamera ke kode QR unit produk</p>
-                            <p class="text-sm text-red-600 mt-3 text-center" x-text="scanError" x-show="scanError"></p>
+                            <p class="text-sm text-brand-dark-600 dark:text-brand-dark-400 mt-4 text-center">Arahkan kamera ke kode QR unit produk</p>
+                            <p class="text-sm text-red-600 dark:text-red-400 mt-3 text-center" x-text="scanError" x-show="scanError"></p>
                         </div>
                     </div>
 
                     <!-- Search Results -->
                     <div x-show="searchResults.length > 0" class="card border rounded-xl mb-6 max-h-60 overflow-y-auto custom-scrollbar fade-in" x-cloak>
-                        <ul class="divide-y divide-brand-dark-200">
+                        <ul class="divide-y divide-brand-dark-200 dark:divide-brand-dark-600">
                             <template x-for="unit in searchResults" :key="unit.unit_code">
                                 <li class="p-4 transition-colors cursor-pointer hover-scale glow" @click="addToCart(unit)">
                                     <div class="flex justify-between items-center">
                                         <div>
-                                            <p class="font-semibold text-brand-dark-800 text-base sm:text-lg" x-text="unit.product_name"></p>
+                                            <p class="font-semibold text-brand-dark-800 dark:text-brand-dark-50 text-base sm:text-lg" x-text="unit.product_name"></p>
                                             <div class="flex items-center mt-2 space-x-3">
                                                 <span class="inline-block h-3 w-3 rounded-full" :style="`background-color: ${getColorCode(unit.color)}`"></span>
-                                                <span class="text-sm text-brand-dark-600" x-text="unit.color"></span>
-                                                <span class="text-brand-dark-400">|</span>
-                                                <span class="text-sm text-brand-dark-600" x-text="`Ukuran: ${unit.size}`"></span>
-                                                <span class="text-brand-dark-400">|</span>
-                                                <span class="text-sm text-brand-dark-600" x-text="`Kode: ${unit.unit_code}`"></span>
+                                                <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="unit.color"></span>
+                                                <span class="text-brand-dark-400 dark:text-brand-dark-600">|</span>
+                                                <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="`Ukuran: ${unit.size}`"></span>
+                                                <span class="text-brand-dark-400 dark:text-brand-dark-600">|</span>
+                                                <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="`Kode: ${unit.unit_code}`"></span>
                                             </div>
                                         </div>
                                         <div class="text-right">
-                                            <p class="font-semibold text-brand-dark-800 text-base sm:text-lg" x-text="unit.discount_price ? formatRupiah(unit.discount_price) : formatRupiah(unit.selling_price)"></p>
+                                            <p class="font-semibold text-brand-dark-800 dark:text-brand-dark-50 text-base sm:text-lg" x-text="unit.discount_price ? formatRupiah(unit.discount_price) : formatRupiah(unit.selling_price)"></p>
                                             <button type="button" class="mt-2 text-sm bg-brand-primary text-brand-gold py-1.5 px-3 rounded-full font-semibold hover-scale ripple">+ Tambah</button>
                                         </div>
                                     </div>
@@ -417,31 +495,31 @@
                     </div>
 
                     <!-- Product Units List -->
-                    <div class="border border-brand-dark-200 rounded-xl max-h-96 overflow-y-auto custom-scrollbar">
-                        <div x-show="availableUnits.length === 0" class="text-center py-12 text-brand-dark-600">
+                    <div class="border border-brand-dark-200 dark:border-brand-dark-600 rounded-xl max-h-96 overflow-y-auto custom-scrollbar">
+                        <div x-show="availableUnits.length === 0" class="text-center py-12 text-brand-dark-600 dark:text-brand-dark-400">
                             <svg class="h-12 w-12 mx-auto text-brand-gold/50 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                             </svg>
                             <p class="text-base sm:text-lg font-medium">Tidak ada unit produk tersedia</p>
-                            <p class="text-sm text-brand-dark-600">Coba lagi nanti</p>
+                            <p class="text-sm text-brand-dark-600 dark:text-brand-dark-400">Coba lagi nanti</p>
                         </div>
-                        <ul class="divide-y divide-brand-dark-200">
+                        <ul class="divide-y divide-brand-dark-200 dark:divide-brand-dark-600">
                             <template x-for="unit in availableUnits" :key="unit.unit_code">
                                 <li class="p-4 transition-colors cursor-pointer fade-in hover-scale glow" @click="addToCart(unit)">
                                     <div class="flex justify-between items-center">
                                         <div>
-                                            <p class="font-semibold text-brand-dark-800 text-base sm:text-lg" x-text="unit.product_name"></p>
+                                            <p class="font-semibold text-brand-dark-800 dark:text-brand-dark-50 text-base sm:text-lg" x-text="unit.product_name"></p>
                                             <div class="flex items-center mt-2 space-x-3">
                                                 <span class="inline-block h-3 w-3 rounded-full" :style="`background-color: ${getColorCode(unit.color)}`"></span>
-                                                <span class="text-sm text-brand-dark-600" x-text="unit.color"></span>
-                                                <span class="text-brand-dark-400">|</span>
-                                                <span class="text-sm text-brand-dark-600" x-text="`Ukuran: ${unit.size}`"></span>
-                                                <span class="text-brand-dark-400">|</span>
-                                                <span class="text-sm text-brand-dark-600" x-text="`Kode: ${unit.unit_code}`"></span>
+                                                <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="unit.color"></span>
+                                                <span class="text-brand-dark-400 dark:text-brand-dark-600">|</span>
+                                                <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="`Ukuran: ${unit.size}`"></span>
+                                                <span class="text-brand-dark-400 dark:text-brand-dark-600">|</span>
+                                                <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="`Kode: ${unit.unit_code}`"></span>
                                             </div>
                                         </div>
                                         <div class="text-right">
-                                            <p class="font-semibold text-brand-dark-800 text-base sm:text-lg" x-text="unit.discount_price ? formatRupiah(unit.discount_price) : formatRupiah(unit.selling_price)"></p>
+                                            <p class="font-semibold text-brand-dark-800 dark:text-brand-dark-50 text-base sm:text-lg" x-text="unit.discount_price ? formatRupiah(unit.discount_price) : formatRupiah(unit.selling_price)"></p>
                                             <button type="button" class="mt-2 text-sm bg-brand-primary text-brand-gold py-1.5 px-3 rounded-full font-semibold hover-scale ripple">+ Tambah</button>
                                         </div>
                                     </div>
@@ -454,7 +532,7 @@
                 <!-- Customer & Cart -->
                 <div class="card rounded-xl p-6 sm:p-8 fade-in">
                     <!-- Customer Info -->
-                    <h2 class="text-xl sm:text-2xl font-semibold text-brand-dark-800 mb-6 flex items-center font-['Cinzel']">
+                    <h2 class="text-xl sm:text-2xl font-semibold text-brand-dark-800 dark:text-brand-dark-50 mb-6 flex items-center font-['Cinzel']">
                         <svg class="h-6 w-6 mr-3 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -463,15 +541,15 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div>
-                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 mb-2">Nama Pelanggan</label>
+                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 dark:text-brand-dark-300 mb-2">Nama Pelanggan</label>
                             <input type="text" name="customer_name" placeholder="Masukkan nama pelanggan" value="{{ old('customer_name') }}" class="w-full px-4 py-3 text-base sm:text-lg rounded-lg">
                         </div>
                         <div>
-                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 mb-2">No. Telepon</label>
+                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 dark:text-brand-dark-300 mb-2">No. Telepon</label>
                             <input type="text" name="customer_phone" placeholder="Masukkan nomor telepon" value="{{ old('customer_phone') }}" class="w-full px-4 py-3 text-base sm:text-lg rounded-lg">
                         </div>
                         <div>
-                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 mb-2">Metode Pembayaran <span class="text-red-600">*</span></label>
+                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 dark:text-brand-dark-300 mb-2">Metode Pembayaran <span class="text-red-600 dark:text-red-400">*</span></label>
                             <select name="payment_method" id="payment_method" x-model="paymentMethod" @change="updateCardTypeVisibility" class="w-full px-4 py-3 text-base sm:text-lg rounded-lg" required>
                                 <option value="" disabled {{ old('payment_method') ? '' : 'selected' }}>Pilih metode pembayaran</option>
                                 <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Tunai</option>
@@ -481,7 +559,7 @@
                             </select>
                         </div>
                         <div x-show="paymentMethod === 'debit'" x-cloak>
-                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 mb-2">Tipe Kartu <span class="text-red-600">*</span></label>
+                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 dark:text-brand-dark-300 mb-2">Tipe Kartu <span class="text-red-600 dark:text-red-400">*</span></label>
                             <select name="card_type" id="card_type" class="w-full px-4 py-3 text-base sm:text-lg rounded-lg" x-model="cardType">
                                 <option value="" disabled {{ old('card_type') ? '' : 'selected' }}>Pilih tipe kartu</option>
                                 <option value="Mandiri" {{ old('card_type') == 'Mandiri' ? 'selected' : '' }}>Mandiri</option>
@@ -490,47 +568,47 @@
                             </select>
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 mb-2">Catatan</label>
+                            <label class="block text-sm sm:text-base font-medium text-brand-dark-600 dark:text-brand-dark-300 mb-2">Catatan</label>
                             <textarea name="notes" rows="4" placeholder="Catatan tambahan untuk transaksi" class="w-full px-4 py-3 text-base sm:text-lg rounded-lg">{{ old('notes') }}</textarea>
                         </div>
                     </div>
 
                     <!-- Cart -->
-                    <h2 class="text-xl sm:text-2xl font-semibold text-brand-dark-800 mb-6 flex items-center border-t border-brand-dark-200 pt-6 font-['Cinzel']">
+                    <h2 class="text-xl sm:text-2xl font-semibold text-brand-dark-800 dark:text-brand-dark-50 mb-6 flex items-center border-t border-brand-dark-200 dark:border-brand-dark-600 pt-6 font-['Cinzel']">
                         <svg class="h-6 w-6 mr-3 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                         Keranjang Belanja
                     </h2>
 
-                    <div x-show="cart.length === 0" class="text-center py-12 text-brand-dark-600 border border-brand-dark-200 rounded-xl bg-brand-dark-50/10 mb-6">
+                    <div x-show="cart.length === 0" class="text-center py-12 text-brand-dark-600 dark:text-brand-dark-400 border border-brand-dark-200 dark:border-brand-dark-600 rounded-xl bg-brand-dark-50/10 dark:bg-brand-dark-700/10 mb-6">
                         <svg class="h-16 w-16 mx-auto text-brand-gold/50 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
                         <p class="text-base sm:text-lg font-medium">Keranjang Kosong</p>
-                        <p class="text-sm text-brand-dark-600">Tambahkan unit produk dari daftar di samping</p>
+                        <p class="text-sm text-brand-dark-600 dark:text-brand-dark-400">Tambahkan unit produk dari daftar di samping</p>
                     </div>
 
                     <div x-show="cart.length > 0" class="max-h-64 overflow-y-auto custom-scrollbar mb-6 space-y-4">
                         <ul class="space-y-3">
                             <template x-for="(item, index) in cart" :key="index">
-                                <li class="border border-brand-dark-200 rounded-xl p-4 bg-brand-dark-50/10 relative fade-in hover-scale glow">
-                                    <button type="button" @click="removeItem(index)" class="absolute top-3 right-3 text-brand-dark-600 hover:text-red-600 hover-scale">
+                                <li class="border border-brand-dark-200 dark:border-brand-dark-600 rounded-xl p-4 bg-brand-dark-50/10 dark:bg-brand-dark-700/10 relative fade-in hover-scale glow">
+                                    <button type="button" @click="removeItem(index)" class="absolute top-3 right-3 text-brand-dark-600 dark:text-brand-dark-300 hover:text-red-600 dark:hover:text-red-400 hover-scale">
                                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
-                                    <p class="font-semibold text-brand-dark-800 pr-8 text-base sm:text-lg" x-text="item.name"></p>
+                                    <p class="font-semibold text-brand-dark-800 dark:text-brand-dark-50 pr-8 text-base sm:text-lg" x-text="item.name"></p>
                                     <div class="flex items-center mt-2 space-x-3">
                                         <span class="inline-block h-3 w-3 rounded-full" :style="`background-color: ${getColorCode(item.color)}`"></span>
-                                        <span class="text-sm text-brand-dark-600" x-text="item.color"></span>
-                                        <span class="text-brand-dark-400">|</span>
-                                        <span class="text-sm text-brand-dark-600" x-text="`Ukuran: ${item.size}`"></span>
-                                        <span class="text-brand-dark-400">|</span>
-                                        <span class="text-sm text-brand-dark-600" x-text="`Kode: ${item.unit_code}`"></span>
+                                        <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="item.color"></span>
+                                        <span class="text-brand-dark-400 dark:text-brand-dark-600">|</span>
+                                        <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="`Ukuran: ${item.size}`"></span>
+                                        <span class="text-brand-dark-400 dark:text-brand-dark-600">|</span>
+                                        <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="`Kode: ${item.unit_code}`"></span>
                                     </div>
                                     <div class="flex justify-between items-center mt-4">
-                                        <p class="font-semibold text-brand-dark-800 text-base sm:text-lg" x-text="item.discount_price ? formatRupiah(item.discount_price) : formatRupiah(item.selling_price)"></p>
+                                        <p class="font-semibold text-brand-dark-800 dark:text-brand-dark-50 text-base sm:text-lg" x-text="item.discount_price ? formatRupiah(item.discount_price) : formatRupiah(item.selling_price)"></p>
                                     </div>
                                     <input type="hidden" :name="'products['+index+'][product_id]'" x-model="item.product_id">
                                     <input type="hidden" :name="'products['+index+'][unit_code]'" x-model="item.unit_code">
@@ -542,25 +620,25 @@
                     </div>
 
                     <!-- Summary -->
-                    <div class="border-t border-brand-dark-200 pt-6">
-                        <h2 class="text-xl sm:text-2xl font-semibold text-brand-dark-800 mb-4 font-['Cinzel']">Ringkasan Pembayaran</h2>
+                    <div class="border-t border-brand-dark-200 dark:border-brand-dark-600 pt-6">
+                        <h2 class="text-xl sm:text-2xl font-semibold text-brand-dark-800 dark:text-brand-dark-50 mb-4 font-['Cinzel']">Ringkasan Pembayaran</h2>
                         <div class="space-y-4">
                             <div class="flex justify-between text-base sm:text-lg">
-                                <span class="text-brand-dark-600">Subtotal</span>
-                                <span class="font-semibold text-brand-dark-800" x-text="formatRupiah(calculateSubtotal())"></span>
+                                <span class="text-brand-dark-600 dark:text-brand-dark-300">Subtotal</span>
+                                <span class="font-semibold text-brand-dark-800 dark:text-brand-dark-50" x-text="formatRupiah(calculateSubtotal())"></span>
                             </div>
                             <div class="flex justify-between text-base sm:text-lg">
                                 <span class="text-brand-gold">Diskon</span>
                                 <span class="font-semibold text-brand-gold" x-text="formatRupiah(calculateDiscount())"></span>
                             </div>
                             <div class="flex justify-between items-center text-base sm:text-lg">
-                                <span class="text-brand-dark-600">Harga Baru</span>
+                                <span class="text-brand-dark-600 dark:text-brand-dark-300">Harga Baru</span>
                                 <div class="flex items-center">
-                                    <span class="text-brand-dark-600 mr-3">Rp</span>
+                                    <span class="text-brand-dark-600 dark:text-brand-dark-300 mr-3">Rp</span>
                                     <input type="number" name="discount_amount" x-model.number="new_total" min="0" :max="calculateSubtotal()" placeholder="Masukkan harga baru" class="w-28 text-right px-3 py-2 text-base sm:text-lg rounded-lg" @input="updateNewTotal">
                                 </div>
                             </div>
-                            <div class="flex justify-between border-t border-brand-dark-200 pt-4 text-base sm:text-lg">
+                            <div class="flex justify-between border-t border-brand-dark-200 dark:border-brand-dark-600 pt-4 text-base sm:text-lg">
                                 <span class="font-bold text-brand-gold">Total Bayar</span>
                                 <span class="font-bold text-lg sm:text-xl text-brand-gold" x-text="formatRupiah(calculateTotal())"></span>
                             </div>
@@ -597,6 +675,17 @@
                 popupType: 'success',
                 scannedUnitCodes: [],
 
+                init() {
+                    // Load dark mode preference from localStorage
+                    this.darkMode = localStorage.getItem('darkMode') === 'true';
+                    this.$watch('darkMode', value => {
+                        localStorage.setItem('darkMode', value);
+                    });
+
+                    // Initialize other properties
+                    this.initialize();
+                },
+
                 formatRupiah(amount) {
                     return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount || 0);
                 },
@@ -608,7 +697,7 @@
                         'Putih': '#FAFAFA',
                         'Biru': '#2563EB',
                         'Navy': '#1E3A8A',
-                        'Hijau': '#065F46',
+                        'Hijau': '#065 háb0.0000000a0000000b0000000c0000000d0000000e0000000f00000010',
                         'Kuning': '#FACC15',
                         'Abu-abu': '#6B7280',
                         'Coklat': '#5D2E0B',
