@@ -22,7 +22,7 @@
 
             <div id="scanner-container" class="hidden mt-4">
                 <div id="qr-scanner" class="w-full max-w-md mx-auto rounded-lg"></div>
-                <input type="text" id="barcode-input" style="opacity: 0; position: absolute; width: 0; height: 0;" />
+                <input type="text" id="barcode-input" class="barcode-input" />
                 <button id="stop-scanner" type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors mt-2 w-full md:w-auto">
                     Stop Scan
                 </button>
@@ -35,9 +35,55 @@
                     Simpan Laporan
                 </button>
             </div>
+
+            <!-- Stock Opname Reports Section -->
+            <div id="reports-list" class="mt-6">
+                <h2 class="text-lg font-semibold text-white mb-3">Laporan Stock Opname</h2>
+                <div id="reports-table" class="bg-gray-800 p-4 rounded-lg text-white">
+                    @if(session('stock_opname_reports') && count(session('stock_opname_reports')) > 0)
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr>
+                                    <th class="p-2 border border-gray-600">Tanggal</th>
+                                    <th class="p-2 border border-gray-600">Produk</th>
+                                    <th class="p-2 border border-gray-600">Ukuran</th>
+                                    <th class="p-2 border border-gray-600">Warna</th>
+                                    <th class="p-2 border border-gray-600">Stok Sistem</th>
+                                    <th class="p-2 border border-gray-600">Stok Fisik</th>
+                                    <th class="p-2 border border-gray-600">Selisih</th>
+                                    <th class="p-2 border border-gray-600">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach(session('stock_opname_reports') as $index => $report)
+                                    <tr>
+                                        <td class="p-2 border border-gray-600">{{ \Carbon\Carbon::parse($report['timestamp'])->format('d/m/Y H:i') }}</td>
+                                        <td class="p-2 border border-gray-600">{{ $report['name'] }}</td>
+                                        <td class="p-2 border border-gray-600">{{ $report['size'] }}</td>
+                                        <td class="p-2 border border-gray-600">{{ $report['color'] }}</td>
+                                        <td class="p-2 border border-gray-600">{{ $report['system_stock'] }}</td>
+                                        <td class="p-2 border border-gray-600">{{ $report['physical_stock'] }}</td>
+                                        <td class="p-2 border border-gray-600 {{ $report['difference'] < 0 ? 'text-red-400' : ($report['difference'] > 0 ? 'text-yellow-400' : 'text-green-400') }}">
+                                            {{ $report['difference'] > 0 ? '+' : '' }}{{ $report['difference'] }}
+                                        </td>
+                                        <td class="p-2 border border-gray-600">
+                                            <form action="{{ route('inventory.delete_report', $index) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus laporan ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-500 hover:text-red-700">Hapus</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p class="text-center text-gray-400">Belum ada laporan stock opname.</p>
+                    @endif
+                </div>
+            </div>
         </div>
 
-        <!-- Session Messages -->
         @if(session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 animate-fade-in" role="alert">
                 <span class="block sm:inline">{{ session('success') }}</span>
@@ -64,6 +110,14 @@
         height: auto;
         border-radius: 0.5rem;
     }
+    .barcode-input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        top: -9999px;
+        left: -9999px;
+    }
     .scanned-item {
         display: flex;
         justify-content: space-between;
@@ -84,16 +138,16 @@
         cursor: pointer;
         font-size: 16px;
     }
-    #products-table table {
+    #products-table table, #reports-table table {
         width: 100%;
         border-collapse: collapse;
     }
-    #products-table th, #products-table td {
+    #products-table th, #products-table td, #reports-table th, #reports-table td {
         padding: 8px;
         border: 1px solid #4b5563;
         text-align: left;
     }
-    #products-table th {
+    #products-table th, #reports-table th {
         background-color: #374151;
     }
     #products-table input {
@@ -120,18 +174,13 @@ document.addEventListener('DOMContentLoaded', function() {
     scannedList.className = 'mt-4';
 
     let html5QrCode = null;
-    let scannedProducts = {}; // Menyimpan data produk yang discan
+    let scannedProducts = {};
     let scannedQRCodes = new Set();
+    let scanTimeout = null;
 
     // Initialize QR scanner
     startScannerBtn.addEventListener('click', async () => {
         try {
-            // Check camera permission
-            const permission = await navigator.permissions.query({ name: 'camera' });
-            if (permission.state === 'denied') {
-                showAlert('error', 'Izin kamera ditolak. Silakan izinkan akses kamera atau gunakan scanner fisik.');
-            }
-
             scannerContainer.classList.remove('hidden');
             startScannerBtn.classList.add('hidden');
             scannedProducts = {};
@@ -140,11 +189,12 @@ document.addEventListener('DOMContentLoaded', function() {
             barcodeInput.focus();
 
             // Start camera-based QR scanner if available
+            const permission = await navigator.permissions.query({ name: 'camera' });
             if (permission.state !== 'denied') {
                 html5QrCode = new Html5Qrcode("qr-scanner");
                 const cameras = await Html5Qrcode.getCameras();
                 if (cameras.length === 0) {
-                    showAlert('warning', 'Tidak ada kamera yang ditemukan. Gunakan scanner fisik.');
+                    showAlert('warning', 'Tidak ada kamera yang ditemukan. Gunakan scanner fisik 2D.');
                 } else {
                     const cameraId = cameras.find(cam => cam.label.toLowerCase().includes('back'))?.id || cameras[0].id;
                     await html5QrCode.start(
@@ -159,6 +209,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         onScanError
                     );
                 }
+            } else {
+                showAlert('warning', 'Izin kamera ditolak. Gunakan scanner fisik 2D.');
             }
         } catch (err) {
             console.error('Error starting QR scanner:', err);
@@ -167,12 +219,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Handle input from physical scanner
+    // Handle input from physical 2D scanner with debounce
     barcodeInput.addEventListener('input', function(e) {
         const decodedText = e.target.value.trim();
         if (decodedText) {
-            onScanSuccess(decodedText);
-            barcodeInput.value = '';
+            clearTimeout(scanTimeout);
+            scanTimeout = setTimeout(() => {
+                onScanSuccess(decodedText);
+                barcodeInput.value = '';
+                barcodeInput.focus();
+            }, 200);
+        }
+    });
+
+    // Ensure barcode input stays focused
+    barcodeInput.addEventListener('blur', () => {
+        if (!scannerContainer.classList.contains('hidden')) {
+            setTimeout(() => barcodeInput.focus(), 100);
         }
     });
 
@@ -183,6 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle successful QR scan
     function onScanSuccess(decodedText) {
+        console.log('Scanned QR:', decodedText); // Debugging
         if (!decodedText.includes('inventory')) {
             showAlert('error', 'QR code tidak valid untuk inventory.');
             return;
@@ -210,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 scannedProducts[productId] = {
                     count: 0,
                     systemStock: 0,
-                    name: '-',
+                    name: 'Memuat...',
                     size: '-',
                     color: '-',
                     qrCodes: new Set()
@@ -233,35 +297,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch product data
     function fetchProductData(productId) {
+        console.log('Fetching product data for ID:', productId); // Debugging
         fetch(`/inventory/${productId}/json`, {
+            method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Fetch response status:', response.status); // Debugging
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Fetched product data:', data); // Debugging
             if (data.error) {
                 showAlert('error', data.error);
-                return;
+                scannedProducts[productId].name = 'Produk Tidak Ditemukan';
+                scannedProducts[productId].size = 'N/A';
+                scannedProducts[productId].color = 'N/A';
+                scannedProducts[productId].systemStock = 0;
+            } else {
+                scannedProducts[productId] = {
+                    ...scannedProducts[productId],
+                    name: data.name || 'Tidak Diketahui',
+                    size: data.size || '-',
+                    color: data.color || '-',
+                    systemStock: data.stock || 0
+                };
             }
-            scannedProducts[productId] = {
-                ...scannedProducts[productId],
-                name: data.name || '-',
-                size: data.size || '-',
-                color: data.color || '-',
-                systemStock: data.stock || 0
-            };
             updateProductsTable();
         })
         .catch(error => {
             console.error('Error fetching product:', error);
-            showAlert('error', 'Gagal mengambil data produk');
+            showAlert('error', 'Gagal mengambil data produk: ' + error.message);
+            scannedProducts[productId].name = 'Gagal Memuat';
+            scannedProducts[productId].size = 'N/A';
+            scannedProducts[productId].color = 'N/A';
+            scannedProducts[productId].systemStock = 0;
+            updateProductsTable();
         });
     }
 
     // Update products table
     function updateProductsTable() {
+        console.log('Updating table with products:', scannedProducts); // Debugging
         let html = `
             <table>
                 <thead>
@@ -313,10 +396,8 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         productsTable.innerHTML = html;
 
-        // Show/hide save report button
         saveReportBtn.classList.toggle('hidden', Object.keys(scannedProducts).length === 0);
 
-        // Add event listeners for stock inputs and update buttons
         document.querySelectorAll('.physical-stock-input').forEach(input => {
             input.addEventListener('change', function() {
                 const productId = this.dataset.productId;
@@ -343,11 +424,18 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             body: formData,
             headers: {
-                'Accept': 'application/json',
+                'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Update stock response status:', response.status); // Debugging
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Update stock response:', data); // Debugging
             if (data.success) {
                 showAlert('success', data.message);
                 delete scannedProducts[productId];
@@ -365,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Save report (optional)
+    // Save report
     saveReportBtn.addEventListener('click', () => {
         const report = Object.entries(scannedProducts).map(([productId, product]) => ({
             product_id: productId,
@@ -374,10 +462,32 @@ document.addEventListener('DOMContentLoaded', function() {
             color: product.color,
             system_stock: product.systemStock,
             physical_stock: product.count,
-            difference: product.count - product.systemStock
+            difference: product.count - product.systemStock,
+            timestamp: new Date().toISOString()
         }));
-        console.log('Stock Opname Report:', report);
-        showAlert('success', 'Laporan stok opname disimpan di konsol.'); // Bisa diganti dengan fetch ke endpoint baru
+
+        fetch('{{ route('inventory.save_report') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ reports: report })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                resetScanner();
+                window.location.reload(); // Refresh halaman untuk menampilkan laporan baru
+            } else {
+                showAlert('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving report:', error);
+            showAlert('error', 'Gagal menyimpan laporan: ' + error.message);
+        });
     });
 
     // Reset scanner state

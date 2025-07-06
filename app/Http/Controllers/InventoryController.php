@@ -579,4 +579,62 @@ class InventoryController extends Controller
             ], 500);
         }
     }
+
+    public function saveReport(Request $request)
+    {
+        $validated = $request->validate([
+            'reports' => 'required|array',
+            'reports.*.product_id' => 'required|integer',
+            'reports.*.name' => 'required|string',
+            'reports.*.size' => 'required|string',
+            'reports.*.color' => 'required|string',
+            'reports.*.system_stock' => 'required|integer',
+            'reports.*.physical_stock' => 'required|integer',
+            'reports.*.difference' => 'required|integer',
+            'reports.*.timestamp' => 'required|date',
+        ]);
+
+        try {
+            $reports = session('stock_opname_reports', []);
+            foreach ($validated['reports'] as $report) {
+                $reports[] = [
+                    'product_id' => $report['product_id'],
+                    'name' => $report['name'],
+                    'size' => $report['size'],
+                    'color' => $report['color'],
+                    'system_stock' => $report['system_stock'],
+                    'physical_stock' => $report['physical_stock'],
+                    'difference' => $report['difference'],
+                    'timestamp' => $report['timestamp'],
+                ];
+            }
+            session(['stock_opname_reports' => $reports]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Laporan stock opname berhasil disimpan',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan laporan: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function deleteReport($index)
+    {
+        try {
+            $reports = session('stock_opname_reports', []);
+            if (isset($reports[$index])) {
+                unset($reports[$index]);
+                $reports = array_values($reports); // Reindex array
+                session(['stock_opname_reports' => $reports]);
+                return redirect()->route('inventory.stock_opname')->with('success', 'Laporan berhasil dihapus');
+            }
+            return redirect()->route('inventory.stock_opname')->with('error', 'Laporan tidak ditemukan');
+        } catch (\Exception $e) {
+            return redirect()->route('inventory.stock_opname')->with('error', 'Gagal menghapus laporan: ' . $e->getMessage());
+        }
+    }
 }

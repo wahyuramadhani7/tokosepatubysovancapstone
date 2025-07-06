@@ -36,7 +36,6 @@
                 </button>
             </div>
 
-            <!-- Keterangan Lupa Sandi -->
             <div class="mb-6 text-left">
                 <p class="text-xs text-orange-400">
                     Lupa sandi? 
@@ -52,7 +51,6 @@
             </button>
         </form>
 
-        <!-- Popup untuk pesan kesalahan -->
         <div id="errorPopup" class="hidden fixed inset-0 bg-black bg-opacity-50">
             <div class="flex items-center justify-center min-h-screen">
                 <div class="bg-white p-6 rounded-lg shadow-lg text-center">
@@ -64,7 +62,6 @@
     </div>
 
     <script>
-        // Ambil elemen form dan input
         const loginForm = document.getElementById('loginForm');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
@@ -73,19 +70,14 @@
         const errorMessage = document.getElementById('errorMessage');
         const closePopup = document.getElementById('closePopup');
 
-        // Muat data login dari memory jika ada
         window.onload = function() {
-            // Removed localStorage usage as it's not supported in Claude artifacts
-            // Form will work without persistent storage
-            
-            // Periksa apakah ada error dari server (misalnya, dari session Laravel)
-            // @if ($errors->has('email') || $errors->has('password'))
-            //     errorMessage.textContent = 'Password Salah!';
-            //     errorPopup.classList.remove('hidden');
-            // @endif
+            // Check for server-side errors (Laravel session errors)
+            @if ($errors->has('email') || $errors->has('password'))
+                errorMessage.textContent = 'Password Salah!';
+                errorPopup.classList.remove('hidden');
+            @endif
         };
 
-        // Toggle visibilitas password
         togglePassword.addEventListener('click', () => {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
@@ -99,13 +91,10 @@
                 </svg>`;
         });
 
-        // Submit form
         loginForm.addEventListener('submit', (e) => {
-            // Form akan dikirim ke server untuk validasi Laravel
             console.log('Form submitted');
         });
 
-        // Tutup popup
         closePopup.addEventListener('click', () => {
             errorPopup.classList.add('hidden');
         });
