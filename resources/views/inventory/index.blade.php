@@ -8,7 +8,7 @@
         <!-- Inventory Information Cards -->
         <div class="rounded-lg p-4 md:p-6 mb-6" style="background-color: #292929;">
             <h2 class="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-white text-center">INVENTORY INFORMATION</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 <div class="bg-gray-100 p-4 md:p-6 rounded-lg shadow flex items-center transition-all hover:shadow-md">
                     <svg class="h-8 w-8 md:h-10 md:w-10 text-orange-500 mr-3 md:mr-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4m-4 4h16l-2 6H6l-2-6z" />
@@ -34,6 +34,21 @@
                     <div>
                         <h3 class="text-sm md:text-base font-semibold uppercase">Total Unit</h3>
                         <p class="text-gray-600 text-base md:text-lg font-medium">{{ $totalStock ?? 0 }}</p>
+                    </div>
+                </div>
+                <div class="bg-gray-100 p-4 md:p-6 rounded-lg shadow flex items-center transition-all hover:shadow-md">
+                    <svg class="h-8 w-8 md:h-10 md:w-10 text-orange-500 mr-3 md:mr-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10m-5 10V7m5 10h2a2 2 0 002-2V7a2 2 0 00-2-2h-2M7 7H5a2 2 0 00-2 2v6a2 2 0 002 2h2" />
+                    </svg>
+                    <div class="w-full">
+                        <h3 class="text-sm md:text-base font-semibold uppercase">Jumlah Brand</h3>
+                        <select id="brand-counts" class="w-full bg-white text-gray-600 text-sm md:text-base rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            @forelse ($brandCounts ?? [] as $brand => $count)
+                                <option value="{{ $brand }}">{{ $brand }} ({{ $count }})</option>
+                            @empty
+                                <option value="">Tidak ada brand</option>
+                            @endforelse
+                        </select>
                     </div>
                 </div>
             </div>
@@ -92,7 +107,7 @@
         @endif
 
         <!-- Table - Desktop version -->
-        <div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
+            <div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
             <div class="rounded-lg overflow-hidden">
                 <!-- Table Headers -->
                 <div class="grid grid-cols-9 gap-0">
@@ -335,12 +350,25 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             const desktopTableBody = document.getElementById('desktop-table-body');
             const mobileCards = document.getElementById('mobile-cards');
+            const brandCountsSelect = document.getElementById('brand-counts');
             desktopTableBody.innerHTML = '';
             mobileCards.innerHTML = '';
+            brandCountsSelect.innerHTML = '';
 
             if (data.error) {
                 showError(data.message);
                 return;
+            }
+
+            // Update brand counts dropdown
+            if (data.brandCounts && Object.keys(data.brandCounts).length > 0) {
+                let brandHtml = '';
+                for (const [brand, count] of Object.entries(data.brandCounts)) {
+                    brandHtml += `<option value="${brand}">${brand} (${count})</option>`;
+                }
+                brandCountsSelect.innerHTML = brandHtml;
+            } else {
+                brandCountsSelect.innerHTML = '<option value="">Tidak ada brand</option>';
             }
 
             if (!data.products.length) {
@@ -500,9 +528,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function showError(message) {
         const desktopTableBody = document.getElementById('desktop-table-body');
         const mobileCards = document.getElementById('mobile-cards');
+        const brandCountsSelect = document.getElementById('brand-counts');
         const errorHtml = `<div class="bg-white p-6 text-center text-red-500">${message}</div>`;
         desktopTableBody.innerHTML = errorHtml;
         mobileCards.innerHTML = errorHtml;
+        brandCountsSelect.innerHTML = '<option value="">Tidak ada brand</option>';
         document.getElementById('desktop-pagination').innerHTML = '';
         document.getElementById('mobile-pagination').innerHTML = '';
     }

@@ -48,10 +48,30 @@ class InventoryController extends Controller
             $query->where('is_active', true);
         }, '<=', 10)->count();
 
+        // Hitung jumlah produk per brand dengan case-insensitive
+        $brandCounts = Product::whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })
+        ->get()
+        ->groupBy(function ($product) {
+            // Ambil kata pertama dari nama produk, ubah ke huruf kecil untuk pengelompokan
+            return Str::lower(explode(' ', trim($product->name))[0]);
+        })
+        ->map(function ($group) {
+            // Format nama brand menjadi huruf kapital awal untuk tampilan
+            $brandName = Str::title($group->first()->name ? explode(' ', trim($group->first()->name))[0] : 'Unknown');
+            return [
+                'name' => $brandName,
+                'count' => $group->count()
+            ];
+        })
+        ->sortBy('name')
+        ->pluck('count', 'name');
+
         $newProducts = session('new_products', []);
         $updatedProducts = session('updated_products', []);
 
-        return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock', 'newProducts', 'updatedProducts'));
+        return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock', 'brandCounts', 'newProducts', 'updatedProducts'));
     }
 
     public function search(Request $request)
@@ -85,10 +105,35 @@ class InventoryController extends Controller
             $query->where('is_active', true);
         }, '<=', 10)->count();
 
+        // Hitung jumlah produk per brand berdasarkan hasil pencarian dengan case-insensitive
+        $brandCounts = Product::whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })
+        ->where(function ($query) use ($searchTerm) {
+            $query->where('name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('color', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('size', 'like', '%' . $searchTerm . '%');
+        })
+        ->get()
+        ->groupBy(function ($product) {
+            // Ambil kata pertama dari nama produk, ubah ke huruf kecil untuk pengelompokan
+            return Str::lower(explode(' ', trim($product->name))[0]);
+        })
+        ->map(function ($group) {
+            // Format nama brand menjadi huruf kapital awal untuk tampilan
+            $brandName = Str::title($group->first()->name ? explode(' ', trim($group->first()->name))[0] : 'Unknown');
+            return [
+                'name' => $brandName,
+                'count' => $group->count()
+            ];
+        })
+        ->sortBy('name')
+        ->pluck('count', 'name');
+
         $newProducts = session('new_products', []);
         $updatedProducts = session('updated_products', []);
 
-        return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock', 'searchTerm', 'newProducts', 'updatedProducts'));
+        return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock', 'searchTerm', 'brandCounts', 'newProducts', 'updatedProducts'));
     }
 
     public function create()
@@ -789,3 +834,4 @@ class InventoryController extends Controller
         }
     }
 }
+?>
