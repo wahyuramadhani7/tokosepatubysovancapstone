@@ -24,20 +24,30 @@ class InventoryController extends Controller
 
     public function index()
     {
-        // Urutkan produk berdasarkan name dan size untuk pengelompokan
+        // Hanya ambil produk dengan minimal satu ProductUnit aktif (stok > 0)
         $products = Product::withCount(['productUnits' => function ($query) {
             $query->where('is_active', true);
         }])
+        ->whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })
         ->orderBy('name')
         ->orderBy('size')
         ->paginate(10);
-        $totalProducts = Product::count();
+
+        // Hanya hitung produk dengan stok > 0
+        $totalProducts = Product::whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })->count();
+
+        // Total stok dari jumlah ProductUnit aktif
+        $totalStock = ProductUnit::where('is_active', true)->count();
+
+        // Produk dengan stok rendah (misal, <= 10 unit aktif)
         $lowStockProducts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         }, '<=', 10)->count();
-        $totalStock = ProductUnit::where('is_active', true)->count();
 
-        // Ambil ID produk yang baru ditambahkan atau diedit dari session
         $newProducts = session('new_products', []);
         $updatedProducts = session('updated_products', []);
 
@@ -53,6 +63,9 @@ class InventoryController extends Controller
             return Product::withCount(['productUnits' => function ($query) {
                 $query->where('is_active', true);
             }])
+            ->whereHas('productUnits', function ($query) {
+                $query->where('is_active', true);
+            })
             ->where(function ($query) use ($searchTerm) {
                 $query->where('name', 'like', '%' . $searchTerm . '%')
                       ->orWhere('color', 'like', '%' . $searchTerm . '%')
@@ -64,13 +77,14 @@ class InventoryController extends Controller
             ->appends(['search' => $searchTerm]);
         });
 
-        $totalProducts = Product::count();
+        $totalProducts = Product::whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })->count();
+        $totalStock = ProductUnit::where('is_active', true)->count();
         $lowStockProducts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         }, '<=', 10)->count();
-        $totalStock = ProductUnit::where('is_active', true)->count();
 
-        // Ambil ID produk yang baru ditambahkan atau diedit dari session
         $newProducts = session('new_products', []);
         $updatedProducts = session('updated_products', []);
 
@@ -95,12 +109,22 @@ class InventoryController extends Controller
             'discount_price' => 'nullable|numeric|min:0|lte:selling_price',
         ]);
 
+        // Cek total stok dari semua ukuran
+        $totalStock = array_sum(array_column($validated['sizes'], 'stock'));
+        if ($totalStock == 0) {
+            return redirect()->route('inventory.index')->with('success', 'Produk tidak disimpan karena stok 0.');
+        }
+
         DB::beginTransaction();
 
         try {
             $newUnitCodes = [];
             $newProductIds = [];
             foreach ($validated['sizes'] as $sizeData) {
+                if ($sizeData['stock'] == 0) {
+                    continue; // Skip ukuran dengan stok 0
+                }
+
                 $product = Product::create([
                     'name' => trim($validated['brand'] . ' ' . $validated['model']),
                     'size' => $sizeData['size'],
@@ -191,14 +215,16 @@ class InventoryController extends Controller
         }])->find($productId);
         $unit = ProductUnit::where('product_id', $productId)->where('unit_code', $unitCode)->first();
 
-        // Ambil produk sejenis berdasarkan nama produk
         $similarProducts = [];
         if ($product && $product->name !== 'Produk Tidak Ditemukan') {
             $similarProducts = Product::withCount(['productUnits' => function ($query) {
                 $query->where('is_active', true);
             }])
             ->where('name', $product->name)
-            ->where('id', '!=', $productId) // Kecualikan produk saat ini
+            ->where('id', '!=', $productId)
+            ->whereHas('productUnits', function ($query) {
+                $query->where('is_active', true);
+            })
             ->get()
             ->map(function ($similarProduct) {
                 return [
@@ -220,7 +246,7 @@ class InventoryController extends Controller
             if ($cachedProduct && $cachedUnit) {
                 $product = (object) $cachedProduct;
                 $unit = (object) $cachedUnit;
-                $similarProducts = []; // Tidak ada produk sejenis jika dari cache
+                $similarProducts = [];
             } else {
                 $product = (object) [
                     'id' => $productId,
@@ -245,7 +271,9 @@ class InventoryController extends Controller
 
     public function json($id)
     {
-        $product = Product::find($id);
+        $product = Product::with(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])->find($id);
 
         if (!$product) {
             $cachedProduct = Cache::get($this->getProductCacheKey($id));
@@ -264,20 +292,22 @@ class InventoryController extends Controller
             'size' => $product->size,
             'selling_price' => $product->selling_price,
             'discount_price' => $product->discount_price,
-            'stock' => $product->stock ?? 0,
-            'units' => isset($product->productUnits) ? $product->productUnits->map(function ($unit) {
+            'stock' => $product->productUnits->count(),
+            'units' => $product->productUnits->map(function ($unit) {
                 return [
                     'unit_code' => $unit->unit_code,
                     'qr_code' => $unit->qr_code,
                     'is_active' => $unit->is_active,
                 ];
-            }) : [],
+            }),
         ], 200);
     }
 
     public function edit($id)
     {
-        $product = Product::find($id);
+        $product = Product::with(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])->find($id);
 
         if (!$product) {
             return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
@@ -303,6 +333,39 @@ class InventoryController extends Controller
             'selling_price' => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lte:selling_price',
         ]);
+
+        // Cek total stok dari semua ukuran
+        $totalStock = array_sum(array_column($validated['sizes'], 'stock'));
+        if ($totalStock == 0) {
+            DB::beginTransaction();
+            try {
+                // Hapus semua ProductUnit terkait
+                $product->productUnits()->delete();
+                // Hapus cache dan session
+                $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
+                foreach ($unitCodes as $unitCode) {
+                    Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
+                }
+                Cache::forget($this->getProductCacheKey($product->id));
+                session()->forget('new_units_' . $product->id);
+                $newProducts = array_diff(session('new_products', []), [$product->id]);
+                $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
+                $existingMismatches = session('stock_mismatches', []);
+                unset($existingMismatches[$product->id]);
+                session([
+                    'new_products' => $newProducts,
+                    'updated_products' => $updatedProducts,
+                    'stock_mismatches' => $existingMismatches,
+                ]);
+                // Hapus produk
+                $product->delete();
+                DB::commit();
+                return redirect()->route('inventory.index')->with('success', 'Produk dihapus karena stok 0.');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return redirect()->route('inventory.index')->with('error', 'Gagal menghapus produk: ' . $e->getMessage());
+            }
+        }
 
         DB::beginTransaction();
 
@@ -333,14 +396,12 @@ class InventoryController extends Controller
                     ]);
                     $qrCode = route('inventory.show_unit', ['product' => $product->id, 'unitCode' => $unit->unit_code]);
                     $unit->update(['qr_code' => $qrCode]);
-
                     Cache::forever($this->getUnitCacheKey($product->id, $unit->unit_code), [
                         'product_id' => $product->id,
                         'unit_code' => $unit->unit_code,
                         'qr_code' => $qrCode,
                         'is_active' => true,
                     ]);
-
                     $newUnitCodes[] = $unit->unit_code;
                 }
             } elseif ($desiredStock < $currentStock) {
@@ -360,6 +421,9 @@ class InventoryController extends Controller
             // Buat produk baru untuk ukuran tambahan
             for ($i = 1; $i < count($validated['sizes']); $i++) {
                 $sizeData = $validated['sizes'][$i];
+                if ($sizeData['stock'] == 0) {
+                    continue; // Skip ukuran dengan stok 0
+                }
                 $newProduct = Product::create([
                     'name' => trim($validated['brand'] . ' ' . $validated['model']),
                     'size' => $sizeData['size'],
@@ -441,12 +505,22 @@ class InventoryController extends Controller
 
         try {
             $product->productUnits()->delete();
-            $product->delete();
-            session()->forget('new_units_' . $id);
-            // Hapus dari session new_products dan updated_products
+            $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
+            foreach ($unitCodes as $unitCode) {
+                Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
+            }
+            Cache::forget($this->getProductCacheKey($product->id));
             $newProducts = array_diff(session('new_products', []), [$id]);
             $updatedProducts = array_diff(session('updated_products', []), [$id]);
-            session(['new_products' => $newProducts, 'updated_products' => $updatedProducts]);
+            $existingMismatches = session('stock_mismatches', []);
+            unset($existingMismatches[$id]);
+            session([
+                'new_products' => $newProducts,
+                'updated_products' => $updatedProducts,
+                'new_units_' . $id => null,
+                'stock_mismatches' => $existingMismatches,
+            ]);
+            $product->delete();
             DB::commit();
             return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil dihapus');
         } catch (\Exception $e) {
@@ -457,7 +531,9 @@ class InventoryController extends Controller
 
     public function printQr($id)
     {
-        $product = Product::find($id);
+        $product = Product::with(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])->find($id);
 
         if (!$product) {
             $cachedProduct = Cache::get($this->getProductCacheKey($id));
@@ -474,10 +550,6 @@ class InventoryController extends Controller
         if (!empty($newUnitCodes)) {
             $product->load(['productUnits' => function ($query) use ($newUnitCodes) {
                 $query->where('is_active', true)->whereIn('unit_code', $newUnitCodes);
-            }]);
-        } else {
-            $product->load(['productUnits' => function ($query) {
-                $query->where('is_active', true);
             }]);
         }
 
@@ -503,6 +575,8 @@ class InventoryController extends Controller
             'physical_stock' => 'required|integer|min:0',
         ]);
 
+        DB::beginTransaction();
+
         try {
             $currentStock = $product->productUnits()->where('is_active', true)->count();
             $physicalStock = $validated['physical_stock'];
@@ -517,7 +591,40 @@ class InventoryController extends Controller
             ];
             $newUnitCodes = session('new_units_' . $product->id, []);
 
-            if ($difference > 0) {
+            if ($physicalStock == 0) {
+                // Nonaktifkan semua ProductUnit
+                $unitsToDeactivate = $product->productUnits()->where('is_active', true)->get();
+                foreach ($unitsToDeactivate as $unit) {
+                    $unit->update(['is_active' => false]);
+                    Cache::forever($this->getUnitCacheKey($product->id, $unit->unit_code), [
+                        'product_id' => $product->id,
+                        'unit_code' => $unit->unit_code,
+                        'qr_code' => $unit->qr_code,
+                        'is_active' => false,
+                    ]);
+                    $newUnitCodes = array_diff($newUnitCodes, [$unit->unit_code]);
+                }
+                // Hapus produk dan bersihkan cache serta session
+                $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
+                foreach ($unitCodes as $unitCode) {
+                    Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
+                }
+                Cache::forget($this->getProductCacheKey($product->id));
+                $newProducts = array_diff(session('new_products', []), [$product->id]);
+                $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
+                $existingMismatches = session('stock_mismatches', []);
+                unset($existingMismatches[$product->id]);
+                session([
+                    'new_products' => $newProducts,
+                    'updated_products' => $updatedProducts,
+                    'new_units_' . $product->id => null,
+                    'stock_mismatches' => $existingMismatches,
+                ]);
+                $product->productUnits()->delete();
+                $product->delete();
+                $stockMessage = 'Produk dihapus karena stok fisik 0.';
+                $stockMismatch['message'] = 'Produk dihapus karena stok fisik 0.';
+            } elseif ($difference > 0) {
                 $stockMessage = "Stok fisik: {$physicalStock}, Stok sistem: {$currentStock}, Selisih: +{$difference} unit";
                 $stockMismatch['message'] = "Stok tidak sesuai, lebih {$difference} unit";
                 for ($i = $currentStock; $i < $physicalStock; $i++) {
@@ -561,9 +668,20 @@ class InventoryController extends Controller
             $existingMismatches[$product->id] = $stockMismatch;
             session(['stock_mismatches' => $existingMismatches, 'new_units_' . $product->id => $newUnitCodes]);
 
+            Cache::forever($this->getProductCacheKey($product->id), [
+                'id' => $product->id,
+                'name' => $product->name,
+                'size' => $product->size,
+                'color' => $product->color,
+                'selling_price' => $product->selling_price,
+                'discount_price' => $product->discount_price,
+                'stock' => $physicalStock,
+            ]);
+
+            DB::commit();
             return response()->json([
                 'success' => true,
-                'message' => 'Stok fisik berhasil dicatat',
+                'message' => $stockMessage,
                 'stock_message' => $stockMessage,
                 'product' => [
                     'id' => $product->id,
@@ -573,6 +691,7 @@ class InventoryController extends Controller
                 ]
             ], 200);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mencatat stok fisik: ' . $e->getMessage()
@@ -597,6 +716,38 @@ class InventoryController extends Controller
         try {
             $reports = session('stock_opname_reports', []);
             foreach ($validated['reports'] as $report) {
+                if ($report['physical_stock'] == 0) {
+                    // Hapus produk jika stok fisik 0
+                    $product = Product::find($report['product_id']);
+                    if ($product) {
+                        DB::beginTransaction();
+                        try {
+                            $product->productUnits()->delete();
+                            $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
+                            foreach ($unitCodes as $unitCode) {
+                                Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
+                            }
+                            Cache::forget($this->getProductCacheKey($product->id));
+                            $newProducts = array_diff(session('new_products', []), [$product->id]);
+                            $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
+                            $existingMismatches = session('stock_mismatches', []);
+                            unset($existingMismatches[$product->id]);
+                            session([
+                                'new_products' => $newProducts,
+                                'updated_products' => $updatedProducts,
+                                'new_units_' . $product->id => null,
+                                'stock_mismatches' => $existingMismatches,
+                            ]);
+                            $product->delete();
+                            DB::commit();
+                            continue; // Skip simpan laporan untuk produk yang dihapus
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            // Lanjutkan loop meskipun gagal hapus
+                            continue;
+                        }
+                    }
+                }
                 $reports[] = [
                     'product_id' => $report['product_id'],
                     'name' => $report['name'],
@@ -628,7 +779,7 @@ class InventoryController extends Controller
             $reports = session('stock_opname_reports', []);
             if (isset($reports[$index])) {
                 unset($reports[$index]);
-                $reports = array_values($reports); // Reindex array
+                $reports = array_values($reports);
                 session(['stock_opname_reports' => $reports]);
                 return redirect()->route('inventory.stock_opname')->with('success', 'Laporan berhasil dihapus');
             }

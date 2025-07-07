@@ -84,7 +84,7 @@
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 animate-fade-in" role="alert">
                 <span class="block sm:inline">{{ session('error') }}</span>
                 <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
-                    <svg class="h-4 w-4" fillnone" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -112,7 +112,7 @@
                     @php
                         $currentGroup = '';
                     @endphp
-                    @forelse ($products ?? [] as $index => $product)
+                    @forelse ($products->filter(fn($product) => $product->product_units_count > 0) ?? [] as $index => $product)
                         @if ($currentGroup !== $product->name)
                             @if ($currentGroup !== '')
                                 <div class="border-t border-gray-300 my-2"></div>
@@ -173,7 +173,7 @@
                         </div>
                     @empty
                         <div class="bg-white p-6 text-center text-gray-500">
-                            Tidak ada produk ditemukan.
+                            Tidak ada produk ditemukan dengan stok lebih dari 0.
                         </div>
                     @endforelse
                 </div>
@@ -192,7 +192,7 @@
             @php
                 $currentGroup = '';
             @endphp
-            @forelse ($products ?? [] as $product)
+            @forelse ($products->filter(fn($product) => $product->product_units_count > 0) ?? [] as $product)
                 @if ($currentGroup !== $product->name)
                     @if ($currentGroup !== '')
                         </div>
@@ -270,7 +270,7 @@
                 </div>
             @empty
                 <div class="text-center text-gray-500 p-4">
-                    Tidak ada produk ditemukan.
+                    Tidak ada produk ditemukan dengan stok lebih dari 0.
                 </div>
             @endforelse
             @if ($currentGroup !== '')
@@ -344,8 +344,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (!data.products.length) {
-                desktopTableBody.innerHTML = '<div class="bg-white p-6 text-center text-gray-500">Tidak ada produk ditemukan.</div>';
-                mobileCards.innerHTML = '<div class="text-center text-gray-500 p-4">Tidak ada produk ditemukan.</div>';
+                desktopTableBody.innerHTML = '<div class="bg-white p-6 text-center text-gray-500">Tidak ada produk ditemukan dengan stok lebih dari 0.</div>';
+                mobileCards.innerHTML = '<div class="text-center text-gray-500 p-4">Tidak ada produk ditemukan dengan stok lebih dari 0.</div>';
                 updatePagination(data.pagination, keyword);
                 return;
             }
@@ -355,6 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             data.products.forEach((product, index) => {
                 const stockValue = product.stock || 0;
+                if (stockValue <= 0) return; // Skip products with stock <= 0
                 const mismatch = @json(session('stock_mismatches', []))[product.id] || {};
                 const physicalStock = mismatch.physical_stock || stockValue;
                 const stockDifference = mismatch.difference || 0;

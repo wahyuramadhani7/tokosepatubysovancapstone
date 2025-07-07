@@ -33,7 +33,10 @@ class DashboardController extends Controller
             ->get();
         $totalTransactions = Transaction::whereDate('created_at', $today)->count();
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
-        $totalProducts = Product::count();
+        // Hitung produk dengan minimal satu ProductUnit aktif (stok > 0)
+        $totalProducts = Product::whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })->count();
 
         // Produk terlaris berdasarkan transaksi hari ini
         $topProducts = TransactionItem::select('product_id')
@@ -109,7 +112,10 @@ class DashboardController extends Controller
             ->get();
         $totalTransactions = Transaction::whereDate('created_at', $today)->count();
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
-        $totalProducts = Product::count();
+        // Hitung produk dengan minimal satu ProductUnit aktif (stok > 0)
+        $totalProducts = Product::whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })->count();
 
         // Produk terlaris berdasarkan transaksi hari ini
         $topProducts = TransactionItem::select('product_id')
