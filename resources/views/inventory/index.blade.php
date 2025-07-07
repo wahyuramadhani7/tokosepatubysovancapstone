@@ -41,10 +41,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10m-5 10V7m5 10h2a2 2 0 002-2V7a2 2 0 00-2-2h-2M7 7H5a2 2 0 00-2 2v6a2 2 0 002 2h2" />
                     </svg>
                     <div class="w-full">
-                        <h3 class="text-sm md:text-base font-semibold uppercase">Jumlah Brand</h3>
+                        <h3 class="text-sm md:text-base font-semibold uppercase">Jumlah Unit per Brand</h3>
                         <select id="brand-counts" class="w-full bg-white text-gray-600 text-sm md:text-base rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-orange-500">
                             @forelse ($brandCounts ?? [] as $brand => $count)
-                                <option value="{{ $brand }}">{{ $brand }} ({{ $count }})</option>
+                                <option value="{{ $brand }}">{{ $brand }} ({{ $count }} unit)</option>
                             @empty
                                 <option value="">Tidak ada brand</option>
                             @endforelse
@@ -107,7 +107,7 @@
         @endif
 
         <!-- Table - Desktop version -->
-            <div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
+        <div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
             <div class="rounded-lg overflow-hidden">
                 <!-- Table Headers -->
                 <div class="grid grid-cols-9 gap-0">
@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.brandCounts && Object.keys(data.brandCounts).length > 0) {
                 let brandHtml = '';
                 for (const [brand, count] of Object.entries(data.brandCounts)) {
-                    brandHtml += `<option value="${brand}">${brand} (${count})</option>`;
+                    brandHtml += `<option value="${brand}">${brand} (${count} unit)</option>`;
                 }
                 brandCountsSelect.innerHTML = brandHtml;
             } else {

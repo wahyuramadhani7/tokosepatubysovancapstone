@@ -48,10 +48,13 @@ class InventoryController extends Controller
             $query->where('is_active', true);
         }, '<=', 10)->count();
 
-        // Hitung jumlah produk per brand dengan case-insensitive
+        // Hitung jumlah unit per brand dengan case-insensitive
         $brandCounts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })
+        ->withCount(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])
         ->get()
         ->groupBy(function ($product) {
             // Ambil kata pertama dari nama produk, ubah ke huruf kecil untuk pengelompokan
@@ -62,7 +65,7 @@ class InventoryController extends Controller
             $brandName = Str::title($group->first()->name ? explode(' ', trim($group->first()->name))[0] : 'Unknown');
             return [
                 'name' => $brandName,
-                'count' => $group->count()
+                'count' => $group->sum('product_units_count') // Jumlahkan total unit aktif
             ];
         })
         ->sortBy('name')
@@ -105,7 +108,7 @@ class InventoryController extends Controller
             $query->where('is_active', true);
         }, '<=', 10)->count();
 
-        // Hitung jumlah produk per brand berdasarkan hasil pencarian dengan case-insensitive
+        // Hitung jumlah unit per brand berdasarkan hasil pencarian dengan case-insensitive
         $brandCounts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })
@@ -114,6 +117,9 @@ class InventoryController extends Controller
                   ->orWhere('color', 'like', '%' . $searchTerm . '%')
                   ->orWhere('size', 'like', '%' . $searchTerm . '%');
         })
+        ->withCount(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])
         ->get()
         ->groupBy(function ($product) {
             // Ambil kata pertama dari nama produk, ubah ke huruf kecil untuk pengelompokan
@@ -124,7 +130,7 @@ class InventoryController extends Controller
             $brandName = Str::title($group->first()->name ? explode(' ', trim($group->first()->name))[0] : 'Unknown');
             return [
                 'name' => $brandName,
-                'count' => $group->count()
+                'count' => $group->sum('product_units_count') // Jumlahkan total unit aktif
             ];
         })
         ->sortBy('name')
@@ -534,7 +540,7 @@ class InventoryController extends Controller
             return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('inventory.index')->with('error', 'Gagal memperbarui produk: ' . $e->getMessage());
+            return redirect()->route('inventory.index')->with('error', 'Gagal memperbarui produk: ' . $e->getMessage()); // Perbaikan: ubah 'manusia' menjadi 'produk'
         }
     }
 
@@ -834,4 +840,3 @@ class InventoryController extends Controller
         }
     }
 }
-?>
