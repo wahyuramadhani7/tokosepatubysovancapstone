@@ -66,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{product}/physical-stock', [InventoryController::class, 'updatePhysicalStock'])->name('inventory.updatePhysicalStock');
         Route::get('inventory/stock-opname', [InventoryController::class, 'stockOpname'])->name('inventory.stock_opname');
         Route::post('inventory/update-stock', [InventoryController::class, 'updateStock'])->name('inventory.update_stock');
+        Route::post('/inventory/save-report', [InventoryController::class, 'saveReport'])->name('inventory.save_report');
+Route::delete('/inventory/delete-report/{index}', [InventoryController::class, 'deleteReport'])->name('inventory.delete_report');
     });
 
     // Transactions Routes
