@@ -40,7 +40,7 @@
             <div id="reports-list" class="mt-6">
                 <h2 class="text-lg font-semibold text-white mb-3">Laporan Stock Opname</h2>
                 <div id="reports-table" class="bg-gray-800 p-4 rounded-lg text-white">
-                    @if(session('stock_opname_reports') && count(session('stock_opname_reports')) > 0)
+                    @if(!empty($reports))
                         <table class="w-full border-collapse">
                             <thead>
                                 <tr>
@@ -55,7 +55,12 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach(session('stock_opname_reports') as $index => $report)
+                                @php
+                                    $totalSystemStock = 0;
+                                    $totalPhysicalStock = 0;
+                                    $totalDifference = 0;
+                                @endphp
+                                @foreach($reports as $index => $report)
                                     <tr>
                                         <td class="p-2 border border-gray-600">{{ \Carbon\Carbon::parse($report['timestamp'])->format('d/m/Y H:i') }}</td>
                                         <td class="p-2 border border-gray-600">{{ $report['name'] }}</td>
@@ -73,10 +78,60 @@
                                                 <button type="submit" class="text-red-500 hover:text-red-700">Hapus</button>
                                             </form>
                                         </td>
+                                        @php
+                                            $totalSystemStock += $report['system_stock'];
+                                            $totalPhysicalStock += $report['physical_stock'];
+                                            $totalDifference += $report['difference'];
+                                        @endphp
                                     </tr>
                                 @endforeach
+                                <tr class="font-bold">
+                                    <td class="p-2 border border-gray-600" colspan="4">Total</td>
+                                    <td class="p-2 border border-gray-600">{{ $totalSystemStock }}</td>
+                                    <td class="p-2 border border-gray-600">{{ $totalPhysicalStock }}</td>
+                                    <td class="p-2 border border-gray-600 {{ $totalDifference < 0 ? 'text-red-400' : ($totalDifference > 0 ? 'text-yellow-400' : 'text-green-400') }}">
+                                        {{ $totalDifference > 0 ? '+' : '' }}{{ $totalDifference }}
+                                    </td>
+                                    <td class="p-2 border border-gray-600"></td>
+                                </tr>
                             </tbody>
                         </table>
+                        <div class="mt-4 text-white">
+                            <p>
+                                Keterangan: 
+                                <br>Total stok sistem dari laporan: {{ $totalSystemStock }} unit.
+                                <br>Total stok fisik dari laporan: {{ $totalPhysicalStock }} unit.
+                                <br>Selisih stok laporan: {{ $totalDifference >= 0 ? '+' : '' }}{{ $totalDifference }} unit.
+                                @if(isset($totalStock))
+                                    <br>Total stok di inventory: {{ $totalStock }} unit.
+                                    @if($totalSystemStock == $totalStock && $totalPhysicalStock == $totalStock)
+                                        <span class="text-green-400">Stok laporan sesuai dengan inventory.</span>
+                                    @else
+                                        @php
+                                            $systemStockDifference = $totalSystemStock - $totalStock;
+                                            $physicalStockDifference = $totalPhysicalStock - $totalStock;
+                                        @endphp
+                                        @if($systemStockDifference < 0)
+                                            <span class="text-red-400">Produk kurang {{ abs($systemStockDifference) }} unit dibandingkan inventory.</span>
+                                        @elseif($systemStockDifference > 0)
+                                            <span class="text-yellow-400">Produk lebih {{ $systemStockDifference }} unit dibandingkan inventory.</span>
+                                        @else
+                                            <span class="text-green-400">Stok sistem sesuai dengan inventory.</span>
+                                        @endif
+                                        @if($physicalStockDifference != 0)
+                                            <br>
+                                            @if($physicalStockDifference < 0)
+                                                <span class="text-red-400">Stok fisik kurang {{ abs($physicalStockDifference) }} unit dibandingkan inventory.</span>
+                                            @else
+                                                <span class="text-yellow-400">Stok fisik lebih {{ $physicalStockDifference }} unit dibandingkan inventory.</span>
+                                            @endif
+                                        @endif
+                                    @endif
+                                @else
+                                    <span class="text-red-400">Data stok inventory tidak tersedia.</span>
+                                @endif
+                            </p>
+                        </div>
                     @else
                         <p class="text-center text-gray-400">Belum ada laporan stock opname.</p>
                     @endif
@@ -178,7 +233,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let scannedQRCodes = new Set();
     let scanTimeout = null;
 
-    // Initialize QR scanner
     startScannerBtn.addEventListener('click', async () => {
         try {
             scannerContainer.classList.remove('hidden');
@@ -188,7 +242,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updateProductsTable();
             barcodeInput.focus();
 
-            // Start camera-based QR scanner if available
             const permission = await navigator.permissions.query({ name: 'camera' });
             if (permission.state !== 'denied') {
                 html5QrCode = new Html5Qrcode("qr-scanner");
@@ -219,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Handle input from physical 2D scanner with debounce
     barcodeInput.addEventListener('input', function(e) {
         const decodedText = e.target.value.trim();
         if (decodedText) {
@@ -232,21 +284,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Ensure barcode input stays focused
     barcodeInput.addEventListener('blur', () => {
         if (!scannerContainer.classList.contains('hidden')) {
             setTimeout(() => barcodeInput.focus(), 100);
         }
     });
 
-    // Stop QR scanner
     stopScannerBtn.addEventListener('click', () => {
         resetScanner();
     });
 
-    // Handle successful QR scan
     function onScanSuccess(decodedText) {
-        console.log('Scanned QR:', decodedText); // Debugging
+        console.log('Scanned QR:', decodedText);
         if (!decodedText.includes('inventory')) {
             showAlert('error', 'QR code tidak valid untuk inventory.');
             return;
@@ -295,9 +344,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('QR scan error:', errorMessage);
     }
 
-    // Fetch product data
     function fetchProductData(productId) {
-        console.log('Fetching product data for ID:', productId); // Debugging
+        console.log('Fetching product data for ID:', productId);
         fetch(`/inventory/${productId}/json`, {
             method: 'GET',
             headers: {
@@ -306,14 +354,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            console.log('Fetch response status:', response.status); // Debugging
+            console.log('Fetch response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Fetched product data:', data); // Debugging
+            console.log('Fetched product data:', data);
             if (data.error) {
                 showAlert('error', data.error);
                 scannedProducts[productId].name = 'Produk Tidak Ditemukan';
@@ -342,9 +390,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Update products table
     function updateProductsTable() {
-        console.log('Updating table with products:', scannedProducts); // Debugging
+        console.log('Updating table with products:', scannedProducts);
         let html = `
             <table>
                 <thead>
@@ -414,7 +461,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Update stock for a product
     function updateStock(productId) {
         const formData = new FormData();
         formData.append('physical_stock', scannedProducts[productId].count);
@@ -428,14 +474,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            console.log('Update stock response status:', response.status); // Debugging
+            console.log('Update stock response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Update stock response:', data); // Debugging
+            console.log('Update stock response:', data);
             if (data.success) {
                 showAlert('success', data.message);
                 delete scannedProducts[productId];
@@ -453,7 +499,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Save report
     saveReportBtn.addEventListener('click', () => {
         const report = Object.entries(scannedProducts).map(([productId, product]) => ({
             product_id: productId,
@@ -463,8 +508,11 @@ document.addEventListener('DOMContentLoaded', function() {
             system_stock: product.systemStock,
             physical_stock: product.count,
             difference: product.count - product.systemStock,
-            timestamp: new Date().toISOString()
         }));
+
+        const totalPhysicalStock = report.reduce((sum, item) => sum + item.physical_stock, 0);
+        const totalSystemStock = report.reduce((sum, item) => sum + item.system_stock, 0);
+        const totalDifference = totalPhysicalStock - totalSystemStock;
 
         fetch('{{ route('inventory.save_report') }}', {
             method: 'POST',
@@ -477,9 +525,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showAlert('success', data.message);
+                const message = `Laporan berhasil disimpan! ${report.length} produk dilaporkan. Total stok fisik: ${totalPhysicalStock} unit, stok sistem: ${totalSystemStock} unit, selisih: ${totalDifference >= 0 ? '+' : ''}${totalDifference} unit.`;
+                showAlert('success', message);
                 resetScanner();
-                window.location.reload(); // Refresh halaman untuk menampilkan laporan baru
+                window.location.reload();
             } else {
                 showAlert('error', data.message);
             }
@@ -490,7 +539,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Reset scanner state
     function resetScanner() {
         if (html5QrCode) {
             html5QrCode.stop().then(() => {
@@ -519,14 +567,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Show alert message
     function showAlert(type, message) {
         const alertDiv = document.createElement('div');
         alertDiv.className = `bg-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-100 border border-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-400 text-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-700 px-4 py-3 rounded relative mb-4 animate-fade-in`;
         alertDiv.innerHTML = `
             <span class="block sm:inline">${message}</span>
             <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -540,7 +587,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
-    // Add scanned item to list
     function addScannedItem(decodedText, isNew) {
         if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
             const item = document.createElement('div');

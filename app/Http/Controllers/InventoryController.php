@@ -6,8 +6,9 @@ use App\Models\Product;
 use App\Models\ProductUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB; // Impor DB facade
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class InventoryController extends Controller
 {
@@ -24,7 +25,6 @@ class InventoryController extends Controller
 
     public function index()
     {
-        // Hanya ambil produk dengan minimal satu ProductUnit aktif (stok > 0)
         $products = Product::withCount(['productUnits' => function ($query) {
             $query->where('is_active', true);
         }])
@@ -35,20 +35,16 @@ class InventoryController extends Controller
         ->orderBy('size')
         ->paginate(10);
 
-        // Hanya hitung produk dengan stok > 0
         $totalProducts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })->count();
 
-        // Total stok dari jumlah ProductUnit aktif
         $totalStock = ProductUnit::where('is_active', true)->count();
 
-        // Produk dengan stok rendah (misal, <= 10 unit aktif)
         $lowStockProducts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         }, '<=', 10)->count();
 
-        // Hitung jumlah unit per brand dengan case-insensitive
         $brandCounts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })
@@ -57,15 +53,13 @@ class InventoryController extends Controller
         }])
         ->get()
         ->groupBy(function ($product) {
-            // Ambil kata pertama dari nama produk, ubah ke huruf kecil untuk pengelompokan
             return Str::lower(explode(' ', trim($product->name))[0]);
         })
         ->map(function ($group) {
-            // Format nama brand menjadi huruf kapital awal untuk tampilan
             $brandName = Str::title($group->first()->name ? explode(' ', trim($group->first()->name))[0] : 'Unknown');
             return [
                 'name' => $brandName,
-                'count' => $group->sum('product_units_count') // Jumlahkan total unit aktif
+                'count' => $group->sum('product_units_count')
             ];
         })
         ->sortBy('name')
@@ -108,7 +102,6 @@ class InventoryController extends Controller
             $query->where('is_active', true);
         }, '<=', 10)->count();
 
-        // Hitung jumlah unit per brand berdasarkan hasil pencarian dengan case-insensitive
         $brandCounts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })
@@ -122,15 +115,13 @@ class InventoryController extends Controller
         }])
         ->get()
         ->groupBy(function ($product) {
-            // Ambil kata pertama dari nama produk, ubah ke huruf kecil untuk pengelompokan
             return Str::lower(explode(' ', trim($product->name))[0]);
         })
         ->map(function ($group) {
-            // Format nama brand menjadi huruf kapital awal untuk tampilan
             $brandName = Str::title($group->first()->name ? explode(' ', trim($group->first()->name))[0] : 'Unknown');
             return [
                 'name' => $brandName,
-                'count' => $group->sum('product_units_count') // Jumlahkan total unit aktif
+                'count' => $group->sum('product_units_count')
             ];
         })
         ->sortBy('name')
@@ -160,7 +151,6 @@ class InventoryController extends Controller
             'discount_price' => 'nullable|numeric|min:0|lte:selling_price',
         ]);
 
-        // Cek total stok dari semua ukuran
         $totalStock = array_sum(array_column($validated['sizes'], 'stock'));
         if ($totalStock == 0) {
             return redirect()->route('inventory.index')->with('success', 'Produk tidak disimpan karena stok 0.');
@@ -173,7 +163,7 @@ class InventoryController extends Controller
             $newProductIds = [];
             foreach ($validated['sizes'] as $sizeData) {
                 if ($sizeData['stock'] == 0) {
-                    continue; // Skip ukuran dengan stok 0
+                    continue;
                 }
 
                 $product = Product::create([
@@ -385,14 +375,11 @@ class InventoryController extends Controller
             'discount_price' => 'nullable|numeric|min:0|lte:selling_price',
         ]);
 
-        // Cek total stok dari semua ukuran
         $totalStock = array_sum(array_column($validated['sizes'], 'stock'));
         if ($totalStock == 0) {
             DB::beginTransaction();
             try {
-                // Hapus semua ProductUnit terkait
                 $product->productUnits()->delete();
-                // Hapus cache dan session
                 $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
                 foreach ($unitCodes as $unitCode) {
                     Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
@@ -408,7 +395,6 @@ class InventoryController extends Controller
                     'updated_products' => $updatedProducts,
                     'stock_mismatches' => $existingMismatches,
                 ]);
-                // Hapus produk
                 $product->delete();
                 DB::commit();
                 return redirect()->route('inventory.index')->with('success', 'Produk dihapus karena stok 0.');
@@ -421,7 +407,6 @@ class InventoryController extends Controller
         DB::beginTransaction();
 
         try {
-            // Update produk yang ada
             $product->update([
                 'name' => trim($validated['brand'] . ' ' . $validated['model']),
                 'size' => $validated['sizes'][0]['size'],
@@ -469,11 +454,10 @@ class InventoryController extends Controller
                 }
             }
 
-            // Buat produk baru untuk ukuran tambahan
             for ($i = 1; $i < count($validated['sizes']); $i++) {
                 $sizeData = $validated['sizes'][$i];
                 if ($sizeData['stock'] == 0) {
-                    continue; // Skip ukuran dengan stok 0
+                    continue;
                 }
                 $newProduct = Product::create([
                     'name' => trim($validated['brand'] . ' ' . $validated['model']),
@@ -540,7 +524,7 @@ class InventoryController extends Controller
             return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('inventory.index')->with('error', 'Gagal memperbarui produk: ' . $e->getMessage()); // Perbaikan: ubah 'manusia' menjadi 'produk'
+            return redirect()->route('inventory.index')->with('error', 'Gagal memperbarui produk: ' . $e->getMessage());
         }
     }
 
@@ -611,7 +595,10 @@ class InventoryController extends Controller
 
     public function stockOpname()
     {
-        return view('inventory.stock_opname');
+        $totalStock = ProductUnit::where('is_active', true)->count();
+        $reports = Cache::get('stock_opname_reports', []);
+
+        return view('inventory.stock_opname', compact('totalStock', 'reports'));
     }
 
     public function updatePhysicalStock(Request $request, $id)
@@ -643,7 +630,6 @@ class InventoryController extends Controller
             $newUnitCodes = session('new_units_' . $product->id, []);
 
             if ($physicalStock == 0) {
-                // Nonaktifkan semua ProductUnit
                 $unitsToDeactivate = $product->productUnits()->where('is_active', true)->get();
                 foreach ($unitsToDeactivate as $unit) {
                     $unit->update(['is_active' => false]);
@@ -655,7 +641,6 @@ class InventoryController extends Controller
                     ]);
                     $newUnitCodes = array_diff($newUnitCodes, [$unit->unit_code]);
                 }
-                // Hapus produk dan bersihkan cache serta session
                 $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
                 foreach ($unitCodes as $unitCode) {
                     Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
@@ -761,14 +746,12 @@ class InventoryController extends Controller
             'reports.*.system_stock' => 'required|integer',
             'reports.*.physical_stock' => 'required|integer',
             'reports.*.difference' => 'required|integer',
-            'reports.*.timestamp' => 'required|date',
         ]);
 
         try {
-            $reports = session('stock_opname_reports', []);
+            $reports = Cache::get('stock_opname_reports', []);
             foreach ($validated['reports'] as $report) {
                 if ($report['physical_stock'] == 0) {
-                    // Hapus produk jika stok fisik 0
                     $product = Product::find($report['product_id']);
                     if ($product) {
                         DB::beginTransaction();
@@ -791,10 +774,9 @@ class InventoryController extends Controller
                             ]);
                             $product->delete();
                             DB::commit();
-                            continue; // Skip simpan laporan untuk produk yang dihapus
+                            continue;
                         } catch (\Exception $e) {
                             DB::rollBack();
-                            // Lanjutkan loop meskipun gagal hapus
                             continue;
                         }
                     }
@@ -807,10 +789,10 @@ class InventoryController extends Controller
                     'system_stock' => $report['system_stock'],
                     'physical_stock' => $report['physical_stock'],
                     'difference' => $report['difference'],
-                    'timestamp' => $report['timestamp'],
+                    'timestamp' => Carbon::now('Asia/Jakarta')->toDateTimeString(),
                 ];
             }
-            session(['stock_opname_reports' => $reports]);
+            Cache::put('stock_opname_reports', $reports, now()->addHours(24));
 
             return response()->json([
                 'success' => true,
@@ -827,11 +809,11 @@ class InventoryController extends Controller
     public function deleteReport($index)
     {
         try {
-            $reports = session('stock_opname_reports', []);
+            $reports = Cache::get('stock_opname_reports', []);
             if (isset($reports[$index])) {
                 unset($reports[$index]);
                 $reports = array_values($reports);
-                session(['stock_opname_reports' => $reports]);
+                Cache::put('stock_opname_reports', $reports, now()->addHours(24));
                 return redirect()->route('inventory.stock_opname')->with('success', 'Laporan berhasil dihapus');
             }
             return redirect()->route('inventory.stock_opname')->with('error', 'Laporan tidak ditemukan');
