@@ -57,14 +57,20 @@
         <!-- Search Bar, Add Product Button, and Stock Opname Button -->
         <div style="background-color: #292929;" class="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 mb-6 rounded-lg gap-4 shadow-sm">
             <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                <form action="{{ route('inventory.search') }}" method="GET" class="flex items-center w-full max-w-md">
+                <form action="{{ route('inventory.search') }}" method="GET" class="flex flex-col md:flex-row items-center gap-3 w-full max-w-lg">
                     <div class="relative flex-grow">
-                        <input type="text" name="search" id="search-input" class="w-full bg-white text-black text-sm md:text-base rounded-lg py-2.5 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-500" placeholder="Cari produk..." value="{{ $searchTerm ?? '' }}">
+                        <input type="text" name="search" id="search-input" class="w-full bg-white text-black text-sm md:text-base rounded-lg py-2.5 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-500" placeholder="Cari brand atau model..." value="{{ $searchTerm ?? '' }}">
                         <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    <button type="submit" class="ml-2 bg-orange-500 text-black font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-orange-600 transition-colors">Cari</button>
+                    <div class="relative flex-grow">
+                        <input type="text" name="size" id="size-input" class="w-full bg-white text-black text-sm md:text-base rounded-lg py-2.5 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-500" placeholder="Cari ukuran..." value="{{ $sizeTerm ?? '' }}">
+                        <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <button type="submit" class="bg-orange-500 text-black font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-orange-600 transition-colors">Cari</button>
                 </form>
                 <div class="flex gap-3">
                     <a href="{{ route('inventory.create') }}" class="bg-white text-black font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-gray-100 transition-colors flex items-center">
@@ -110,8 +116,9 @@
         <div class="shadow rounded-lg overflow-hidden hidden md:block p-4" style="background-color: #292929;">
             <div class="rounded-lg overflow-hidden">
                 <!-- Table Headers -->
-                <div class="grid grid-cols-9 gap-0">
-                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Produk</div>
+                <div class="grid grid-cols-10 gap-0">
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Brand</div>
+                    <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Model</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Ukuran</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Warna</div>
                     <div class="bg-orange-500 text-black font-medium py-2 px-3 text-center">Stok Sistem</div>
@@ -126,21 +133,26 @@
                 <div class="mt-1" id="desktop-table-body">
                     @php
                         $currentGroup = '';
+                        $brandNames = session('brand_names', []);
                     @endphp
                     @forelse ($products->filter(fn($product) => $product->product_units_count > 0) ?? [] as $index => $product)
-                        @if ($currentGroup !== $product->name)
+                        @php
+                            $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
+                            $model = trim(str_replace($brand, '', $product->name));
+                        @endphp
+                        @if ($currentGroup !== $brand)
                             @if ($currentGroup !== '')
                                 <div class="border-t border-gray-300 my-2"></div>
                             @endif
-                            <div class="bg-orange-500 text-black font-semibold py-2 px-3">{{ $product->name }}</div>
+                            <div class="bg-orange-500 text-black font-semibold py-2 px-3">{{ $brand }}</div>
                             @php
-                                $currentGroup = $product->name;
+                                $currentGroup = $brand;
                             @endphp
                         @endif
-                        <div class="grid grid-cols-9 gap-0 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
+                        <div class="grid grid-cols-10 gap-0 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-200' }}">
                             <div class="p-3 text-black">
                                 <div class="flex items-center">
-                                    <span>{{ $product->name ?? '-' }}</span>
+                                    <span>{{ $brand }}</span>
                                     @if (in_array($product->id, $newProducts ?? []))
                                         <span class="ml-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">Baru</span>
                                     @elseif (in_array($product->id, $updatedProducts ?? []))
@@ -151,6 +163,7 @@
                                     <p class="text-sm text-red-600 mt-1">{{ session('stock_mismatches')[$product->id]['message'] }}</p>
                                 @endif
                             </div>
+                            <div class="p-3 text-black text-center">{{ $model ?: '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->size ?? '-' }}</div>
                             <div class="p-3 text-black text-center">{{ $product->color ?? '-' }}</div>
                             <div class="p-3 font-medium text-center {{ $product->product_units_count < 5 ? 'text-red-600' : 'text-black' }}">{{ $product->product_units_count ?? 0 }}</div>
@@ -206,29 +219,35 @@
         <div class="md:hidden space-y-4" id="mobile-cards">
             @php
                 $currentGroup = '';
+                $brandNames = session('brand_names', []);
             @endphp
             @forelse ($products->filter(fn($product) => $product->product_units_count > 0) ?? [] as $product)
-                @if ($currentGroup !== $product->name)
+                @php
+                    $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
+                    $model = trim(str_replace($brand, '', $product->name));
+                @endphp
+                @if ($currentGroup !== $brand)
                     @if ($currentGroup !== '')
                         </div>
                     @endif
-                    <div class="bg-orange-500 text-black font-semibold py-2 px-3 rounded-t-lg">{{ $product->name }}</div>
+                    <div class="bg-orange-500 text-black font-semibold py-2 px-3 rounded-t-lg">{{ $brand }}</div>
                     <div class="space-y-4">
                         @php
-                            $currentGroup = $product->name;
+                            $currentGroup = $brand;
                         @endphp
                 @endif
                 <div class="bg-white rounded-lg shadow p-4">
                     <div class="mb-2 flex items-center">
                         <div>
                             <h3 class="font-medium text-gray-900 flex items-center">
-                                {{ $product->name ?? '-' }}
+                                {{ $brand }}
                                 @if (in_array($product->id, $newProducts ?? []))
                                     <span class="ml-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">Baru</span>
                                 @elseif (in_array($product->id, $updatedProducts ?? []))
                                     <span class="ml-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">Diperbarui</span>
                                 @endif
                             </h3>
+                            <div class="text-sm text-gray-500">Model: {{ $model ?: '-' }}</div>
                             <div class="text-sm text-gray-500">{{ $product->size ?? '-' }} | {{ $product->color ?? '-' }}</div>
                             @if(session('stock_mismatches') && isset(session('stock_mismatches')[$product->id]))
                                 <p class="text-sm text-red-600 mt-1">{{ session('stock_mismatches')[$product->id]['message'] }}</p>
@@ -310,33 +329,38 @@
     .animate-fade-in {
         animation: fadeIn 0.3s ease-in-out;
     }
-    .grid-cols-9 {
-        grid-template-columns: repeat(9, minmax(0, 1fr));
+    .grid-cols-10 {
+        grid-template-columns: repeat(10, minmax(0, 1fr));
     }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
+    const sizeInput = document.getElementById('size-input');
     let debounceTimer;
 
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                performSearch(this.value.trim(), 1);
-            }, 500);
+    if (searchInput && sizeInput) {
+        const inputs = [searchInput, sizeInput];
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    performSearch(searchInput.value.trim(), sizeInput.value.trim(), 1);
+                }, 500);
+            });
         });
     }
 
-    function performSearch(keyword, page) {
-        if (keyword.length < 2) {
-            showError('Kata kunci minimal 2 karakter.');
+    function performSearch(searchKeyword, sizeKeyword, page) {
+        if (searchKeyword.length < 2 && sizeKeyword.length < 1) {
+            showError('Kata kunci brand atau model minimal 2 karakter atau masukkan ukuran.');
             return;
         }
 
         const url = new URL('{{ route('inventory.search') }}');
-        url.searchParams.set('search', keyword);
+        if (searchKeyword) url.searchParams.set('search', searchKeyword);
+        if (sizeKeyword) url.searchParams.set('size', sizeKeyword);
         url.searchParams.set('page', page);
 
         fetch(url, {
@@ -374,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!data.products.length) {
                 desktopTableBody.innerHTML = '<div class="bg-white p-6 text-center text-gray-500">Tidak ada produk ditemukan dengan stok lebih dari 0.</div>';
                 mobileCards.innerHTML = '<div class="text-center text-gray-500 p-4">Tidak ada produk ditemukan dengan stok lebih dari 0.</div>';
-                updatePagination(data.pagination, keyword);
+                updatePagination(data.pagination, searchKeyword, sizeKeyword);
                 return;
             }
 
@@ -393,23 +417,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Desktop table row
                 let desktopRow = '';
-                if (currentGroup !== product.name) {
+                if (currentGroup !== product.brand) {
                     if (currentGroup !== '') {
                         desktopRow += '<div class="border-t border-gray-300 my-2"></div>';
                     }
-                    desktopRow += `<div class="bg-orange-500 text-black font-semibold py-2 px-3">${product.name}</div>`;
-                    currentGroup = product.name;
+                    desktopRow += `<div class="bg-orange-500 text-black font-semibold py-2 px-3">${product.brand}</div>`;
+                    currentGroup = product.brand;
                 }
 
                 desktopRow += `
-                    <div class="grid grid-cols-9 gap-0 items-center ${index % 2 === 0 ? 'bg-white' : 'bg-gray-200'}">
+                    <div class="grid grid-cols-10 gap-0 items-center ${index % 2 === 0 ? 'bg-white' : 'bg-gray-200'}">
                         <div class="p-3 text-black">
                             <div class="flex items-center">
-                                <span>${product.name || '-'}</span>
+                                <span>${product.brand || '-'}</span>
                                 ${isNew ? '<span class="ml-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">Baru</span>' : isUpdated ? '<span class="ml-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">Diperbarui</span>' : ''}
                             </div>
                             ${mismatchMessage ? `<p class="text-sm text-red-600 mt-1">${mismatchMessage}</p>` : ''}
                         </div>
+                        <div class="p-3 text-black text-center">${product.model || '-'}</div>
                         <div class="p-3 text-black text-center">${product.size || '-'}</div>
                         <div class="p-3 text-black text-center">${product.color || '-'}</div>
                         <div class="p-3 font-medium text-center ${stockValue < 5 ? 'text-red-600' : 'text-black'}">${stockValue}</div>
@@ -417,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="p-3 text-black text-right">Rp ${new Intl.NumberFormat('id-ID').format(product.selling_price || 0)}</div>
                         <div class="p-3 text-black text-right">${product.discount_price ? 'Rp ' + new Intl.NumberFormat('id-ID').format(product.discount_price) : '-'}</div>
                         <div class="p-3 text-center">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${encodeURIComponent('{{ route('inventory.show', ':id') }}'.replace(':id', product.id))}" alt="QR Code for ${product.name || '-'}" class="h-12 w-12 mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${encodeURIComponent('{{ route('inventory.show', ':id') }}'.replace(':id', product.id))}" alt="QR Code for ${product.brand || '-'} ${product.model || ''}" class="h-12 w-12 mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
                         </div>
                         <div class="p-3">
                             <div class="flex justify-center space-x-3">
@@ -445,12 +470,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>`;
 
                 // Mobile card
-                if (currentGroup !== product.name) {
+                if (currentGroup !== product.brand) {
                     if (mobileGroupHtml !== '') {
                         mobileGroupHtml += '</div>';
                     }
-                    mobileGroupHtml += `<div class="bg-orange-500 text-black font-semibold py-2 px-3 rounded-t-lg">${product.name}</div><div class="space-y-4">`;
-                    currentGroup = product.name;
+                    mobileGroupHtml += `<div class="bg-orange-500 text-black font-semibold py-2 px-3 rounded-t-lg">${product.brand}</div><div class="space-y-4">`;
+                    currentGroup = product.brand;
                 }
 
                 mobileGroupHtml += `
@@ -458,13 +483,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="mb-2 flex items-center">
                             <div>
                                 <h3 class="font-medium text-gray-900 flex items-center">
-                                    ${product.name || '-'}
+                                    ${product.brand || '-'}
                                     ${isNew ? '<span class="ml-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">Baru</span>' : isUpdated ? '<span class="ml-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">Diperbarui</span>' : ''}
                                 </h3>
+                                <div class="text-sm text-gray-500">Model: ${product.model || '-'}</div>
                                 <div class="text-sm text-gray-500">${product.size || '-'} | ${product.color || '-'}</div>
                                 ${mismatchMessage ? `<p class="text-sm text-red-600 mt-1">${mismatchMessage}</p>` : ''}
                             </div>
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${encodeURIComponent('{{ route('inventory.show', ':id') }}'.replace(':id', product.id))}" alt="QR Code for ${product.name || '-'}" class="h-12 w-12 ml-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${encodeURIComponent('{{ route('inventory.show', ':id') }}'.replace(':id', product.id))}" alt="QR Code for ${product.brand || '-'} ${product.model || ''}" class="h-12 w-12 ml-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
                         </div>
                         <div class="grid grid-cols-2 gap-2 mb-3">
                             <div>
@@ -518,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 mobileCards.insertAdjacentHTML('beforeend', mobileGroupHtml);
             }
 
-            updatePagination(data.pagination, keyword);
+            updatePagination(data.pagination, searchKeyword, sizeKeyword);
         })
         .catch(error => {
             showError('Terjadi kesalahan saat mencari produk.');
@@ -537,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('mobile-pagination').innerHTML = '';
     }
 
-    function updatePagination(pagination, keyword) {
+    function updatePagination(pagination, searchKeyword, sizeKeyword) {
         const desktopPagination = document.getElementById('desktop-pagination');
         const mobilePagination = document.getElementById('mobile-pagination');
         let html = '';
@@ -555,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.pagination-link').forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
-                    performSearch(keyword, this.getAttribute('data-page'));
+                    performSearch(searchKeyword, sizeKeyword, this.getAttribute('data-page'));
                 });
             });
         } else {

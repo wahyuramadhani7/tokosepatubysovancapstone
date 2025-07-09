@@ -22,7 +22,10 @@
 
             <div id="scanner-container" class="hidden mt-4">
                 <div id="qr-scanner" class="w-full max-w-md mx-auto rounded-lg"></div>
-                <input type="text" id="barcode-input" class="barcode-input" />
+                <input type="text" id="barcode-input" class="barcode-input mt-2" placeholder="Masukkan ID Produk atau Scan QR Code" />
+                <button id="manual-input-btn" type="button" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors mt-2 w-full md:w-auto">
+                    Tambah Produk Manual
+                </button>
                 <button id="stop-scanner" type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors mt-2 w-full md:w-auto">
                     Stop Scan
                 </button>
@@ -32,7 +35,8 @@
                 <h2 class="text-lg font-semibold text-white mb-3">Daftar Produk yang Dipindai</h2>
                 <div id="products-table" class="bg-gray-800 p-4 rounded-lg text-white"></div>
                 <button id="save-report" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors mt-4 hidden">
-                    Simpan Laporan
+                    <span id="save-report-text">Simpan Laporan</span>
+                    <span id="save-report-loading" class="hidden">Menyimpan...</span>
                 </button>
             </div>
 
@@ -166,6 +170,15 @@
         border-radius: 0.5rem;
     }
     .barcode-input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #4b5563;
+        border-radius: 4px;
+        background-color: #1f2937;
+        color: white;
+        margin-bottom: 8px;
+    }
+    .barcode-input.hidden {
         position: absolute;
         opacity: 0;
         width: 1px;
@@ -217,13 +230,25 @@
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
+// Utility untuk debounce
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const startScannerBtn = document.getElementById('start-scanner');
     const stopScannerBtn = document.getElementById('stop-scanner');
     const scannerContainer = document.getElementById('scanner-container');
     const barcodeInput = document.getElementById('barcode-input');
+    const manualInputBtn = document.getElementById('manual-input-btn');
     const productsTable = document.getElementById('products-table');
     const saveReportBtn = document.getElementById('save-report');
+    const saveReportText = document.getElementById('save-report-text');
+    const saveReportLoading = document.getElementById('save-report-loading');
     const scannedList = document.createElement('div');
     scannerContainer.parentNode.insertBefore(scannedList, scannerContainer.nextSibling);
     scannedList.className = 'mt-4';
@@ -231,56 +256,96 @@ document.addEventListener('DOMContentLoaded', function() {
     let html5QrCode = null;
     let scannedProducts = {};
     let scannedQRCodes = new Set();
-    let scanTimeout = null;
+    let isSaving = false;
 
     startScannerBtn.addEventListener('click', async () => {
         try {
             scannerContainer.classList.remove('hidden');
             startScannerBtn.classList.add('hidden');
+            barcodeInput.classList.remove('hidden');
             scannedProducts = {};
             scannedQRCodes.clear();
             updateProductsTable();
             barcodeInput.focus();
 
             const permission = await navigator.permissions.query({ name: 'camera' });
-            if (permission.state !== 'denied') {
-                html5QrCode = new Html5Qrcode("qr-scanner");
-                const cameras = await Html5Qrcode.getCameras();
-                if (cameras.length === 0) {
-                    showAlert('warning', 'Tidak ada kamera yang ditemukan. Gunakan scanner fisik 2D.');
-                } else {
-                    const cameraId = cameras.find(cam => cam.label.toLowerCase().includes('back'))?.id || cameras[0].id;
-                    await html5QrCode.start(
-                        cameraId,
-                        {
-                            fps: 10,
-                            qrbox: { width: 250, height: 250 },
-                            aspectRatio: 1.0,
-                            disableFlip: false
-                        },
-                        onScanSuccess,
-                        onScanError
-                    );
+            if (permission.state === 'granted' || permission.state === 'prompt') {
+                try {
+                    await navigator.mediaDevices.getUserMedia({ video: true });
+                    html5QrCode = new Html5Qrcode("qr-scanner");
+                    const cameras = await Html5Qrcode.getCameras();
+                    if (cameras.length === 0) {
+                        showAlert('warning', 'Tidak ada kamera yang ditemukan. Gunakan input manual atau scanner fisik.');
+                    } else {
+                        const cameraId = cameras.find(cam => cam.label.toLowerCase().includes('back'))?.id || cameras[0].id;
+                        await html5QrCode.start(
+                            cameraId,
+                            {
+                                fps: 10,
+                                qrbox: { width: 250, height: 250 },
+                                aspectRatio: 1.0,
+                                disableFlip: false
+                            },
+                            onScanSuccess,
+                            onScanError
+                        );
+                    }
+                } catch (err) {
+                    showAlert('warning', 'Akses kamera ditolak. Gunakan input manual atau scanner fisik.');
                 }
             } else {
-                showAlert('warning', 'Izin kamera ditolak. Gunakan scanner fisik 2D.');
+                showAlert('warning', 'Izin kamera ditolak. Gunakan input manual atau scanner fisik.');
             }
         } catch (err) {
-            console.error('Error starting QR scanner:', err);
+            console.error('Error memulai scanner:', err);
             showAlert('error', 'Gagal memulai scanner: ' + err.message);
             resetScanner();
         }
     });
 
+    manualInputBtn.addEventListener('click', () => {
+        const productId = prompt('Masukkan ID Produk:');
+        if (productId && /^\d+$/.test(productId)) {
+            if (!scannedProducts[productId]) {
+                scannedProducts[productId] = {
+                    count: 1,
+                    systemStock: 0,
+                    name: 'Memuat...',
+                    size: '-',
+                    color: '-',
+                    qrCodes: new Set()
+                };
+                fetchProductData(productId);
+                updateProductsTable();
+                showAlert('success', `Produk ID ${productId} ditambahkan secara manual.`);
+            } else {
+                scannedProducts[productId].count++;
+                updateProductsTable();
+                showAlert('success', `Stok produk ID ${productId} ditambah 1.`);
+            }
+        } else {
+            showAlert('error', 'ID produk tidak valid.');
+        }
+    });
+
+    const debouncedScan = debounce((decodedText) => {
+        console.log('Memproses input barcode:', decodedText);
+        onScanSuccess(decodedText);
+        barcodeInput.value = '';
+        barcodeInput.focus();
+    }, 500);
+
     barcodeInput.addEventListener('input', function(e) {
         const decodedText = e.target.value.trim();
         if (decodedText) {
-            clearTimeout(scanTimeout);
-            scanTimeout = setTimeout(() => {
-                onScanSuccess(decodedText);
+            if (decodedText.includes('inventory')) {
+                debouncedScan(decodedText);
+            } else if (/^\d+$/.test(decodedText)) {
+                debouncedScan(`/inventory/${decodedText}`);
+            } else {
+                showAlert('error', 'Input tidak valid. Masukkan ID produk atau QR code yang benar.');
                 barcodeInput.value = '';
-                barcodeInput.focus();
-            }, 200);
+            }
         }
     });
 
@@ -295,20 +360,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function onScanSuccess(decodedText) {
-        console.log('Scanned QR:', decodedText);
-        if (!decodedText.includes('inventory')) {
-            showAlert('error', 'QR code tidak valid untuk inventory.');
-            return;
+        console.log('QR code atau ID dipindai:', decodedText);
+        let productId;
+        if (decodedText.includes('inventory')) {
+            const urlParts = decodedText.split('/');
+            const productIndex = urlParts.indexOf('inventory');
+            if (productIndex === -1 || productIndex + 1 >= urlParts.length) {
+                showAlert('error', 'Format QR code tidak valid.');
+                return;
+            }
+            productId = urlParts[productIndex + 1];
+        } else {
+            productId = decodedText;
         }
 
-        const urlParts = decodedText.split('/');
-        const productIndex = urlParts.indexOf('inventory');
-        if (productIndex === -1 || productIndex + 1 >= urlParts.length) {
-            showAlert('error', 'Format QR code tidak valid.');
-            return;
-        }
-
-        const productId = urlParts[productIndex + 1];
         if (!/^\d+$/.test(productId)) {
             showAlert('error', 'ID produk tidak valid.');
             return;
@@ -333,37 +398,35 @@ document.addEventListener('DOMContentLoaded', function() {
             scannedProducts[productId].count++;
             scannedProducts[productId].qrCodes.add(decodedText);
             updateProductsTable();
-            showAlert('success', `QR code dipindai untuk produk ID ${productId}.`);
-        } else if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
-            addScannedItem(decodedText, false);
-            showAlert('warning', 'QR code ini sudah dipindai.');
+            showAlert('success', `Produk ID ${productId} dipindai.`);
+        } else {
+            showAlert('warning', 'QR code atau ID ini sudah dipindai.');
         }
     }
 
     function onScanError(errorMessage) {
-        console.warn('QR scan error:', errorMessage);
+        console.warn('Error pemindaian QR:', errorMessage);
     }
 
     function fetchProductData(productId) {
-        console.log('Fetching product data for ID:', productId);
+        console.log('Mengambil data produk untuk ID:', productId);
         fetch(`/inventory/${productId}/json`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
             }
         })
         .then(response => {
-            console.log('Fetch response status:', response.status);
+            console.log('Status respons fetch produk:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Fetched product data:', data);
+            console.log('Data produk diterima:', data);
             if (data.error) {
-                showAlert('error', data.error);
                 scannedProducts[productId].name = 'Produk Tidak Ditemukan';
                 scannedProducts[productId].size = 'N/A';
                 scannedProducts[productId].color = 'N/A';
@@ -380,9 +443,8 @@ document.addEventListener('DOMContentLoaded', function() {
             updateProductsTable();
         })
         .catch(error => {
-            console.error('Error fetching product:', error);
-            showAlert('error', 'Gagal mengambil data produk: ' + error.message);
-            scannedProducts[productId].name = 'Gagal Memuat';
+            console.error('Error mengambil produk:', error);
+            scannedProducts[productId].name = 'Produk Tidak Ditemukan';
             scannedProducts[productId].size = 'N/A';
             scannedProducts[productId].color = 'N/A';
             scannedProducts[productId].systemStock = 0;
@@ -391,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateProductsTable() {
-        console.log('Updating table with products:', scannedProducts);
+        console.log('Memperbarui tabel dengan produk:', scannedProducts);
         let html = `
             <table>
                 <thead>
@@ -464,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateStock(productId) {
         const formData = new FormData();
         formData.append('physical_stock', scannedProducts[productId].count);
-        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
 
         fetch(`/inventory/${productId}/physical-stock`, {
             method: 'POST',
@@ -474,14 +536,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            console.log('Update stock response status:', response.status);
+            console.log('Status respons update stok:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Update stock response:', data);
+            console.log('Respons update stok:', data);
             if (data.success) {
                 showAlert('success', data.message);
                 delete scannedProducts[productId];
@@ -490,52 +552,90 @@ document.addEventListener('DOMContentLoaded', function() {
                 scannedList.innerHTML = '';
                 [...scannedQRCodes].forEach(qr => addScannedItem(qr, false));
             } else {
-                showAlert('error', data.message);
+                showAlert('error', data.message || 'Gagal memperbarui stok.');
             }
         })
         .catch(error => {
-            console.error('Error updating stock:', error);
+            console.error('Error memperbarui stok:', error);
             showAlert('error', 'Gagal mencatat stok fisik: ' + error.message);
         });
     }
 
     saveReportBtn.addEventListener('click', () => {
+        if (isSaving) return;
+        isSaving = true;
+        saveReportText.classList.add('hidden');
+        saveReportLoading.classList.remove('hidden');
+
         const report = Object.entries(scannedProducts).map(([productId, product]) => ({
-            product_id: productId,
-            name: product.name,
-            size: product.size,
-            color: product.color,
-            system_stock: product.systemStock,
-            physical_stock: product.count,
-            difference: product.count - product.systemStock,
+            product_id: parseInt(productId),
+            name: product.name || 'Tidak Diketahui',
+            size: product.size || '-',
+            color: product.color || '-',
+            system_stock: product.systemStock || 0,
+            physical_stock: product.count || 0,
+            difference: (product.count || 0) - (product.systemStock || 0),
         }));
+
+        // Validasi data yang lebih longgar
+        const isValid = report.every(item => 
+            item.product_id && 
+            typeof item.name === 'string' && 
+            typeof item.size === 'string' && 
+            typeof item.color === 'string' && 
+            Number.isInteger(item.system_stock) && 
+            Number.isInteger(item.physical_stock) && 
+            Number.isInteger(item.difference)
+        );
+
+        if (!isValid) {
+            showAlert('error', 'Data laporan tidak lengkap. Pastikan semua produk memiliki data valid.');
+            isSaving = false;
+            saveReportText.classList.remove('hidden');
+            saveReportLoading.classList.add('hidden');
+            return;
+        }
 
         const totalPhysicalStock = report.reduce((sum, item) => sum + item.physical_stock, 0);
         const totalSystemStock = report.reduce((sum, item) => sum + item.system_stock, 0);
         const totalDifference = totalPhysicalStock - totalSystemStock;
 
+        console.log('Mengirim laporan:', { reports: report });
+
         fetch('{{ route('inventory.save_report') }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
             },
             body: JSON.stringify({ reports: report })
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Status respons simpan laporan:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Respons simpan laporan:', data);
             if (data.success) {
                 const message = `Laporan berhasil disimpan! ${report.length} produk dilaporkan. Total stok fisik: ${totalPhysicalStock} unit, stok sistem: ${totalSystemStock} unit, selisih: ${totalDifference >= 0 ? '+' : ''}${totalDifference} unit.`;
                 showAlert('success', message);
                 resetScanner();
                 window.location.reload();
             } else {
-                showAlert('error', data.message);
+                showAlert('error', data.message || 'Gagal menyimpan laporan.');
             }
         })
         .catch(error => {
-            console.error('Error saving report:', error);
+            console.error('Error menyimpan laporan:', error);
             showAlert('error', 'Gagal menyimpan laporan: ' + error.message);
+        })
+        .finally(() => {
+            isSaving = false;
+            saveReportText.classList.remove('hidden');
+            saveReportLoading.classList.add('hidden');
         });
     });
 
@@ -546,6 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 html5QrCode = null;
                 scannerContainer.classList.add('hidden');
                 startScannerBtn.classList.remove('hidden');
+                barcodeInput.classList.add('hidden');
                 scannedProducts = {};
                 scannedQRCodes.clear();
                 productsTable.innerHTML = '';
@@ -553,11 +654,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveReportBtn.classList.add('hidden');
                 barcodeInput.blur();
             }).catch(err => {
-                console.error('Error stopping scanner:', err);
+                console.error('Error menghentikan scanner:', err);
             });
         } else {
             scannerContainer.classList.add('hidden');
             startScannerBtn.classList.remove('hidden');
+            barcodeInput.classList.add('hidden');
             scannedProducts = {};
             scannedQRCodes.clear();
             productsTable.innerHTML = '';
@@ -569,11 +671,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showAlert(type, message) {
         const alertDiv = document.createElement('div');
-        alertDiv.className = `bg-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-100 border border-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-400 text-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-700 px-4 py-3 rounded relative mb-4 animate-fade-in`;
+        alertDiv.className = `bg-${type === 'success' ? 'green' : type === 'info' ? 'blue' : type === 'warning' ? 'yellow' : 'red'}-100 border border-${type}-400 text-${type === 'success' ? 'green' : type === 'info' ? 'blue' : type === 'warning' ? 'yellow' : 'red'}-700 px-4 py-3 rounded relative mb-4 animate-fade-in`;
         alertDiv.innerHTML = `
             <span class="block sm:inline">${message}</span>
             <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 24 24">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -593,14 +695,15 @@ document.addEventListener('DOMContentLoaded', function() {
             item.className = `scanned-item ${isNew ? 'new' : ''}`;
             item.setAttribute('data-qr', decodedText);
             item.innerHTML = `
-                ${isNew ? 'QR code dipindai.' : 'QR code ini sudah dipindai.'}
+                ${isNew ? 'Produk dipindai.' : 'Produk ini sudah dipindai.'}
                 <button onclick="this.parentElement.remove()">×</button>
             `;
             scannedList.appendChild(item);
 
             item.querySelector('button').addEventListener('click', () => {
                 scannedQRCodes.delete(decodedText);
-                const productId = decodedText.split('/').find((part, index, arr) => arr[index - 1] === 'inventory');
+                const productId = decodedText.includes('inventory') ? 
+                    decodedText.split('/').find((part, index, arr) => arr[index - 1] === 'inventory') : decodedText;
                 if (productId && scannedProducts[productId]) {
                     scannedProducts[productId].qrCodes.delete(decodedText);
                     scannedProducts[productId].count = scannedProducts[productId].qrCodes.size;

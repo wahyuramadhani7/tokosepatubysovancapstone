@@ -52,7 +52,6 @@ class TransactionController extends Controller
             return response()->json([
                 'success' => true,
                 'transactions' => $transactions->map(function ($transaction) {
-                    // Parse payment_method to extract card_type for debit
                     $paymentMethod = $transaction->payment_method;
                     $cardType = null;
                     if (strpos($paymentMethod, 'debit_') === 0) {
@@ -110,25 +109,31 @@ class TransactionController extends Controller
 
     public function create()
     {
-        $products = Product::whereHas('productUnits', function ($query) {
-            $query->where('is_active', true);
-        })->with(['productUnits' => function ($query) {
-            $query->where('is_active', true);
-        }])->get();
-
-        $availableUnits = $products->flatMap(function ($product) {
-            return $product->productUnits->map(function ($unit) use ($product) {
+        // Optimized query using DB facade with join to fetch only necessary columns
+        $availableUnits = DB::table('products')
+            ->join('product_units', 'products.id', '=', 'product_units.product_id')
+            ->where('product_units.is_active', true)
+            ->select([
+                'products.id as product_id',
+                'products.name as product_name',
+                'products.color',
+                'products.size',
+                'products.selling_price',
+                'products.discount_price',
+                'product_units.unit_code',
+            ])
+            ->get()
+            ->map(function ($unit) {
                 return [
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'color' => $product->color,
-                    'size' => $product->size,
-                    'selling_price' => $product->selling_price,
-                    'discount_price' => $product->discount_price,
+                    'product_id' => $unit->product_id,
+                    'product_name' => $unit->product_name,
+                    'color' => $unit->color ?? '-',
+                    'size' => $unit->size ?? '-',
+                    'selling_price' => $unit->selling_price,
+                    'discount_price' => $unit->discount_price,
                     'unit_code' => $unit->unit_code,
                 ];
-            });
-        })->toArray();
+            })->toArray();
 
         return view('transactions.create', compact('availableUnits'));
     }
@@ -279,14 +284,22 @@ class TransactionController extends Controller
     public function addProductByQr($unitCode)
     {
         try {
-            $unit = ProductUnit::where('unit_code', $unitCode)->where('is_active', true)->first();
+            $unit = ProductUnit::where('unit_code', $unitCode)
+                ->where('is_active', true)
+                ->first();
             if (!$unit) {
-                return response()->json(['success' => false, 'message' => 'Unit produk tidak ditemukan atau sudah tidak aktif.'], 404);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unit produk tidak ditemukan atau sudah tidak aktif.'
+                ], 404);
             }
 
             $product = $unit->product;
             if (!$product) {
-                return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan.'], 404);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk tidak ditemukan.'
+                ], 404);
             }
 
             return response()->json([
@@ -294,8 +307,8 @@ class TransactionController extends Controller
                 'unit' => [
                     'product_id' => $product->id,
                     'product_name' => $product->name,
-                    'color' => $product->color,
-                    'size' => $product->size,
+                    'color' => $product->color ?? '-',
+                    'size' => $product->size ?? '-',
                     'selling_price' => $product->selling_price,
                     'discount_price' => $product->discount_price,
                     'unit_code' => $unit->unit_code,
@@ -303,7 +316,10 @@ class TransactionController extends Controller
             ], 200);
         } catch (\Exception $e) {
             Log::error('QR scan failed: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Gagal memuat unit produk: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat unit produk: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
