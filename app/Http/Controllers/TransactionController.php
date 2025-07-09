@@ -109,7 +109,6 @@ class TransactionController extends Controller
 
     public function create()
     {
-        // Optimized query using DB facade with join to fetch only necessary columns
         $availableUnits = DB::table('products')
             ->join('product_units', 'products.id', '=', 'product_units.product_id')
             ->where('product_units.is_active', true)
@@ -266,9 +265,20 @@ class TransactionController extends Controller
     public function report(Request $request)
     {
         $date = $request->input('date', Carbon::today('Asia/Jakarta')->format('Y-m-d'));
+        $month = $request->input('month', Carbon::today('Asia/Jakarta')->format('m'));
+        $year = $request->input('year', Carbon::today('Asia/Jakarta')->format('Y'));
+        $reportType = $request->input('report_type', 'daily'); // Default ke laporan harian
 
-        $query = Transaction::with(['user', 'items.product', 'items.productUnit'])
-            ->whereDate('created_at', $date);
+        $query = Transaction::with(['user', 'items.product', 'items.productUnit']);
+
+        if ($reportType === 'monthly') {
+            // Filter berdasarkan bulan dan tahun
+            $query->whereYear('created_at', $year)
+                  ->whereMonth('created_at', $month);
+        } else {
+            // Filter harian seperti sebelumnya
+            $query->whereDate('created_at', $date);
+        }
 
         if ($request->user_id && (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')) {
             $query->where('user_id', $request->user_id);
@@ -277,8 +287,9 @@ class TransactionController extends Controller
         $transactions = $query->latest()->get();
         $totalSales = $transactions->sum('final_amount');
         $totalTransactions = $transactions->count();
+        $totalDiscount = $transactions->sum('discount_amount');
 
-        return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'date'));
+        return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'totalDiscount', 'date', 'month', 'year', 'reportType'));
     }
 
     public function addProductByQr($unitCode)

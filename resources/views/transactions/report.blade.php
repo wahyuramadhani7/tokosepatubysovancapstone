@@ -139,14 +139,51 @@
 
         <!-- Filter Form -->
         <form method="GET" action="{{ route('transactions.report') }}" id="filter-form" class="mb-10 bg-white p-8 rounded-custom shadow-custom">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div>
+                    <label for="report_type" class="block text-sm font-semibold text-gray-700 mb-2">Tipe Laporan</label>
+                    <div class="relative">
+                        <i class="fas fa-chart-bar absolute left-4 top-3.5 text-gray-400"></i>
+                        <select name="report_type" id="report_type" onchange="toggleFilters(this)"
+                                class="pl-12 mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="daily" {{ $reportType === 'daily' ? 'selected' : '' }}>Harian</option>
+                            <option value="monthly" {{ $reportType === 'monthly' ? 'selected' : '' }}>Bulanan</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="daily-filter" class="{{ $reportType === 'monthly' ? 'hidden' : '' }}">
                     <label for="date" class="block text-sm font-semibold text-gray-700 mb-2">Tanggal</label>
                     <div class="relative">
                         <i class="fas fa-calendar-alt absolute left-4 top-3.5 text-gray-400"></i>
-                        <input type="date" name="date" id="date" value="{{ isset($date) ? $date : '' }}"
+                        <input type="date" name="date" id="date" value="{{ $reportType === 'daily' ? $date : '' }}"
                                placeholder="Pilih tanggal"
                                class="pl-12 mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+                <div id="monthly-filter" class="{{ $reportType === 'daily' ? 'hidden' : '' }}">
+                    <label for="month" class="block text-sm font-semibold text-gray-700 mb-2">Bulan</label>
+                    <div class="relative">
+                        <i class="fas fa-calendar absolute left-4 top-3.5 text-gray-400"></i>
+                        <select name="month" id="month"
+                                class="pl-12 mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            @foreach (range(1, 12) as $m)
+                                <option value="{{ sprintf('%02d', $m) }}" {{ $month == sprintf('%02d', $m) ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div id="year-filter" class="{{ $reportType === 'daily' ? 'hidden' : '' }}">
+                    <label for="year" class="block text-sm font-semibold text-gray-700 mb-2">Tahun</label>
+                    <div class="relative">
+                        <i class="fas fa-calendar absolute left-4 top-3.5 text-gray-400"></i>
+                        <select name="year" id="year"
+                                class="pl-12 mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year) as $y)
+                                <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
                 @if (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')
@@ -176,13 +213,13 @@
         </form>
 
         <!-- Summary -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
             <div class="bg-white p-6 rounded-custom shadow-custom card flex items-center">
                 <div class="bg-indigo-100 p-4 rounded-full mr-4">
                     <i class="fas fa-dollar-sign text-indigo-600 text-2xl"></i>
                 </div>
                 <div>
-                    <p class="text-sm font-semibold text-gray-600">Total Penjualan</p>
+                    <p class="text-sm font-semibold text-gray-600">Total Penjualan {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
                     <p class="text-3xl font-bold text-gray-800">
                         Rp {{ number_format($totalSales, 0, ',', '.') }}
                     </p>
@@ -193,9 +230,20 @@
                     <i class="fas fa-shopping-cart text-green-600 text-2xl"></i>
                 </div>
                 <div>
-                    <p class="text-sm font-semibold text-gray-600">Jumlah Transaksi</p>
+                    <p class="text-sm font-semibold text-gray-600">Jumlah Transaksi {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
                     <p class="text-3xl font-bold text-gray-800">
                         {{ $totalTransactions }}
+                    </p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-custom shadow-custom card flex items-center">
+                <div class="bg-yellow-100 p-4 rounded-full mr-4">
+                    <i class="fas fa-tags text-yellow-600 text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-600">Total Diskon {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
+                    <p class="text-3xl font-bold text-gray-800">
+                        Rp {{ number_format($totalDiscount, 0, ',', '.') }}
                     </p>
                 </div>
             </div>
@@ -222,7 +270,7 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">
                     Metode Pembayaran: {{ ucfirst($method === 'qris' ? 'QRIS' : $method) }}
                 </h2>
-                <div class="bg-white rounded-customSebelumnya shadow-custom overflow-hidden">
+                <div class="bg-white rounded-custom shadow-custom overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead>
@@ -233,6 +281,7 @@
                                     <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Pelanggan</th>
                                     <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Produk</th>
                                     <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Total</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Diskon</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200">
@@ -273,10 +322,13 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}
                                         </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
                                             Tidak ada transaksi ditemukan.
                                         </td>
                                     </tr>
@@ -289,6 +341,11 @@
                     <p class="text-sm font-semibold text-gray-600">Total Penjualan ({{ ucfirst($method === 'qris' ? 'QRIS' : $method) }}): 
                         <span class="text-lg font-bold text-gray-800">
                             Rp {{ number_format($methodTransactions->sum('final_amount'), 0, ',', '.') }}
+                        </span>
+                    </p>
+                    <p class="text-sm font-semibold text-gray-600">Total Diskon ({{ ucfirst($method === 'qris' ? 'QRIS' : $method) }}): 
+                        <span class="text-lg font-bold text-gray-800">
+                            Rp {{ number_format($methodTransactions->sum('discount_amount'), 0, ',', '.') }}
                         </span>
                     </p>
                 </div>
@@ -313,6 +370,7 @@
                                         <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Pelanggan</th>
                                         <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Produk</th>
                                         <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Total</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Diskon</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200">
@@ -353,10 +411,13 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                                 Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}
                                             </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
                                                 Tidak ada transaksi ditemukan.
                                             </td>
                                         </tr>
@@ -371,6 +432,11 @@
                                 Rp {{ number_format($paymentMethods[$method]->sum('final_amount'), 0, ',', '.') }}
                             </span>
                         </p>
+                        <p class="text-sm font-semibold text-gray-600">Total Diskon (Debit {{ $cardType }}): 
+                            <span class="text-lg font-bold text-gray-800">
+                                Rp {{ number_format($paymentMethods[$method]->sum('discount_amount'), 0, ',', '.') }}
+                            </span>
+                        </p>
                     </div>
                 </div>
             @endif
@@ -380,11 +446,30 @@
     <!-- Flatpickr JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
+        function toggleFilters(select) {
+            const dailyFilter = document.getElementById('daily-filter');
+            const monthlyFilter = document.getElementById('monthly-filter');
+            const yearFilter = document.getElementById('year-filter');
+
+            if (select.value === 'monthly') {
+                dailyFilter.classList.add('hidden');
+                monthlyFilter.classList.remove('hidden');
+                yearFilter.classList.remove('hidden');
+                document.getElementById('date').value = ''; // Reset date input
+            } else {
+                dailyFilter.classList.remove('hidden');
+                monthlyFilter.classList.add('hidden');
+                yearFilter.classList.add('hidden');
+                document.getElementById('month').value = '{{ \Carbon\Carbon::now()->format('m') }}'; // Reset to current month
+                document.getElementById('year').value = '{{ \Carbon\Carbon::now()->year }}'; // Reset to current year
+            }
+        }
+
         flatpickr("#date", {
             dateFormat: "Y-m-d",
             altInput: true,
             altFormat: "d/m/Y",
-            defaultDate: "{{ isset($date) ? $date : '' }}",
+            defaultDate: "{{ $reportType === 'daily' ? $date : '' }}",
             locale: {
                 firstDayOfWeek: 1 // Mulai dari Senin
             },
@@ -406,6 +491,17 @@
                 viewport.setAttribute('content', 'width=1280');
                 this.innerHTML = '<i class="fas fa-mobile-alt mr-2"></i> Mode Mobile';
             }
+        });
+
+        // Submit form when month or year changes
+        document.getElementById('month').addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+        document.getElementById('year').addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
+        });
+        document.getElementById('user_id').addEventListener('change', function() {
+            document.getElementById('filter-form').submit();
         });
     </script>
 </body>
