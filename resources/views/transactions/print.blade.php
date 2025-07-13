@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receipt - {{ $transaction->invoice_number }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: 'Courier New', monospace;
@@ -215,11 +216,17 @@
         <div class="footer">
             <p>Thank you for your purchase!</p>
             <p>Barang Yang Tidak Sesuai dapat di Tukarkan.</p>
+            <p>Gabung grup WhatsApp kami untuk info</p>
+            <p>diskon dan penawaran menarik!</p>
+            <p>https://chat.whatsapp.com/CSXlDpfDfq92STaQKJ2a58?mode=ac_t</p>
         </div>
     </div>
 
     <div class="no-print" style="margin-top: 20px; text-align: center;">
         <button onclick="connectAndPrint()" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Connect & Print via Bluetooth</button>
+        @if($transaction->customer_phone)
+        <button onclick="sendToWhatsApp()" style="padding: 8px 16px; margin-left: 10px; background-color: #25D366; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Kirim ke WhatsApp</button>
+        @endif
         <a href="{{ route('transactions.index') }}" style="padding: 8px 16px; margin-left: 10px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px;">Close</a>
         <div id="status" style="margin-top: 10px; font-size: 14px;"></div>
     </div>
@@ -244,12 +251,90 @@
             return cleanText.length > maxLength ? cleanText.substring(0, maxLength - 3) + '...' : cleanText;
         }
 
-        // Fungsi untuk mengambil konten receipt sebagai teks
+        // Fungsi untuk memformat nomor telepon ke format internasional
+        function formatPhoneNumber(phone) {
+            let cleanPhone = phone.replace(/\D/g, '');
+            if (cleanPhone.startsWith('0')) {
+                cleanPhone = '+62' + cleanPhone.slice(1);
+            } else if (!cleanPhone.startsWith('+')) {
+                cleanPhone = '+62' + cleanPhone;
+            }
+            return cleanPhone;
+        }
+
+        // Fungsi untuk mengambil konten receipt sebagai teks untuk WhatsApp
+        function getWhatsAppContent() {
+            let content = `*Halo {{ $transaction->customer_name ?? 'Pelanggan' }}!*\n`;
+            content += `Terima kasih atas pembelian Anda di *Sepatu by Sovan*!\n`;
+            content += `Dapatkan info diskon dan penawaran menarik dengan bergabung di grup WhatsApp kami:\n`;
+            content += `https://chat.whatsapp.com/CSXlDpfDfq92STaQKJ2a58?mode=ac_t\n\n`;
+            content += `*Struk Pembelian*\n`;
+            content += `Jl. Puri Anjasmoro B10/9 Smg\n`;
+            content += `08818671005\n`;
+            content += `----------------------------------------\n`;
+            content += `Invoice: ${truncateText('{{ $transaction->invoice_number }}', 33)}\n`;
+            content += `Tanggal: ${truncateText('{{ $transaction->created_at->format('d/m/Y H:i') }}', 33)}\n`;
+            content += `Kasir: ${truncateText('{{ $transaction->user->name ?? 'Unknown' }}', 33)}\n`;
+            content += `Pelanggan: ${truncateText('{{ $transaction->customer_name ?? 'Tanpa Nama' }}', 33)}\n`;
+            @if($transaction->customer_phone)
+            content += `Telepon: ${truncateText('{{ $transaction->customer_phone }}', 33)}\n`;
+            @endif
+            @if($transaction->customer_email)
+            content += `Email: ${truncateText('{{ $transaction->customer_email }}', 33)}\n`;
+            @endif
+            content += `----------------------------------------\n`;
+
+            // Items
+            @foreach($transaction->items as $item)
+            content += `${truncateText(`{{ $item->product ? $item->product->name : 'Produk Tidak Tersedia' }}`, 28)}`;
+            @if($item->productUnit)
+            content += ` ({{ $item->productUnit->unit_code }})\n`;
+            @else
+            content += ` (Unit N/A)\n`;
+            @endif
+            content += `${padRight('{{ $item->quantity }} x {{ number_format($item->price, 0, ',', '.') }}', 24)}Rp {{ number_format($item->subtotal, 0, ',', '.') }}\n`;
+            @if($item->product && ($item->product->color || $item->product->size))
+            content += `  ${truncateText(`@if($item->product->color) {{ $item->product->color }} @endif @if($item->product->size) {{ $item->product->size }} @endif`, 44)}\n`;
+            @endif
+            @endforeach
+            content += `----------------------------------------\n`;
+
+            // Summary
+            content += `Jumlah Item: {{ $transaction->items->sum('quantity') }}\n`;
+            content += `Subtotal: Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}\n`;
+            @if($transaction->discount_amount > 0)
+            content += `Diskon: Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}\n`;
+            @endif
+            content += `*TOTAL: Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}*\n`;
+            content += `Pembayaran: ${truncateText(`@switch($transaction->payment_method) @case('cash') Tunai @break @case('credit_card') QRIS @break @case('transfer') Transfer Bank @break @default {{ $transaction->payment_method }} @endswitch`, 33)}\n`;
+            @if($transaction->notes)
+            content += `Catatan: ${truncateText('{{ $transaction->notes }}', 33)}\n`;
+            @endif
+            content += `----------------------------------------\n`;
+            content += `Terima kasih atas pembelian Anda!\n`;
+            content += `Barang yang tidak sesuai dapat ditukarkan.\n`;
+
+            return content;
+        }
+
+        // Fungsi untuk mengirim ke WhatsApp
+        function sendToWhatsApp() {
+            @if($transaction->customer_phone)
+            const phone = formatPhoneNumber('{{ $transaction->customer_phone }}');
+            const message = encodeURIComponent(getWhatsAppContent());
+            const url = `https://wa.me/${phone}?text=${message}`;
+            window.open(url, '_blank');
+            @else
+            document.getElementById('status').textContent = 'Error: Nomor telepon pelanggan tidak tersedia.';
+            @endif
+        }
+
+        // Fungsi untuk mengambil konten receipt untuk printer
         function getReceiptContent() {
             let content = '';
             
-            // ESC/POS: Initialize printer + set font normal
-            const initPrinter = new Uint8Array([0x1B, 0x40, 0x1B, 0x4D, 0x00]);
+            // Initialize printer (basic reset, compatible with most non-thermal printers)
+            const initPrinter = new Uint8Array([0x1B, 0x40]); // ESC @ (reset printer)
             content += String.fromCharCode(...initPrinter);
 
             // Header
@@ -301,9 +386,12 @@
 
             // Footer
             content += centerText('Thank you for your purchase!') + '\n';
-            content += centerText('Barang dibeli tidak dikembalikan') + '\n\n';
+            content += centerText('Barang dibeli tidak dikembalikan') + '\n';
+            content += centerText('Bisa masuk ke link dibawah ini') + '\n';
+            content += centerText('Dapatkan info diskon menarik!') + '\n';
+            content += centerText('WA: https://chat.whatsapp.com/CSXlDpfDfq92STaQKJ2a58?mode=ac_t') + '\n\n';
 
-            // ESC/POS: Cut paper
+            // Cut paper (if supported)
             content += String.fromCharCode(0x1D, 0x56, 0x00);
 
             return content;
@@ -340,21 +428,14 @@
                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
                 const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
 
-                // Dapatkan konten receipt
+                // Cetak teks receipt
                 const receiptContent = getReceiptContent();
-
-                // Konversi teks ke buffer
                 const encoder = new TextEncoder('utf-8');
-                const buffer = encoder.encode(receiptContent);
-
-                // Pecah buffer menjadi chunks (128 bytes untuk stabilitas)
-                const chunkSize = 128;
-                const chunks = chunkBuffer(buffer, chunkSize);
-
-                // Kirim setiap chunk ke printer dengan penundaan
+                let buffer = encoder.encode(receiptContent);
+                let chunks = chunkBuffer(buffer, 128);
                 for (let i = 0; i < chunks.length; i++) {
                     await characteristic.writeValue(chunks[i]);
-                    status.textContent = `Sending chunk ${i + 1}/${chunks.length}...`;
+                    status.textContent = `Sending text chunk ${i + 1}/${chunks.length}...`;
                     await delay(150);
                 }
 

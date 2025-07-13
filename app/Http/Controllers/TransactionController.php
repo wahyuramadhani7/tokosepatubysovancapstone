@@ -267,16 +267,14 @@ class TransactionController extends Controller
         $date = $request->input('date', Carbon::today('Asia/Jakarta')->format('Y-m-d'));
         $month = $request->input('month', Carbon::today('Asia/Jakarta')->format('m'));
         $year = $request->input('year', Carbon::today('Asia/Jakarta')->format('Y'));
-        $reportType = $request->input('report_type', 'daily'); // Default ke laporan harian
+        $reportType = $request->input('report_type', 'daily');
 
         $query = Transaction::with(['user', 'items.product', 'items.productUnit']);
 
         if ($reportType === 'monthly') {
-            // Filter berdasarkan bulan dan tahun
             $query->whereYear('created_at', $year)
                   ->whereMonth('created_at', $month);
         } else {
-            // Filter harian seperti sebelumnya
             $query->whereDate('created_at', $date);
         }
 
@@ -288,8 +286,11 @@ class TransactionController extends Controller
         $totalSales = $transactions->sum('final_amount');
         $totalTransactions = $transactions->count();
         $totalDiscount = $transactions->sum('discount_amount');
+        $totalProductsSold = $transactions->sum(function ($transaction) {
+            return $transaction->items->sum('quantity');
+        });
 
-        return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'totalDiscount', 'date', 'month', 'year', 'reportType'));
+        return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'totalDiscount', 'totalProductsSold', 'date', 'month', 'year', 'reportType'));
     }
 
     public function addProductByQr($unitCode)

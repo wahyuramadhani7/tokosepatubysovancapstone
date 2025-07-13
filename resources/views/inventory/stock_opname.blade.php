@@ -1,151 +1,182 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="py-6 md:py-12">
+<div class="py-6 md:py-12 bg-gray-100 min-h-screen">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 bg-orange-500 text-black py-2 px-4 rounded inline-block">STOCK OPNAME</h1>
+        <h1 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 bg-orange-500 text-white py-3 px-6 rounded-lg shadow inline-block">STOCK OPNAME</h1>
 
-        <div class="bg-gray-900 rounded-lg p-4 md:p-6 mb-6">
-            <div class="flex flex-col md:flex-row gap-4">
+        <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
                 <div class="flex-1">
-                    <button id="start-scanner" class="bg-orange-500 text-black px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center w-full md:w-auto justify-center">
+                    <button id="start-scanner" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center w-full md:w-auto justify-center font-semibold">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
                         Mulai Scan QR
                     </button>
                 </div>
-                <a href="{{ route('inventory.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-black transition-colors flex items-center justify-center">
+                <a href="{{ route('inventory.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center font-semibold">
                     Kembali ke Inventory
                 </a>
             </div>
 
-            <div id="scanner-container" class="hidden mt-4">
-                <div id="qr-scanner" class="w-full max-w-md mx-auto rounded-lg"></div>
+            <div id="scanner-container" class="hidden mt-6">
+                <div id="qr-scanner" class="w-full max-w-md mx-auto rounded-lg overflow-hidden shadow-md"></div>
                 <input type="text" id="barcode-input" class="barcode-input" />
-                <button id="stop-scanner" type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors mt-2 w-full md:w-auto">
+                <button id="stop-scanner" type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors mt-4 w-full md:w-auto font-semibold">
                     Stop Scan
                 </button>
             </div>
 
-            <div id="products-list" class="mt-4">
-                <h2 class="text-lg font-semibold text-white mb-3">Daftar Produk yang Dipindai</h2>
-                <div id="products-table" class="bg-gray-800 p-4 rounded-lg text-white"></div>
-                <button id="save-report" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors mt-4 hidden">
+            <div id="products-list" class="mt-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-3">Daftar Produk yang Dipindai</h2>
+                <div id="products-table" class="bg-gray-50 p-4 rounded-lg shadow text-gray-800"></div>
+                <button id="save-report" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors mt-4 hidden w-full md:w-auto font-semibold shadow-md border-2 border-green-800">
                     Simpan Laporan
                 </button>
             </div>
 
             <!-- Stock Opname Reports Section -->
-            <div id="reports-list" class="mt-6">
-                <h2 class="text-lg font-semibold text-white mb-3">Laporan Stock Opname</h2>
-                <div id="reports-table" class="bg-gray-800 p-4 rounded-lg text-white">
+            <div id="reports-list" class="mt-8">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-semibold text-gray-800">Laporan Stock Opname</h2>
                     @if(!empty($reports))
-                        <table class="w-full border-collapse">
-                            <thead>
-                                <tr>
-                                    <th class="p-2 border border-gray-600">Tanggal</th>
-                                    <th class="p-2 border border-gray-600">Produk</th>
-                                    <th class="p-2 border border-gray-600">Ukuran</th>
-                                    <th class="p-2 border border-gray-600">Warna</th>
-                                    <th class="p-2 border border-gray-600">Stok Sistem</th>
-                                    <th class="p-2 border border-gray-600">Stok Fisik</th>
-                                    <th class="p-2 border border-gray-600">Selisih</th>
-                                    <th class="p-2 border border-gray-600">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $totalSystemStock = 0;
-                                    $totalPhysicalStock = 0;
-                                    $totalDifference = 0;
-                                @endphp
-                                @foreach($reports as $index => $report)
-                                    <tr>
-                                        <td class="p-2 border border-gray-600">{{ \Carbon\Carbon::parse($report['timestamp'])->format('d/m/Y H:i') }}</td>
-                                        <td class="p-2 border border-gray-600">{{ $report['name'] }}</td>
-                                        <td class="p-2 border border-gray-600">{{ $report['size'] }}</td>
-                                        <td class="p-2 border border-gray-600">{{ $report['color'] }}</td>
-                                        <td class="p-2 border border-gray-600">{{ $report['system_stock'] }}</td>
-                                        <td class="p-2 border border-gray-600">{{ $report['physical_stock'] }}</td>
-                                        <td class="p-2 border border-gray-600 {{ $report['difference'] < 0 ? 'text-red-400' : ($report['difference'] > 0 ? 'text-yellow-400' : 'text-green-400') }}">
-                                            {{ $report['difference'] > 0 ? '+' : '' }}{{ $report['difference'] }}
-                                        </td>
-                                        <td class="p-2 border border-gray-600">
-                                            <form action="{{ route('inventory.delete_report', $index) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus laporan ini?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-500 hover:text-red-700">Hapus</button>
-                                            </form>
-                                        </td>
+                        <form action="{{ route('inventory.delete_all_reports') }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus semua laporan?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors font-semibold shadow-md"
+                                    style="background-image: url('/images/laa-logo.png'); background-size: contain; background-position: center; background-repeat: no-repeat; background-blend-mode: overlay;">
+                                Hapus Semua Laporan
+                            </button>
+                        </form>
+                    @endif
+                </div>
+                <div id="reports-table" class="bg-gray-50 p-4 rounded-lg shadow text-gray-800 overflow-x-auto">
+                    @if(!empty($reports))
+                        @php
+                            // Kelompokkan laporan berdasarkan brand dan urutkan berdasarkan nama produk
+                            $groupedReports = [];
+                            foreach ($reports as $index => $report) {
+                                $brand = explode(' ', $report['name'])[0]; // Ambil kata pertama sebagai brand
+                                $groupedReports[$brand][] = ['index' => $index, 'report' => $report];
+                            }
+                            ksort($groupedReports); // Urutkan brand secara alfabetis
+                            foreach ($groupedReports as $brand => $reports) {
+                                usort($groupedReports[$brand], function($a, $b) {
+                                    return strcmp($a['report']['name'], $b['report']['name']);
+                                });
+                            }
+                            $totalSystemStock = 0;
+                            $totalPhysicalStock = 0;
+                            $totalDifference = 0;
+                        @endphp
+                        @foreach($groupedReports as $brand => $brandReports)
+                            <h3 class="text-md font-semibold text-gray-800 mt-4 mb-2">{{ $brand }}</h3>
+                            <table class="w-full border-collapse text-sm mb-6">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-3 border border-gray-300">Tanggal</th>
+                                        <th class="p-3 border border-gray-300">Produk</th>
+                                        <th class="p-3 border border-gray-300">Ukuran</th>
+                                        <th class="p-3 border border-gray-300">Warna</th>
+                                        <th class="p-3 border border-gray-300">Stok Sistem</th>
+                                        <th class="p-3 border border-gray-300">Stok Fisik</th>
+                                        <th class="p-3 border border-gray-300">Selisih</th>
+                                        <th class="p-3 border border-gray-300">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($brandReports as $item)
                                         @php
+                                            $report = $item['report'];
+                                            $index = $item['index'];
                                             $totalSystemStock += $report['system_stock'];
                                             $totalPhysicalStock += $report['physical_stock'];
                                             $totalDifference += $report['difference'];
                                         @endphp
-                                    </tr>
-                                @endforeach
-                                <tr class="font-bold">
-                                    <td class="p-2 border border-gray-600" colspan="4">Total</td>
-                                    <td class="p-2 border border-gray-600">{{ $totalSystemStock }}</td>
-                                    <td class="p-2 border border-gray-600">{{ $totalPhysicalStock }}</td>
-                                    <td class="p-2 border border-gray-600 {{ $totalDifference < 0 ? 'text-red-400' : ($totalDifference > 0 ? 'text-yellow-400' : 'text-green-400') }}">
-                                        {{ $totalDifference > 0 ? '+' : '' }}{{ $totalDifference }}
-                                    </td>
-                                    <td class="p-2 border border-gray-600"></td>
-                                </tr>
-                            </tbody>
+                                        <tr class="hover:bg-gray-100">
+                                            <td class="p-3 border border-gray-300">{{ \Carbon\Carbon::parse($report['timestamp'])->format('d/m/Y H:i') }}</td>
+                                            <td class="p-3 border border-gray-300">{{ $report['name'] }}</td>
+                                            <td class="p-3 border border-gray-300">{{ $report['size'] }}</td>
+                                            <td class="p-3 border border-gray-300">{{ $report['color'] }}</td>
+                                            <td class="p-3 border border-gray-300">{{ $report['system_stock'] }}</td>
+                                            <td class="p-3 border border-gray-300">{{ $report['physical_stock'] }}</td>
+                                            <td class="p-3 border border-gray-300 {{ $report['difference'] < 0 ? 'text-red-500' : ($report['difference'] > 0 ? 'text-yellow-500' : 'text-green-500') }}">
+                                                {{ $report['difference'] > 0 ? '+' : '' }}{{ $report['difference'] }}
+                                            </td>
+                                            <td class="p-3 border border-gray-300">
+                                                <form action="{{ route('inventory.delete_report', $index) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus laporan ini?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-500 hover:text-red-700 font-semibold">Hapus</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endforeach
+                        <table class="w-full border-collapse text-sm">
+                            <tr class="font-bold bg-gray-200">
+                                <td class="p-3 border border-gray-300" colspan="4">Total</td>
+                                <td class="p-3 border border-gray-300">{{ $totalSystemStock }}</td>
+                                <td class="p-3 border border-gray-300">{{ $totalPhysicalStock }}</td>
+                                <td class="p-3 border border-gray-300 {{ $totalDifference < 0 ? 'text-red-500' : ($totalDifference > 0 ? 'text-yellow-500' : 'text-green-500') }}">
+                                    {{ $totalDifference > 0 ? '+' : '' }}{{ $totalDifference }}
+                                </td>
+                                <td class="p-3 border border-gray-300"></td>
+                            </tr>
                         </table>
-                        <div class="mt-4 text-white">
-                            <p>
-                                Keterangan: 
-                                <br>Total stok sistem dari laporan: {{ $totalSystemStock }} unit.
-                                <br>Total stok fisik dari laporan: {{ $totalPhysicalStock }} unit.
-                                <br>Selisih stok laporan: {{ $totalDifference >= 0 ? '+' : '' }}{{ $totalDifference }} unit.
+                        <div class="mt-4 text-gray-800">
+                            <p class="text-sm">
+                                Keterangan:
+                                <br>Total stok sistem dari laporan: <strong>{{ $totalSystemStock }} unit</strong>.
+                                <br>Total stok fisik dari laporan: <strong>{{ $totalPhysicalStock }} unit</strong>.
+                                <br>Selisih stok laporan: <strong>{{ $totalDifference >= 0 ? '+' : '' }}{{ $totalDifference }} unit</strong>.
                                 @if(isset($totalStock))
-                                    <br>Total stok di inventory: {{ $totalStock }} unit.
+                                    <br>Total stok di inventory: <strong>{{ $totalStock }} unit</strong>.
                                     @if($totalSystemStock == $totalStock && $totalPhysicalStock == $totalStock)
-                                        <span class="text-green-400">Stok laporan sesuai dengan inventory.</span>
+                                        <span class="text-green-500 font-semibold">Stok laporan sesuai dengan inventory.</span>
                                     @else
                                         @php
                                             $systemStockDifference = $totalSystemStock - $totalStock;
                                             $physicalStockDifference = $totalPhysicalStock - $totalStock;
                                         @endphp
                                         @if($systemStockDifference < 0)
-                                            <span class="text-red-400">Produk kurang {{ abs($systemStockDifference) }} unit dibandingkan inventory.</span>
+                                            <span class="text-red-500 font-semibold">Produk kurang {{ abs($systemStockDifference) }} unit dibandingkan inventory.</span>
                                         @elseif($systemStockDifference > 0)
-                                            <span class="text-yellow-400">Produk lebih {{ $systemStockDifference }} unit dibandingkan inventory.</span>
+                                            <span class="text-yellow-500 font-semibold">Produk lebih {{ $systemStockDifference }} unit dibandingkan inventory.</span>
                                         @else
-                                            <span class="text-green-400">Stok sistem sesuai dengan inventory.</span>
+                                            <span class="text-green-500 font-semibold">Stok sistem sesuai dengan inventory.</span>
                                         @endif
                                         @if($physicalStockDifference != 0)
                                             <br>
                                             @if($physicalStockDifference < 0)
-                                                <span class="text-red-400">Stok fisik kurang {{ abs($physicalStockDifference) }} unit dibandingkan inventory.</span>
+                                                <span class="text-red-500 font-semibold">Stok fisik kurang {{ abs($physicalStockDifference) }} unit dibandingkan inventory.</span>
                                             @else
-                                                <span class="text-yellow-400">Stok fisik lebih {{ $physicalStockDifference }} unit dibandingkan inventory.</span>
+                                                <span class="text-yellow-500 font-semibold">Stok fisik lebih {{ $physicalStockDifference }} unit dibandingkan inventory.</span>
                                             @endif
                                         @endif
                                     @endif
                                 @else
-                                    <span class="text-red-400">Data stok inventory tidak tersedia.</span>
+                                    <span class="text-red-500 font-semibold">Data stok inventory tidak tersedia.</span>
                                 @endif
                             </p>
                         </div>
                     @else
-                        <p class="text-center text-gray-400">Belum ada laporan stock opname.</p>
+                        <p class="text-center text-gray-500 text-sm">Belum ada laporan stock opname.</p>
                     @endif
                 </div>
             </div>
         </div>
 
         @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 animate-fade-in" role="alert">
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow mb-4 animate-fade-in" role="alert">
                 <span class="block sm:inline">{{ session('success') }}</span>
             </div>
         @endif
         @if(session('error'))
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 animate-fade-in" role="alert">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow mb-4 animate-fade-in" role="alert">
                 <span class="block sm:inline">{{ session('error') }}</span>
             </div>
         @endif
@@ -177,11 +208,12 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 8px;
-        margin-bottom: 4px;
+        padding: 10px;
+        margin-bottom: 8px;
         background-color: #f87171;
         color: white;
-        border-radius: 4px;
+        border-radius: 6px;
+        font-size: 14px;
     }
     .scanned-item.new {
         background-color: #34d399;
@@ -191,33 +223,74 @@
         border: none;
         color: white;
         cursor: pointer;
-        font-size: 16px;
+        font-size: 18px;
+        line-height: 1;
     }
     #products-table table, #reports-table table {
         width: 100%;
         border-collapse: collapse;
+        font-size: 14px;
     }
     #products-table th, #products-table td, #reports-table th, #reports-table td {
-        padding: 8px;
-        border: 1px solid #4b5563;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
         text-align: left;
     }
     #products-table th, #reports-table th {
-        background-color: #374151;
+        background-color: #f3f4f6;
+        font-weight: 600;
+        color: #1f2937;
     }
     #products-table input {
-        background-color: #4b5563;
-        color: white;
-        padding: 4px;
-        border: none;
+        background-color: #f3f4f6;
+        color: #1f2937;
+        padding: 6px;
+        border: 1px solid #d1d5db;
         border-radius: 4px;
         width: 80px;
+        font-size: 14px;
+    }
+    #save-report {
+        display: none; /* Pastikan tombol disembunyikan secara default */
+        background-color: #16a34a; /* Warna hijau yang lebih menonjol */
+        border: 2px solid #14532d; /* Border hijau tua untuk kontras */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Bayangan untuk efek 3D */
+        font-size: 16px; /* Ukuran font lebih besar */
+        font-weight: 600; /* Teks lebih tebal */
+        padding: 12px 24px; /* Padding lebih besar untuk tombol lebih menonjol */
+        transition: all 0.3s ease; /* Transisi halus untuk hover */
+    }
+    #save-report:not(.hidden) {
+        display: inline-block; /* Pastikan tombol terlihat saat kelas hidden dihapus */
+    }
+    #save-report:hover {
+        background-color: #15803d; /* Warna hijau lebih gelap saat hover */
+        transform: translateY(-2px); /* Efek angkat saat hover */
+    }
+    @media (max-width: 640px) {
+        #products-table table, #reports-table table {
+            font-size: 12px;
+        }
+        #products-table th, #products-table td, #reports-table th, #reports-table td {
+            padding: 8px;
+        }
+        #products-table input {
+            width: 60px;
+        }
+        #save-report {
+            font-size: 14px; /* Ukuran font lebih kecil untuk mobile */
+            padding: 10px 20px; /* Padding lebih kecil untuk mobile */
+        }
+        #reports-table h3 {
+            font-size: 14px; /* Ukuran font lebih kecil untuk header brand di mobile */
+        }
     }
 </style>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const previousPhysicalStocks = @json($previousPhysicalStocks ?? []);
     const startScannerBtn = document.getElementById('start-scanner');
     const stopScannerBtn = document.getElementById('stop-scanner');
     const scannerContainer = document.getElementById('scanner-container');
@@ -232,14 +305,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let scannedProducts = {};
     let scannedQRCodes = new Set();
     let scanTimeout = null;
+    let lastScanTime = 0;
+
+    // Reset state saat halaman dimuat
+    scannedProducts = {};
+    scannedQRCodes.clear();
+    updateProductsTable();
 
     startScannerBtn.addEventListener('click', async () => {
         try {
-            scannerContainer.classList.remove('hidden');
-            startScannerBtn.classList.add('hidden');
+            console.log('Starting scanner, resetting state...');
+            // Reset state sebelum memulai
             scannedProducts = {};
             scannedQRCodes.clear();
             updateProductsTable();
+            scannerContainer.classList.remove('hidden');
+            startScannerBtn.classList.add('hidden');
             barcodeInput.focus();
 
             const permission = await navigator.permissions.query({ name: 'camera' });
@@ -280,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 onScanSuccess(decodedText);
                 barcodeInput.value = '';
                 barcodeInput.focus();
-            }, 200);
+            }, 500); // Debounce 500ms
         }
     });
 
@@ -295,7 +376,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function onScanSuccess(decodedText) {
-        console.log('Scanned QR:', decodedText);
+        const currentTime = Date.now();
+        if (currentTime - lastScanTime < 500) {
+            console.log('Scan ignored: too soon after last scan');
+            return; // Abaikan scan dalam 500ms
+        }
+        lastScanTime = currentTime;
+
+        console.log('Scanned QR:', decodedText, 'ScannedQRCodes:', [...scannedQRCodes]);
         if (!decodedText.includes('inventory')) {
             showAlert('error', 'QR code tidak valid untuk inventory.');
             return;
@@ -321,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!scannedProducts[productId]) {
                 scannedProducts[productId] = {
-                    count: 0,
+                    count: previousPhysicalStocks[productId] || 0,
                     systemStock: 0,
                     name: 'Memuat...',
                     size: '-',
@@ -334,9 +422,12 @@ document.addEventListener('DOMContentLoaded', function() {
             scannedProducts[productId].qrCodes.add(decodedText);
             updateProductsTable();
             showAlert('success', `QR code dipindai untuk produk ID ${productId}.`);
-        } else if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
-            addScannedItem(decodedText, false);
-            showAlert('warning', 'QR code ini sudah dipindai.');
+        } else {
+            console.log('Duplicate scan detected:', decodedText);
+            if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
+                addScannedItem(decodedText, false);
+                showAlert('warning', 'QR code ini sudah dipindai.');
+            }
         }
     }
 
@@ -413,26 +504,27 @@ document.addEventListener('DOMContentLoaded', function() {
             let statusClass = '';
             if (difference === 0) {
                 statusMessage = 'Sesuai';
-                statusClass = 'text-green-400';
+                statusClass = 'text-green-500';
             } else if (difference > 0) {
                 statusMessage = `Lebih ${difference}`;
-                statusClass = 'text-yellow-400';
+                statusClass = 'text-yellow-500';
             } else {
                 statusMessage = `Kurang ${Math.abs(difference)}`;
-                statusClass = 'text-red-400';
+                statusClass = 'text-red-500';
             }
             html += `
-                <tr>
+                <tr class="hover:bg-gray-100">
                     <td>${product.name}</td>
                     <td>${product.size}</td>
                     <td>${product.color}</td>
                     <td>${product.systemStock}</td>
                     <td>
                         <input type="number" min="0" value="${product.count}" data-product-id="${productId}" class="physical-stock-input">
+                        ${previousPhysicalStocks[productId] ? `<span class="text-gray-500 text-xs block mt-1">(Sebelumnya: ${previousPhysicalStocks[productId]})</span>` : ''}
                     </td>
                     <td class="${statusClass}">${statusMessage}</td>
                     <td>
-                        <button class="update-stock-btn bg-orange-500 text-black px-2 py-1 rounded hover:bg-orange-600" data-product-id="${productId}">Update</button>
+                        <button class="update-stock-btn bg-orange-500 text-white px-2 py-1 rounded hover:bg-orange-600 transition-colors font-semibold" data-product-id="${productId}">Update</button>
                     </td>
                 </tr>
             `;
@@ -443,7 +535,14 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         productsTable.innerHTML = html;
 
+        // Log untuk debugging visibilitas tombol
+        console.log('Scanned products count:', Object.keys(scannedProducts).length, 'Save report button hidden:', saveReportBtn.classList.contains('hidden'));
         saveReportBtn.classList.toggle('hidden', Object.keys(scannedProducts).length === 0);
+        if (Object.keys(scannedProducts).length > 0) {
+            saveReportBtn.style.display = 'inline-block'; // Pastikan tombol terlihat
+        } else {
+            saveReportBtn.style.display = 'none'; // Pastikan tombol tersembunyi
+        }
 
         document.querySelectorAll('.physical-stock-input').forEach(input => {
             input.addEventListener('change', function() {
@@ -500,6 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     saveReportBtn.addEventListener('click', () => {
+        console.log('Save report button clicked, reports:', scannedProducts);
         const report = Object.entries(scannedProducts).map(([productId, product]) => ({
             product_id: productId,
             name: product.name,
@@ -540,6 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function resetScanner() {
+        console.log('Resetting scanner...');
         if (html5QrCode) {
             html5QrCode.stop().then(() => {
                 html5QrCode.clear();
@@ -551,7 +652,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 productsTable.innerHTML = '';
                 scannedList.innerHTML = '';
                 saveReportBtn.classList.add('hidden');
+                saveReportBtn.style.display = 'none'; // Pastikan tombol tersembunyi
                 barcodeInput.blur();
+                console.log('Scanner reset complete');
             }).catch(err => {
                 console.error('Error stopping scanner:', err);
             });
@@ -563,17 +666,20 @@ document.addEventListener('DOMContentLoaded', function() {
             productsTable.innerHTML = '';
             scannedList.innerHTML = '';
             saveReportBtn.classList.add('hidden');
+            saveReportBtn.style.display = 'none'; // Pastikan tombol tersembunyi
             barcodeInput.blur();
+            console.log('Scanner reset complete (no html5QrCode)');
         }
     }
 
     function showAlert(type, message) {
+        console.log(`Showing ${type} alert: ${message}`);
         const alertDiv = document.createElement('div');
-        alertDiv.className = `bg-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-100 border border-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-400 text-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-700 px-4 py-3 rounded relative mb-4 animate-fade-in`;
+        alertDiv.className = `bg-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-100 border border-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-400 text-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-700 px-4 py-3 rounded-lg shadow mb-4 animate-fade-in`;
         alertDiv.innerHTML = `
             <span class="block sm:inline">${message}</span>
             <button type="button" class="absolute top-0 right-0 mt-3 mr-4" onclick="this.parentElement.remove()">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 24 24">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -589,6 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function addScannedItem(decodedText, isNew) {
         if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
+            console.log('Adding scanned item:', decodedText, 'Is new:', isNew);
             const item = document.createElement('div');
             item.className = `scanned-item ${isNew ? 'new' : ''}`;
             item.setAttribute('data-qr', decodedText);
@@ -597,6 +704,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button onclick="this.parentElement.remove()">×</button>
             `;
             scannedList.appendChild(item);
+
+            if (isNew) {
+                setTimeout(() => {
+                    item.style.opacity = '0';
+                    item.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => item.remove(), 500);
+                }, 3000);
+            }
 
             item.querySelector('button').addEventListener('click', () => {
                 scannedQRCodes.delete(decodedText);
@@ -610,6 +725,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateProductsTable();
                 }
             });
+        } else {
+            console.log('Item already in scannedList:', decodedText);
         }
     }
 });

@@ -213,7 +213,7 @@
         </form>
 
         <!-- Summary -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             <div class="bg-white p-6 rounded-custom shadow-custom card flex items-center">
                 <div class="bg-indigo-100 p-4 rounded-full mr-4">
                     <i class="fas fa-dollar-sign text-indigo-600 text-2xl"></i>
@@ -244,6 +244,17 @@
                     <p class="text-sm font-semibold text-gray-600">Total Diskon {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
                     <p class="text-3xl font-bold text-gray-800">
                         Rp {{ number_format($totalDiscount, 0, ',', '.') }}
+                    </p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-custom shadow-custom card flex items-center">
+                <div class="bg-blue-100 p-4 rounded-full mr-4">
+                    <i class="fas fa-box-open text-blue-600 text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-600">Total Produk Terjual {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
+                    <p class="text-3xl font-bold text-gray-800">
+                        {{ $totalProductsSold }}
                     </p>
                 </div>
             </div>
@@ -348,6 +359,11 @@
                             Rp {{ number_format($methodTransactions->sum('discount_amount'), 0, ',', '.') }}
                         </span>
                     </p>
+                    <p class="text-sm font-semibold text-gray-600">Total Produk Terjual ({{ ucfirst($method === 'qris' ? 'QRIS' : $method) }}): 
+                        <span class="text-lg font-bold text-gray-800">
+                            {{ $methodTransactions->sum(function ($transaction) { return $transaction->items->sum('quantity'); }) }}
+                        </span>
+                    </p>
                 </div>
             </div>
         @endforeach
@@ -435,6 +451,11 @@
                         <p class="text-sm font-semibold text-gray-600">Total Diskon (Debit {{ $cardType }}): 
                             <span class="text-lg font-bold text-gray-800">
                                 Rp {{ number_format($paymentMethods[$method]->sum('discount_amount'), 0, ',', '.') }}
+                            </span>
+                        </p>
+                        <p class="text-sm font-semibold text-gray-600">Total Produk Terjual (Debit {{ $cardType }}): 
+                            <span class="text-lg font-bold text-gray-800">
+                                {{ $paymentMethods[$method]->sum(function ($transaction) { return $transaction->items->sum('quantity'); }) }}
                             </span>
                         </p>
                     </div>

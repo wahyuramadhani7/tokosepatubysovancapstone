@@ -681,8 +681,20 @@ class InventoryController extends Controller
     {
         $totalStock = ProductUnit::where('is_active', true)->count();
         $reports = Cache::get('stock_opname_reports', []);
+        
+        // Bersihkan sesi terkait untuk memastikan tidak ada data lama
+        session()->forget(['stock_mismatches', 'new_products', 'updated_products', 'brand_names']);
+        foreach ($reports as $report) {
+            session()->forget('new_units_' . $report['product_id']);
+        }
 
-        return view('inventory.stock_opname', compact('totalStock', 'reports'));
+        // Buat array untuk menyimpan stok fisik sebelumnya berdasarkan product_id
+        $previousPhysicalStocks = [];
+        foreach ($reports as $report) {
+            $previousPhysicalStocks[$report['product_id']] = $report['physical_stock'];
+        }
+
+        return view('inventory.stock_opname', compact('totalStock', 'reports', 'previousPhysicalStocks'));
     }
 
     public function updatePhysicalStock(Request $request, $id)
@@ -756,7 +768,11 @@ class InventoryController extends Controller
                 $stockMessage = "Stok fisik: {$physicalStock}, Stok sistem: {$currentStock}, Selisih: +{$difference} unit";
                 $stockMismatch['message'] = "Stok tidak sesuai, lebih {$difference} unit";
                 for ($i = $currentStock; $i < $physicalStock; $i++) {
-                    $unitCode = 'UNIT-' . strtoupper(Str::random(8));
+                    // Pastikan unit_code unik
+                    do {
+                        $unitCode = 'UNIT-' . strtoupper(Str::random(12));
+                    } while (ProductUnit::where('unit_code', $unitCode)->exists() || Cache::has($this->getUnitCacheKey($product->id, $unitCode)));
+                    
                     $unit = ProductUnit::create([
                         'product_id' => $product->id,
                         'unit_code' => $unitCode,
@@ -831,84 +847,96 @@ class InventoryController extends Controller
         }
     }
 
-   public function saveReport(Request $request)
-{
-    $validated = $request->validate([
-        'reports' => 'required|array',
-        'reports.*.product_id' => 'required|integer',
-        'reports.*.name' => 'nullable|string',
-        'reports.*.size' => 'nullable|string',
-        'reports.*.color' => 'nullable|string',
-        'reports.*.system_stock' => 'required|integer',
-        'reports.*.physical_stock' => 'required|integer',
-        'reports.*.difference' => 'required|integer',
-    ]);
+    public function saveReport(Request $request)
+    {
+        $validated = $request->validate([
+            'reports' => 'required|array',
+            'reports.*.product_id' => 'required|integer',
+            'reports.*.name' => 'nullable|string',
+            'reports.*.size' => 'nullable|string',
+            'reports.*.color' => 'nullable|string',
+            'reports.*.system_stock' => 'required|integer',
+            'reports.*.physical_stock' => 'required|integer',
+            'reports.*.difference' => 'required|integer',
+        ]);
 
-    try {
-        $reports = Cache::get('stock_opname_reports', []);
-        $brandNames = session('brand_names', []);
-        foreach ($validated['reports'] as $report) {
-            if ($report['physical_stock'] == 0) {
-                $product = Product::find($report['product_id']);
-                if ($product) {
-                    DB::beginTransaction();
-                    try {
-                        $product->productUnits()->delete();
-                        $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
-                        foreach ($unitCodes as $unitCode) {
-                            Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
+        try {
+            $reports = Cache::get('stock_opname_reports', []);
+            $brandNames = session('brand_names', []);
+            
+            // Index laporan berdasarkan product_id untuk menghindari duplikat
+            $existingReports = [];
+            foreach ($reports as $report) {
+                $existingReports[$report['product_id']] = $report;
+            }
+
+            foreach ($validated['reports'] as $report) {
+                if ($report['physical_stock'] == 0) {
+                    $product = Product::find($report['product_id']);
+                    if ($product) {
+                        DB::beginTransaction();
+                        try {
+                            $product->productUnits()->delete();
+                            $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
+                            foreach ($unitCodes as $unitCode) {
+                                Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
+                            }
+                            Cache::forget($this->getProductCacheKey($product->id));
+                            $newProducts = array_diff(session('new_products', []), [$product->id]);
+                            $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
+                            $existingMismatches = session('stock_mismatches', []);
+                            unset($existingMismatches[$product->id]);
+                            $brandNames = session('brand_names', []);
+                            unset($brandNames[$product->id]);
+                            session([
+                                'new_products' => $newProducts,
+                                'updated_products' => $updatedProducts,
+                                'new_units_' . $product->id => null,
+                                'stock_mismatches' => $existingMismatches,
+                                'brand_names' => $brandNames,
+                            ]);
+                            $product->delete();
+                            DB::commit();
+                            unset($existingReports[$report['product_id']]);
+                            continue;
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            continue;
                         }
-                        Cache::forget($this->getProductCacheKey($product->id));
-                        $newProducts = array_diff(session('new_products', []), [$product->id]);
-                        $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
-                        $existingMismatches = session('stock_mismatches', []);
-                        unset($existingMismatches[$product->id]);
-                        $brandNames = session('brand_names', []);
-                        unset($brandNames[$product->id]);
-                        session([
-                            'new_products' => $newProducts,
-                            'updated_products' => $updatedProducts,
-                            'new_units_' . $product->id => null,
-                            'stock_mismatches' => $existingMismatches,
-                            'brand_names' => $brandNames,
-                        ]);
-                        $product->delete();
-                        DB::commit();
-                        continue;
-                    } catch (\Exception $e) {
-                        DB::rollBack();
-                        continue;
                     }
                 }
-            }
-            $brand = $brandNames[$report['product_id']] ?? ($report['name'] ? explode(' ', trim($report['name']))[0] : 'Unknown');
-            $model = $report['name'] ? trim(str_replace($brand, '', $report['name'])) : 'Unknown';
-            $reports[] = [
-                'product_id' => $report['product_id'],
-                'name' => $report['name'] ?? 'Produk Tidak Diketahui',
-                'brand' => $brand,
-                'model' => $model,
-                'size' => $report['size'] ?? '-',
-                'color' => $report['color'] ?? '-',
-                'system_stock' => $report['system_stock'],
-                'physical_stock' => $report['physical_stock'],
-                'difference' => $report['difference'],
-                'timestamp' => Carbon::now('Asia/Jakarta')->toDateTimeString(),
-            ];
-        }
-        Cache::put('stock_opname_reports', $reports, now()->addHours(24));
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Laporan stock opname berhasil disimpan',
-        ], 200);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Gagal menyimpan laporan: ' . $e->getMessage(),
-        ], 500);
+                $brand = $brandNames[$report['product_id']] ?? ($report['name'] ? explode(' ', trim($report['name']))[0] : 'Unknown');
+                $model = $report['name'] ? trim(str_replace($brand, '', $report['name'])) : 'Unknown';
+                
+                $existingReports[$report['product_id']] = [
+                    'product_id' => $report['product_id'],
+                    'name' => $report['name'] ?? 'Produk Tidak Diketahui',
+                    'brand' => $brand,
+                    'model' => $model,
+                    'size' => $report['size'] ?? '-',
+                    'color' => $report['color'] ?? '-',
+                    'system_stock' => $report['system_stock'],
+                    'physical_stock' => $report['physical_stock'],
+                    'difference' => $report['difference'],
+                    'timestamp' => Carbon::now('Asia/Jakarta')->toDateTimeString(),
+                ];
+            }
+
+            $reports = array_values($existingReports);
+            Cache::forever('stock_opname_reports', $reports);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Laporan stock opname berhasil disimpan',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan laporan: ' . $e->getMessage(),
+            ], 500);
+        }
     }
-}
 
     public function deleteReport($index)
     {
@@ -917,7 +945,7 @@ class InventoryController extends Controller
             if (isset($reports[$index])) {
                 unset($reports[$index]);
                 $reports = array_values($reports);
-                Cache::put('stock_opname_reports', $reports, now()->addHours(24));
+                Cache::forever('stock_opname_reports', $reports);
                 return redirect()->route('inventory.stock_opname')->with('success', 'Laporan berhasil dihapus');
             }
             return redirect()->route('inventory.stock_opname')->with('error', 'Laporan tidak ditemukan');
@@ -925,4 +953,18 @@ class InventoryController extends Controller
             return redirect()->route('inventory.stock_opname')->with('error', 'Gagal menghapus laporan: ' . $e->getMessage());
         }
     }
+
+    public function deleteAllReports()
+    {
+        try {
+            Cache::forget('stock_opname_reports');
+            session()->forget(['stock_mismatches', 'new_products', 'updated_products', 'brand_names']);
+            
+            return redirect()->route('inventory.stock_opname')->with('success', 'Semua laporan berhasil dihapus');
+        } catch (\Exception $e) {
+            return redirect()->route('inventory.stock_opname')->with('error', 'Gagal menghapus semua laporan: ' . $e->getMessage());
+        }
+    }
 }
+
+?>
