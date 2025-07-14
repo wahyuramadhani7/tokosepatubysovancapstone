@@ -55,7 +55,6 @@ class InventoryController extends Controller
         }])
         ->get()
         ->groupBy(function ($product) use ($brandNames) {
-            // Gunakan brand dari sesi jika tersedia, jika tidak ambil kata pertama dari name
             $brand = $brandNames[$product->id] ?? Str::lower(explode(' ', trim($product->name))[0]);
             return $brand;
         })
@@ -114,7 +113,6 @@ class InventoryController extends Controller
             $query->where('is_active', true);
         }, '<=', 10)->count();
 
-        // Gunakan brand yang disimpan di sesi jika ada
         $brandNames = session('brand_names', []);
         $brandCounts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
@@ -133,7 +131,6 @@ class InventoryController extends Controller
         }])
         ->get()
         ->groupBy(function ($product) use ($brandNames) {
-            // Gunakan brand dari sesi jika tersedia, jika tidak ambil kata pertama dari name
             $brand = $brandNames[$product->id] ?? Str::lower(explode(' ', trim($product->name))[0]);
             return $brand;
         })
@@ -682,13 +679,11 @@ class InventoryController extends Controller
         $totalStock = ProductUnit::where('is_active', true)->count();
         $reports = Cache::get('stock_opname_reports', []);
         
-        // Bersihkan sesi terkait untuk memastikan tidak ada data lama
         session()->forget(['stock_mismatches', 'new_products', 'updated_products', 'brand_names']);
         foreach ($reports as $report) {
             session()->forget('new_units_' . $report['product_id']);
         }
 
-        // Buat array untuk menyimpan stok fisik sebelumnya berdasarkan product_id
         $previousPhysicalStocks = [];
         foreach ($reports as $report) {
             $previousPhysicalStocks[$report['product_id']] = $report['physical_stock'];
@@ -768,7 +763,6 @@ class InventoryController extends Controller
                 $stockMessage = "Stok fisik: {$physicalStock}, Stok sistem: {$currentStock}, Selisih: +{$difference} unit";
                 $stockMismatch['message'] = "Stok tidak sesuai, lebih {$difference} unit";
                 for ($i = $currentStock; $i < $physicalStock; $i++) {
-                    // Pastikan unit_code unik
                     do {
                         $unitCode = 'UNIT-' . strtoupper(Str::random(12));
                     } while (ProductUnit::where('unit_code', $unitCode)->exists() || Cache::has($this->getUnitCacheKey($product->id, $unitCode)));
@@ -858,12 +852,23 @@ class InventoryController extends Controller
             'reports.*.system_stock' => 'required|integer',
             'reports.*.physical_stock' => 'required|integer',
             'reports.*.difference' => 'required|integer',
+            'reports.*.scanned_qr_codes' => 'nullable|array',
+            'reports.*.scanned_qr_codes.*' => 'string',
         ]);
 
         try {
             $reports = Cache::get('stock_opname_reports', []);
             $brandNames = session('brand_names', []);
-            
+
+            // Kumpulkan semua QR code yang sudah dilaporkan
+            $previouslyScannedQRCodes = [];
+            foreach ($reports as $report) {
+                if (!empty($report['scanned_qr_codes'])) {
+                    $previouslyScannedQRCodes = array_merge($previouslyScannedQRCodes, $report['scanned_qr_codes']);
+                }
+            }
+            $previouslyScannedQRCodes = array_unique($previouslyScannedQRCodes);
+
             // Index laporan berdasarkan product_id untuk menghindari duplikat
             $existingReports = [];
             foreach ($reports as $report) {
@@ -871,44 +876,69 @@ class InventoryController extends Controller
             }
 
             foreach ($validated['reports'] as $report) {
-                if ($report['physical_stock'] == 0) {
-                    $product = Product::find($report['product_id']);
-                    if ($product) {
-                        DB::beginTransaction();
-                        try {
-                            $product->productUnits()->delete();
-                            $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
-                            foreach ($unitCodes as $unitCode) {
-                                Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
-                            }
-                            Cache::forget($this->getProductCacheKey($product->id));
-                            $newProducts = array_diff(session('new_products', []), [$product->id]);
-                            $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
-                            $existingMismatches = session('stock_mismatches', []);
-                            unset($existingMismatches[$product->id]);
-                            $brandNames = session('brand_names', []);
-                            unset($brandNames[$product->id]);
-                            session([
-                                'new_products' => $newProducts,
-                                'updated_products' => $updatedProducts,
-                                'new_units_' . $product->id => null,
-                                'stock_mismatches' => $existingMismatches,
-                                'brand_names' => $brandNames,
-                            ]);
-                            $product->delete();
-                            DB::commit();
-                            unset($existingReports[$report['product_id']]);
-                            continue;
-                        } catch (\Exception $e) {
-                            DB::rollBack();
-                            continue;
+                $product = Product::find($report['product_id']);
+                $scannedQRCodes = $report['scanned_qr_codes'] ?? [];
+
+                // Validasi QR code untuk mencegah duplikasi
+                foreach ($scannedQRCodes as $qrCode) {
+                    if (in_array($qrCode, $previouslyScannedQRCodes)) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "QR code $qrCode sudah dilaporkan sebelumnya dan tidak dapat digunakan lagi."
+                        ], 400);
+                    }
+                }
+
+                // Ambil semua QR code aktif untuk produk
+                $allUnitCodes = [];
+                if ($product) {
+                    $allUnitCodes = ProductUnit::where('product_id', $report['product_id'])
+                        ->where('is_active', true)
+                        ->pluck('unit_code')
+                        ->toArray();
+                }
+
+                // Hitung QR code yang belum discan
+                $scannedUnitCodes = array_map(function ($qr) {
+                    return basename(parse_url($qr, PHP_URL_PATH));
+                }, $scannedQRCodes);
+                $unscannedQRCodes = array_diff($allUnitCodes, $scannedUnitCodes);
+
+                if ($report['physical_stock'] == 0 && $product) {
+                    DB::beginTransaction();
+                    try {
+                        $product->productUnits()->delete();
+                        $unitCodes = $product->productUnits()->pluck('unit_code')->toArray();
+                        foreach ($unitCodes as $unitCode) {
+                            Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
                         }
+                        Cache::forget($this->getProductCacheKey($product->id));
+                        $newProducts = array_diff(session('new_products', []), [$product->id]);
+                        $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
+                        $existingMismatches = session('stock_mismatches', []);
+                        unset($existingMismatches[$product->id]);
+                        $brandNames = session('brand_names', []);
+                        unset($brandNames[$product->id]);
+                        session([
+                            'new_products' => $newProducts,
+                            'updated_products' => $updatedProducts,
+                            'new_units_' . $product->id => null,
+                            'stock_mismatches' => $existingMismatches,
+                            'brand_names' => $brandNames,
+                        ]);
+                        $product->delete();
+                        DB::commit();
+                        unset($existingReports[$report['product_id']]);
+                        continue;
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        continue;
                     }
                 }
 
                 $brand = $brandNames[$report['product_id']] ?? ($report['name'] ? explode(' ', trim($report['name']))[0] : 'Unknown');
                 $model = $report['name'] ? trim(str_replace($brand, '', $report['name'])) : 'Unknown';
-                
+
                 $existingReports[$report['product_id']] = [
                     'product_id' => $report['product_id'],
                     'name' => $report['name'] ?? 'Produk Tidak Diketahui',
@@ -919,6 +949,8 @@ class InventoryController extends Controller
                     'system_stock' => $report['system_stock'],
                     'physical_stock' => $report['physical_stock'],
                     'difference' => $report['difference'],
+                    'scanned_qr_codes' => $scannedQRCodes,
+                    'unscanned_qr_codes' => array_values($unscannedQRCodes),
                     'timestamp' => Carbon::now('Asia/Jakarta')->toDateTimeString(),
                 ];
             }
@@ -966,5 +998,3 @@ class InventoryController extends Controller
         }
     }
 }
-
-?>

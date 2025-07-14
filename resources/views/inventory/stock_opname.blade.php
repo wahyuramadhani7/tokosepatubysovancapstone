@@ -54,13 +54,12 @@
                 <div id="reports-table" class="bg-gray-50 p-4 rounded-lg shadow text-gray-800 overflow-x-auto">
                     @if(!empty($reports))
                         @php
-                            // Kelompokkan laporan berdasarkan brand dan urutkan berdasarkan nama produk
                             $groupedReports = [];
                             foreach ($reports as $index => $report) {
-                                $brand = explode(' ', $report['name'])[0]; // Ambil kata pertama sebagai brand
+                                $brand = explode(' ', $report['name'])[0];
                                 $groupedReports[$brand][] = ['index' => $index, 'report' => $report];
                             }
-                            ksort($groupedReports); // Urutkan brand secara alfabetis
+                            ksort($groupedReports);
                             foreach ($groupedReports as $brand => $reports) {
                                 usort($groupedReports[$brand], function($a, $b) {
                                     return strcmp($a['report']['name'], $b['report']['name']);
@@ -71,6 +70,11 @@
                             $totalDifference = 0;
                         @endphp
                         @foreach($groupedReports as $brand => $brandReports)
+                            @php
+                                $brandSystemStock = 0;
+                                $brandPhysicalStock = 0;
+                                $brandDifference = 0;
+                            @endphp
                             <h3 class="text-md font-semibold text-gray-800 mt-4 mb-2">{{ $brand }}</h3>
                             <table class="w-full border-collapse text-sm mb-6">
                                 <thead>
@@ -82,6 +86,7 @@
                                         <th class="p-3 border border-gray-300">Stok Sistem</th>
                                         <th class="p-3 border border-gray-300">Stok Fisik</th>
                                         <th class="p-3 border border-gray-300">Selisih</th>
+                                        <th class="p-3 border border-gray-300">QR Code</th>
                                         <th class="p-3 border border-gray-300">Aksi</th>
                                     </tr>
                                 </thead>
@@ -93,6 +98,9 @@
                                             $totalSystemStock += $report['system_stock'];
                                             $totalPhysicalStock += $report['physical_stock'];
                                             $totalDifference += $report['difference'];
+                                            $brandSystemStock += $report['system_stock'];
+                                            $brandPhysicalStock += $report['physical_stock'];
+                                            $brandDifference += $report['difference'];
                                         @endphp
                                         <tr class="hover:bg-gray-100">
                                             <td class="p-3 border border-gray-300">{{ \Carbon\Carbon::parse($report['timestamp'])->format('d/m/Y H:i') }}</td>
@@ -105,6 +113,33 @@
                                                 {{ $report['difference'] > 0 ? '+' : '' }}{{ $report['difference'] }}
                                             </td>
                                             <td class="p-3 border border-gray-300">
+                                                <button class="toggle-qr-codes text-blue-500 hover:text-blue-700 font-semibold" data-index="{{ $index }}">
+                                                    Lihat QR Codes
+                                                </button>
+                                                <div class="qr-codes-details hidden mt-2" data-index="{{ $index }}">
+                                                    <p class="text-sm font-semibold">QR Code Discan ({{ count($report['scanned_qr_codes'] ?? []) }}):</p>
+                                                    <ul class="text-sm list-disc pl-5">
+                                                        @if(!empty($report['scanned_qr_codes']))
+                                                            @foreach($report['scanned_qr_codes'] as $qrCode)
+                                                                <li>{{ basename(parse_url($qrCode, PHP_URL_PATH)) }}</li>
+                                                            @endforeach
+                                                        @else
+                                                            <li class="text-gray-500">Tidak ada QR code discan</li>
+                                                        @endif
+                                                    </ul>
+                                                    <p class="text-sm font-semibold mt-2">QR Code Belum Discan ({{ count($report['unscanned_qr_codes'] ?? []) }}):</p>
+                                                    <ul class="text-sm list-disc pl-5">
+                                                        @if(!empty($report['unscanned_qr_codes']))
+                                                            @foreach($report['unscanned_qr_codes'] as $qrCode)
+                                                                <li>{{ $qrCode }}</li>
+                                                            @endforeach
+                                                        @else
+                                                            <li class="text-gray-500">Semua QR code telah discan</li>
+                                                        @endif
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                            <td class="p-3 border border-gray-300">
                                                 <form action="{{ route('inventory.delete_report', $index) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus laporan ini?')">
                                                     @csrf
                                                     @method('DELETE')
@@ -115,6 +150,17 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                            <table class="w-full border-collapse text-sm mb-6">
+                                <tr class="font-bold bg-gray-200">
+                                    <td class="p-3 border border-gray-300" colspan="4">Total {{ $brand }}</td>
+                                    <td class="p-3 border border-gray-300">{{ $brandSystemStock }}</td>
+                                    <td class="p-3 border border-gray-300">{{ $brandPhysicalStock }}</td>
+                                    <td class="p-3 border border-gray-300 {{ $brandDifference < 0 ? 'text-red-500' : ($brandDifference > 0 ? 'text-yellow-500' : 'text-green-500') }}">
+                                        {{ $brandDifference > 0 ? '+' : '' }}{{ $brandDifference }}
+                                    </td>
+                                    <td class="p-3 border border-gray-300" colspan="2"></td>
+                                </tr>
+                            </table>
                         @endforeach
                         <table class="w-full border-collapse text-sm">
                             <tr class="font-bold bg-gray-200">
@@ -124,7 +170,7 @@
                                 <td class="p-3 border border-gray-300 {{ $totalDifference < 0 ? 'text-red-500' : ($totalDifference > 0 ? 'text-yellow-500' : 'text-green-500') }}">
                                     {{ $totalDifference > 0 ? '+' : '' }}{{ $totalDifference }}
                                 </td>
-                                <td class="p-3 border border-gray-300"></td>
+                                <td class="p-3 border border-gray-300" colspan="2"></td>
                             </tr>
                         </table>
                         <div class="mt-4 text-gray-800">
@@ -251,21 +297,34 @@
         font-size: 14px;
     }
     #save-report {
-        display: none; /* Pastikan tombol disembunyikan secara default */
-        background-color: #16a34a; /* Warna hijau yang lebih menonjol */
-        border: 2px solid #14532d; /* Border hijau tua untuk kontras */
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Bayangan untuk efek 3D */
-        font-size: 16px; /* Ukuran font lebih besar */
-        font-weight: 600; /* Teks lebih tebal */
-        padding: 12px 24px; /* Padding lebih besar untuk tombol lebih menonjol */
-        transition: all 0.3s ease; /* Transisi halus untuk hover */
+        display: none;
+        background-color: #16a34a;
+        border: 2px solid #14532d;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        font-size: 16px;
+        font-weight: 600;
+        padding: 12px 24px;
+        transition: all 0.3s ease;
     }
     #save-report:not(.hidden) {
-        display: inline-block; /* Pastikan tombol terlihat saat kelas hidden dihapus */
+        display: inline-block;
     }
     #save-report:hover {
-        background-color: #15803d; /* Warna hijau lebih gelap saat hover */
-        transform: translateY(-2px); /* Efek angkat saat hover */
+        background-color: #15803d;
+        transform: translateY(-2px);
+    }
+    .qr-codes-details {
+        background-color: #f9fafb;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #e5e7eb;
+    }
+    .qr-codes-details ul {
+        max-height: 150px;
+        overflow-y: auto;
+    }
+    .toggle-qr-codes {
+        cursor: pointer;
     }
     @media (max-width: 640px) {
         #products-table table, #reports-table table {
@@ -278,11 +337,14 @@
             width: 60px;
         }
         #save-report {
-            font-size: 14px; /* Ukuran font lebih kecil untuk mobile */
-            padding: 10px 20px; /* Padding lebih kecil untuk mobile */
+            font-size: 14px;
+            padding: 10px 20px;
         }
         #reports-table h3 {
-            font-size: 14px; /* Ukuran font lebih kecil untuk header brand di mobile */
+            font-size: 14px;
+        }
+        .qr-codes-details {
+            font-size: 12px;
         }
     }
 </style>
@@ -291,12 +353,14 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const previousPhysicalStocks = @json($previousPhysicalStocks ?? []);
+    const reports = @json($reports ?? []);
     const startScannerBtn = document.getElementById('start-scanner');
     const stopScannerBtn = document.getElementById('stop-scanner');
     const scannerContainer = document.getElementById('scanner-container');
     const barcodeInput = document.getElementById('barcode-input');
     const productsTable = document.getElementById('products-table');
     const saveReportBtn = document.getElementById('save-report');
+    const reportsTable = document.getElementById('reports-table');
     const scannedList = document.createElement('div');
     scannerContainer.parentNode.insertBefore(scannedList, scannerContainer.nextSibling);
     scannedList.className = 'mt-4';
@@ -304,18 +368,41 @@ document.addEventListener('DOMContentLoaded', function() {
     let html5QrCode = null;
     let scannedProducts = {};
     let scannedQRCodes = new Set();
-    let scanTimeout = null;
-    let lastScanTime = 0;
+    let previouslyScannedQRCodes = new Set();
+
+    // Inisialisasi QR code yang sudah discan dari laporan sebelumnya
+    reports.forEach(report => {
+        if (report.scanned_qr_codes) {
+            report.scanned_qr_codes.forEach(qrCode => {
+                previouslyScannedQRCodes.add(qrCode);
+            });
+        }
+    });
 
     // Reset state saat halaman dimuat
     scannedProducts = {};
     scannedQRCodes.clear();
     updateProductsTable();
 
+    // Event delegation untuk tombol toggle-qr-codes
+    reportsTable.addEventListener('click', function(event) {
+        const button = event.target.closest('.toggle-qr-codes');
+        if (button) {
+            const index = button.dataset.index;
+            const details = document.querySelector(`.qr-codes-details[data-index="${index}"]`);
+            if (details) {
+                console.log('Toggling QR codes for index:', index);
+                details.classList.toggle('hidden');
+                button.textContent = details.classList.contains('hidden') ? 'Lihat QR Codes' : 'Sembunyikan QR Codes';
+            } else {
+                console.warn('QR codes details not found for index:', index);
+            }
+        }
+    });
+
     startScannerBtn.addEventListener('click', async () => {
         try {
             console.log('Starting scanner, resetting state...');
-            // Reset state sebelum memulai
             scannedProducts = {};
             scannedQRCodes.clear();
             updateProductsTable();
@@ -361,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 onScanSuccess(decodedText);
                 barcodeInput.value = '';
                 barcodeInput.focus();
-            }, 500); // Debounce 500ms
+            }, 500);
         }
     });
 
@@ -379,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentTime = Date.now();
         if (currentTime - lastScanTime < 500) {
             console.log('Scan ignored: too soon after last scan');
-            return; // Abaikan scan dalam 500ms
+            return;
         }
         lastScanTime = currentTime;
 
@@ -399,6 +486,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const productId = urlParts[productIndex + 1];
         if (!/^\d+$/.test(productId)) {
             showAlert('error', 'ID produk tidak valid.');
+            return;
+        }
+
+        // Cek apakah QR code sudah ada di laporan sebelumnya
+        if (previouslyScannedQRCodes.has(decodedText)) {
+            showAlert('warning', 'QR code ini sudah dilaporkan sebelumnya dan tidak dapat discan ulang.');
             return;
         }
 
@@ -426,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Duplicate scan detected:', decodedText);
             if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
                 addScannedItem(decodedText, false);
-                showAlert('warning', 'QR code ini sudah dipindai.');
+                showAlert('warning', 'QR code ini sudah dipindai dalam sesi ini.');
             }
         }
     }
@@ -535,13 +628,12 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         productsTable.innerHTML = html;
 
-        // Log untuk debugging visibilitas tombol
         console.log('Scanned products count:', Object.keys(scannedProducts).length, 'Save report button hidden:', saveReportBtn.classList.contains('hidden'));
         saveReportBtn.classList.toggle('hidden', Object.keys(scannedProducts).length === 0);
         if (Object.keys(scannedProducts).length > 0) {
-            saveReportBtn.style.display = 'inline-block'; // Pastikan tombol terlihat
+            saveReportBtn.style.display = 'inline-block';
         } else {
-            saveReportBtn.style.display = 'none'; // Pastikan tombol tersembunyi
+            saveReportBtn.style.display = 'none';
         }
 
         document.querySelectorAll('.physical-stock-input').forEach(input => {
@@ -608,6 +700,7 @@ document.addEventListener('DOMContentLoaded', function() {
             system_stock: product.systemStock,
             physical_stock: product.count,
             difference: product.count - product.systemStock,
+            scanned_qr_codes: Array.from(product.qrCodes)
         }));
 
         const totalPhysicalStock = report.reduce((sum, item) => sum + item.physical_stock, 0);
@@ -627,6 +720,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 const message = `Laporan berhasil disimpan! ${report.length} produk dilaporkan. Total stok fisik: ${totalPhysicalStock} unit, stok sistem: ${totalSystemStock} unit, selisih: ${totalDifference >= 0 ? '+' : ''}${totalDifference} unit.`;
                 showAlert('success', message);
+                // Tambahkan QR code yang baru disimpan ke previouslyScannedQRCodes
+                report.forEach(item => {
+                    item.scanned_qr_codes.forEach(qrCode => {
+                        previouslyScannedQRCodes.add(qrCode);
+                    });
+                });
                 resetScanner();
                 window.location.reload();
             } else {
@@ -652,7 +751,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 productsTable.innerHTML = '';
                 scannedList.innerHTML = '';
                 saveReportBtn.classList.add('hidden');
-                saveReportBtn.style.display = 'none'; // Pastikan tombol tersembunyi
+                saveReportBtn.style.display = 'none';
                 barcodeInput.blur();
                 console.log('Scanner reset complete');
             }).catch(err => {
@@ -666,7 +765,7 @@ document.addEventListener('DOMContentLoaded', function() {
             productsTable.innerHTML = '';
             scannedList.innerHTML = '';
             saveReportBtn.classList.add('hidden');
-            saveReportBtn.style.display = 'none'; // Pastikan tombol tersembunyi
+            saveReportBtn.style.display = 'none';
             barcodeInput.blur();
             console.log('Scanner reset complete (no html5QrCode)');
         }
@@ -729,6 +828,22 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Item already in scannedList:', decodedText);
         }
     }
+
+    // Event delegation untuk tombol toggle-qr-codes
+    reportsTable.addEventListener('click', function(event) {
+        const button = event.target.closest('.toggle-qr-codes');
+        if (button) {
+            const index = button.dataset.index;
+            const details = document.querySelector(`.qr-codes-details[data-index="${index}"]`);
+            if (details) {
+                console.log('Toggling QR codes for index:', index);
+                details.classList.toggle('hidden');
+                button.textContent = details.classList.contains('hidden') ? 'Lihat QR Codes' : 'Sembunyikan QR Codes';
+            } else {
+                console.warn('QR codes details not found for index:', index);
+            }
+        }
+    });
 });
 </script>
 @endsection

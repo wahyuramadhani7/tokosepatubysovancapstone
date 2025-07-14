@@ -262,12 +262,13 @@ class TransactionController extends Controller
         return view('transactions.print', compact('transaction'));
     }
 
-    public function report(Request $request)
+     public function report(Request $request)
     {
         $date = $request->input('date', Carbon::today('Asia/Jakarta')->format('Y-m-d'));
         $month = $request->input('month', Carbon::today('Asia/Jakarta')->format('m'));
         $year = $request->input('year', Carbon::today('Asia/Jakarta')->format('Y'));
         $reportType = $request->input('report_type', 'daily');
+        $productSearch = $request->input('product_search');
 
         $query = Transaction::with(['user', 'items.product', 'items.productUnit']);
 
@@ -282,6 +283,13 @@ class TransactionController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
+        // Filter berdasarkan nama produk jika ada input pencarian
+        if ($productSearch) {
+            $query->whereHas('items.product', function ($q) use ($productSearch) {
+                $q->where('name', 'like', '%' . $productSearch . '%');
+            });
+        }
+
         $transactions = $query->latest()->get();
         $totalSales = $transactions->sum('final_amount');
         $totalTransactions = $transactions->count();
@@ -290,7 +298,18 @@ class TransactionController extends Controller
             return $transaction->items->sum('quantity');
         });
 
-        return view('transactions.report', compact('transactions', 'totalSales', 'totalTransactions', 'totalDiscount', 'totalProductsSold', 'date', 'month', 'year', 'reportType'));
+        return view('transactions.report', compact(
+            'transactions',
+            'totalSales',
+            'totalTransactions',
+            'totalDiscount',
+            'totalProductsSold',
+            'date',
+            'month',
+            'year',
+            'reportType',
+            'productSearch' // Kirim variabel productSearch ke view untuk mempertahankan input
+        ));
     }
 
     public function addProductByQr($unitCode)

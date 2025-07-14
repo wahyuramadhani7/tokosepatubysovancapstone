@@ -68,10 +68,10 @@
         .rounded-custom {
             border-radius: 1rem;
         }
-        input[type="date"], select {
+        input[type="date"], input[type="text"], select {
             transition: all 0.3s ease;
         }
-        input[type="date"]:focus, select:focus {
+        input[type="date"]:focus, input[type="text"]:focus, select:focus {
             border-color: #4f46e5;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
         }
@@ -203,6 +203,15 @@
                         </div>
                     </div>
                 @endif
+                <div>
+                    <label for="product_search" class="block text-sm font-semibold text-gray-700 mb-2">Cari Produk</label>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                        <input type="text" name="product_search" id="product_search" value="{{ $productSearch ?? '' }}"
+                               placeholder="Masukkan nama produk"
+                               class="pl-12 mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
             </div>
             <div class="mt-6">
                 <button type="submit"
@@ -318,7 +327,14 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @foreach ($transaction->items as $item)
+                                                    @php
+                                                        $filteredItems = $productSearch
+                                                            ? $transaction->items->filter(function ($item) use ($productSearch) {
+                                                                  return stripos($item->product->name ?? '', $productSearch) !== false;
+                                                              })
+                                                            : $transaction->items;
+                                                    @endphp
+                                                    @forelse ($filteredItems as $item)
                                                         <tr>
                                                             <td class="text-sm text-gray-600">{{ $item->product->name ?? '-' }}</td>
                                                             <td class="text-sm text-gray-600">{{ $item->product->size ?? '-' }}</td>
@@ -326,7 +342,11 @@
                                                             <td class="text-sm text-gray-600">{{ $item->productUnit->unit_code ?? '-' }}</td>
                                                             <td class="text-sm text-gray-600">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                                                         </tr>
-                                                    @endforeach
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="5" class="text-sm text-gray-600 text-center">Tidak ada produk yang cocok.</td>
+                                                        </tr>
+                                                    @endforelse
                                                 </tbody>
                                             </table>
                                         </td>
@@ -361,7 +381,13 @@
                     </p>
                     <p class="text-sm font-semibold text-gray-600">Total Produk Terjual ({{ ucfirst($method === 'qris' ? 'QRIS' : $method) }}): 
                         <span class="text-lg font-bold text-gray-800">
-                            {{ $methodTransactions->sum(function ($transaction) { return $transaction->items->sum('quantity'); }) }}
+                            {{ $methodTransactions->sum(function ($transaction) use ($productSearch) {
+                                return $productSearch
+                                    ? $transaction->items->filter(function ($item) use ($productSearch) {
+                                          return stripos($item->product->name ?? '', $productSearch) !== false;
+                                      })->sum('quantity')
+                                    : $transaction->items->sum('quantity');
+                            }) }}
                         </span>
                     </p>
                 </div>
@@ -412,7 +438,14 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        @foreach ($transaction->items as $item)
+                                                        @php
+                                                            $filteredItems = $productSearch
+                                                                ? $transaction->items->filter(function ($item) use ($productSearch) {
+                                                                      return stripos($item->product->name ?? '', $productSearch) !== false;
+                                                                  })
+                                                                : $transaction->items;
+                                                        @endphp
+                                                        @forelse ($filteredItems as $item)
                                                             <tr>
                                                                 <td class="text-sm text-gray-600">{{ $item->product->name ?? '-' }}</td>
                                                                 <td class="text-sm text-gray-600">{{ $item->product->size ?? '-' }}</td>
@@ -420,7 +453,11 @@
                                                                 <td class="text-sm text-gray-600">{{ $item->productUnit->unit_code ?? '-' }}</td>
                                                                 <td class="text-sm text-gray-600">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                                                             </tr>
-                                                        @endforeach
+                                                        @empty
+                                                            <tr>
+                                                                <td colspan="5" class="text-sm text-gray-600 text-center">Tidak ada produk yang cocok.</td>
+                                                            </tr>
+                                                        @endforelse
                                                     </tbody>
                                                 </table>
                                             </td>
@@ -455,7 +492,13 @@
                         </p>
                         <p class="text-sm font-semibold text-gray-600">Total Produk Terjual (Debit {{ $cardType }}): 
                             <span class="text-lg font-bold text-gray-800">
-                                {{ $paymentMethods[$method]->sum(function ($transaction) { return $transaction->items->sum('quantity'); }) }}
+                                {{ $paymentMethods[$method]->sum(function ($transaction) use ($productSearch) {
+                                    return $productSearch
+                                        ? $transaction->items->filter(function ($item) use ($productSearch) {
+                                              return stripos($item->product->name ?? '', $productSearch) !== false;
+                                          })->sum('quantity')
+                                        : $transaction->items->sum('quantity');
+                                }) }}
                             </span>
                         </p>
                     </div>
@@ -514,7 +557,19 @@
             }
         });
 
-        // Submit form when month or year changes
+        // Submit form when month, year, user_id, or product_search changes
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         document.getElementById('month').addEventListener('change', function() {
             document.getElementById('filter-form').submit();
         });
@@ -524,6 +579,9 @@
         document.getElementById('user_id').addEventListener('change', function() {
             document.getElementById('filter-form').submit();
         });
+        document.getElementById('product_search').addEventListener('input', debounce(function() {
+            document.getElementById('filter-form').submit();
+        }, 500));
     </script>
 </body>
 </html>
