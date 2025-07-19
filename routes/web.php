@@ -69,6 +69,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/inventory/save-report', [InventoryController::class, 'saveReport'])->name('inventory.save_report');
 Route::delete('/inventory/delete-report/{index}', [InventoryController::class, 'deleteReport'])->name('inventory.delete_report');
 Route::delete('inventory/delete-all-reports', [InventoryController::class, 'deleteAllReports'])->name('inventory.delete_all_reports');
+Route::get('/inventory/stock-opname/reports', [InventoryController::class, 'getReports'])->name('inventory.stock_opname.reports');
+Route::get('/inventory/{id}/json', [InventoryController::class, 'getProductJson'])->name('inventory.json');
     });
 
     // Transactions Routes

@@ -59,6 +59,10 @@
             transform: rotate(360deg);
         }
 
+        .uppercase-text {
+            text-transform: uppercase;
+        }
+
         @media print {
             body * {
                 visibility: hidden;
@@ -105,6 +109,9 @@
                 word-break: break-word !important;
                 max-width: 40mm !important;
             }
+            .uppercase-text {
+                text-transform: uppercase !important;
+            }
             .text-sm.font-bold.text-red-600 {
                 font-size: 0.6rem !important;
                 font-weight: 700 !important;
@@ -131,7 +138,7 @@
             <!-- Header -->
             <div class="text-center mb-8 animate__animated animate__fadeInDown">
                 <h1 class="text-4xl font-extrabold header-title">Cetak QR Code</h1>
-                <p class="text-lg text-gray-700 mt-2 animate__animated animate__fadeIn">
+                <p class="text-lg text-gray-700 mt-2 animate__animated animate__fadeIn uppercase-text">
                     Produk: {{ $product->name ?? 'Tidak Diketahui' }} - Toko Sepatu By Sovan
                 </p>
                 @if(count($product->productUnits) < $product->productUnits()->where('is_active', true)->count())
@@ -153,9 +160,9 @@
                             <div class="text-xs text-red-500 text-center font-medium" style="display: none;">Gagal Memuat QR</div>
                         </div>
                         <div class="text-center w-full">
-                            <p class="text-xs font-semibold text-gray-800 m-0" style="line-height: 1.2; word-break: break-word;">{{ $product->name ?? '-' }}</p>
+                            <p class="text-xs font-semibold text-gray-800 m-0 uppercase-text" style="line-height: 1.2; word-break: break-word;">{{ $product->name ?? '-' }}</p>
                             <p class="text-xs text-gray-600 m-0" style="line-height: 1.2;">Unit: {{ $unit->unit_code ?? '-' }}</p>
-                            <p class="text-xs text-gray-600 m-0" style="line-height: 1.2;">Ukuran: {{ $product->size ?? '-' }} | Warna: {{ $product->color ?? '-' }}</p>
+                            <p class="text-xs text-gray-600 m-0 uppercase-text" style="line-height: 1.2;">Ukuran: {{ $product->size ?? '-' }} | Warna: {{ $product->color ?? '-' }}</p>
                             @if ($product->discount_price)
                                 <p class="text-sm font-bold text-red-600 m-0" style="line-height: 1.2;">Harga Diskon: Rp {{ number_format($product->discount_price, 0, ',', '.') }}</p>
                                 <p class="text-sm font-bold text-black m-0" style="line-height: 1.2;"><s>Harga Asli: Rp {{ number_format($product->selling_price ?? 0, 0, ',', '.') }}</s></p>

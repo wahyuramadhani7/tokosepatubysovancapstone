@@ -55,9 +55,11 @@
                     @if(!empty($reports))
                         @php
                             $groupedReports = [];
+                            $brandQuantities = [];
                             foreach ($reports as $index => $report) {
                                 $brand = explode(' ', $report['name'])[0];
                                 $groupedReports[$brand][] = ['index' => $index, 'report' => $report];
+                                $brandQuantities[$brand] = ($brandQuantities[$brand] ?? 0) + $report['physical_stock'];
                             }
                             ksort($groupedReports);
                             foreach ($groupedReports as $brand => $reports) {
@@ -70,12 +72,7 @@
                             $totalDifference = 0;
                         @endphp
                         @foreach($groupedReports as $brand => $brandReports)
-                            @php
-                                $brandSystemStock = 0;
-                                $brandPhysicalStock = 0;
-                                $brandDifference = 0;
-                            @endphp
-                            <h3 class="text-md font-semibold text-gray-800 mt-4 mb-2">{{ $brand }}</h3>
+                            <h3 class="text-md font-semibold text-gray-800 mt-4 mb-2">{{ $brand }} (Total Quantity: {{ $brandQuantities[$brand] }})</h3>
                             <table class="w-full border-collapse text-sm mb-6">
                                 <thead>
                                     <tr class="bg-gray-200">
@@ -98,9 +95,6 @@
                                             $totalSystemStock += $report['system_stock'];
                                             $totalPhysicalStock += $report['physical_stock'];
                                             $totalDifference += $report['difference'];
-                                            $brandSystemStock += $report['system_stock'];
-                                            $brandPhysicalStock += $report['physical_stock'];
-                                            $brandDifference += $report['difference'];
                                         @endphp
                                         <tr class="hover:bg-gray-100">
                                             <td class="p-3 border border-gray-300">{{ \Carbon\Carbon::parse($report['timestamp'])->format('d/m/Y H:i') }}</td>
@@ -149,17 +143,6 @@
                                         </tr>
                                     @endforeach
                                 </tbody>
-                            </table>
-                            <table class="w-full border-collapse text-sm mb-6">
-                                <tr class="font-bold bg-gray-200">
-                                    <td class="p-3 border border-gray-300" colspan="4">Total {{ $brand }}</td>
-                                    <td class="p-3 border border-gray-300">{{ $brandSystemStock }}</td>
-                                    <td class="p-3 border border-gray-300">{{ $brandPhysicalStock }}</td>
-                                    <td class="p-3 border border-gray-300 {{ $brandDifference < 0 ? 'text-red-500' : ($brandDifference > 0 ? 'text-yellow-500' : 'text-green-500') }}">
-                                        {{ $brandDifference > 0 ? '+' : '' }}{{ $brandDifference }}
-                                    </td>
-                                    <td class="p-3 border border-gray-300" colspan="2"></td>
-                                </tr>
                             </table>
                         @endforeach
                         <table class="w-full border-collapse text-sm">
@@ -353,7 +336,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const previousPhysicalStocks = @json($previousPhysicalStocks ?? []);
-    const reports = @json($reports ?? []);
     const startScannerBtn = document.getElementById('start-scanner');
     const stopScannerBtn = document.getElementById('stop-scanner');
     const scannerContainer = document.getElementById('scanner-container');
@@ -368,16 +350,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let html5QrCode = null;
     let scannedProducts = {};
     let scannedQRCodes = new Set();
-    let previouslyScannedQRCodes = new Set();
-
-    // Inisialisasi QR code yang sudah discan dari laporan sebelumnya
-    reports.forEach(report => {
-        if (report.scanned_qr_codes) {
-            report.scanned_qr_codes.forEach(qrCode => {
-                previouslyScannedQRCodes.add(qrCode);
-            });
-        }
-    });
+    let scanTimeout = null;
+    let lastScanTime = 0;
 
     // Reset state saat halaman dimuat
     scannedProducts = {};
@@ -489,12 +463,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Cek apakah QR code sudah ada di laporan sebelumnya
-        if (previouslyScannedQRCodes.has(decodedText)) {
-            showAlert('warning', 'QR code ini sudah dilaporkan sebelumnya dan tidak dapat discan ulang.');
-            return;
-        }
-
         const isNewScan = !scannedQRCodes.has(decodedText);
         if (isNewScan) {
             scannedQRCodes.add(decodedText);
@@ -519,7 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Duplicate scan detected:', decodedText);
             if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
                 addScannedItem(decodedText, false);
-                showAlert('warning', 'QR code ini sudah dipindai dalam sesi ini.');
+                showAlert('warning', 'QR code ini sudah dipindai.');
             }
         }
     }
@@ -720,12 +688,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 const message = `Laporan berhasil disimpan! ${report.length} produk dilaporkan. Total stok fisik: ${totalPhysicalStock} unit, stok sistem: ${totalSystemStock} unit, selisih: ${totalDifference >= 0 ? '+' : ''}${totalDifference} unit.`;
                 showAlert('success', message);
-                // Tambahkan QR code yang baru disimpan ke previouslyScannedQRCodes
-                report.forEach(item => {
-                    item.scanned_qr_codes.forEach(qrCode => {
-                        previouslyScannedQRCodes.add(qrCode);
-                    });
-                });
                 resetScanner();
                 window.location.reload();
             } else {
@@ -828,22 +790,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Item already in scannedList:', decodedText);
         }
     }
-
-    // Event delegation untuk tombol toggle-qr-codes
-    reportsTable.addEventListener('click', function(event) {
-        const button = event.target.closest('.toggle-qr-codes');
-        if (button) {
-            const index = button.dataset.index;
-            const details = document.querySelector(`.qr-codes-details[data-index="${index}"]`);
-            if (details) {
-                console.log('Toggling QR codes for index:', index);
-                details.classList.toggle('hidden');
-                button.textContent = details.classList.contains('hidden') ? 'Lihat QR Codes' : 'Sembunyikan QR Codes';
-            } else {
-                console.warn('QR codes details not found for index:', index);
-            }
-        }
-    });
 });
 </script>
 @endsection

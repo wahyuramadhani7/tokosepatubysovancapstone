@@ -852,23 +852,14 @@ class InventoryController extends Controller
             'reports.*.system_stock' => 'required|integer',
             'reports.*.physical_stock' => 'required|integer',
             'reports.*.difference' => 'required|integer',
-            'reports.*.scanned_qr_codes' => 'nullable|array',
-            'reports.*.scanned_qr_codes.*' => 'string',
+            'reports.*.scanned_qr_codes' => 'nullable|array', // Validasi untuk QR code yang discan
+            'reports.*.scanned_qr_codes.*' => 'string', // Setiap QR code adalah string
         ]);
 
         try {
             $reports = Cache::get('stock_opname_reports', []);
             $brandNames = session('brand_names', []);
-
-            // Kumpulkan semua QR code yang sudah dilaporkan
-            $previouslyScannedQRCodes = [];
-            foreach ($reports as $report) {
-                if (!empty($report['scanned_qr_codes'])) {
-                    $previouslyScannedQRCodes = array_merge($previouslyScannedQRCodes, $report['scanned_qr_codes']);
-                }
-            }
-            $previouslyScannedQRCodes = array_unique($previouslyScannedQRCodes);
-
+            
             // Index laporan berdasarkan product_id untuk menghindari duplikat
             $existingReports = [];
             foreach ($reports as $report) {
@@ -878,17 +869,7 @@ class InventoryController extends Controller
             foreach ($validated['reports'] as $report) {
                 $product = Product::find($report['product_id']);
                 $scannedQRCodes = $report['scanned_qr_codes'] ?? [];
-
-                // Validasi QR code untuk mencegah duplikasi
-                foreach ($scannedQRCodes as $qrCode) {
-                    if (in_array($qrCode, $previouslyScannedQRCodes)) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => "QR code $qrCode sudah dilaporkan sebelumnya dan tidak dapat digunakan lagi."
-                        ], 400);
-                    }
-                }
-
+                
                 // Ambil semua QR code aktif untuk produk
                 $allUnitCodes = [];
                 if ($product) {
@@ -897,12 +878,11 @@ class InventoryController extends Controller
                         ->pluck('unit_code')
                         ->toArray();
                 }
-
+                
                 // Hitung QR code yang belum discan
-                $scannedUnitCodes = array_map(function ($qr) {
+                $unscannedQRCodes = array_diff($allUnitCodes, array_map(function($qr) {
                     return basename(parse_url($qr, PHP_URL_PATH));
-                }, $scannedQRCodes);
-                $unscannedQRCodes = array_diff($allUnitCodes, $scannedUnitCodes);
+                }, $scannedQRCodes));
 
                 if ($report['physical_stock'] == 0 && $product) {
                     DB::beginTransaction();
@@ -938,7 +918,7 @@ class InventoryController extends Controller
 
                 $brand = $brandNames[$report['product_id']] ?? ($report['name'] ? explode(' ', trim($report['name']))[0] : 'Unknown');
                 $model = $report['name'] ? trim(str_replace($brand, '', $report['name'])) : 'Unknown';
-
+                
                 $existingReports[$report['product_id']] = [
                     'product_id' => $report['product_id'],
                     'name' => $report['name'] ?? 'Produk Tidak Diketahui',
@@ -949,8 +929,8 @@ class InventoryController extends Controller
                     'system_stock' => $report['system_stock'],
                     'physical_stock' => $report['physical_stock'],
                     'difference' => $report['difference'],
-                    'scanned_qr_codes' => $scannedQRCodes,
-                    'unscanned_qr_codes' => array_values($unscannedQRCodes),
+                    'scanned_qr_codes' => $scannedQRCodes, // Simpan QR code yang discan
+                    'unscanned_qr_codes' => array_values($unscannedQRCodes), // Simpan QR code yang belum discan
                     'timestamp' => Carbon::now('Asia/Jakarta')->toDateTimeString(),
                 ];
             }
@@ -998,3 +978,5 @@ class InventoryController extends Controller
         }
     }
 }
+
+?>
