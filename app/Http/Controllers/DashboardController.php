@@ -18,6 +18,8 @@ class DashboardController extends Controller
     public function owner()
     {
         $today = Carbon::today('Asia/Jakarta');
+        $currentMonth = Carbon::now('Asia/Jakarta')->startOfMonth();
+        $endOfMonth = Carbon::now('Asia/Jakarta')->endOfMonth();
 
         // Ringkasan transaksi harian
         $recentTransactions = Transaction::with([
@@ -31,17 +33,19 @@ class DashboardController extends Controller
             ->whereDate('created_at', $today)
             ->latest()
             ->get();
+
         $totalTransactions = Transaction::whereDate('created_at', $today)->count();
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
+        
         // Hitung produk dengan minimal satu ProductUnit aktif (stok > 0)
         $totalProducts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })->count();
 
-        // Produk terlaris berdasarkan transaksi hari ini
+        // Produk terlaris berdasarkan transaksi bulan ini
         $topProducts = TransactionItem::select('product_id')
-            ->whereHas('transaction', function ($query) use ($today) {
-                $query->whereDate('created_at', $today);
+            ->whereHas('transaction', function ($query) use ($currentMonth, $endOfMonth) {
+                $query->whereBetween('created_at', [$currentMonth, $endOfMonth]);
             })
             ->with(['product' => function ($query) {
                 $query->select('id', 'name');
@@ -50,12 +54,12 @@ class DashboardController extends Controller
             ->orderByRaw('SUM(quantity) DESC')
             ->take(5)
             ->get()
-            ->map(function ($item) use ($today) {
+            ->map(function ($item) use ($currentMonth, $endOfMonth) {
                 return [
                     'name' => $item->product ? $item->product->name : 'Produk Tidak Dikenal',
                     'quantity' => TransactionItem::where('product_id', $item->product_id)
-                        ->whereHas('transaction', function ($query) use ($today) {
-                            $query->whereDate('created_at', $today);
+                        ->whereHas('transaction', function ($query) use ($currentMonth, $endOfMonth) {
+                            $query->whereBetween('created_at', [$currentMonth, $endOfMonth]);
                         })
                         ->sum('quantity'),
                 ];
@@ -97,6 +101,8 @@ class DashboardController extends Controller
     public function employee()
     {
         $today = Carbon::today('Asia/Jakarta');
+        $currentMonth = Carbon::now('Asia/Jakarta')->startOfMonth();
+        $endOfMonth = Carbon::now('Asia/Jakarta')->endOfMonth();
 
         // Ringkasan transaksi harian
         $recentTransactions = Transaction::with([
@@ -110,17 +116,19 @@ class DashboardController extends Controller
             ->whereDate('created_at', $today)
             ->latest()
             ->get();
+
         $totalTransactions = Transaction::whereDate('created_at', $today)->count();
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
+        
         // Hitung produk dengan minimal satu ProductUnit aktif (stok > 0)
         $totalProducts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })->count();
 
-        // Produk terlaris berdasarkan transaksi hari ini
+        // Produk terlaris berdasarkan transaksi bulan ini
         $topProducts = TransactionItem::select('product_id')
-            ->whereHas('transaction', function ($query) use ($today) {
-                $query->whereDate('created_at', $today);
+            ->whereHas('transaction', function ($query) use ($currentMonth, $endOfMonth) {
+                $query->whereBetween('created_at', [$currentMonth, $endOfMonth]);
             })
             ->with(['product' => function ($query) {
                 $query->select('id', 'name');
@@ -129,12 +137,12 @@ class DashboardController extends Controller
             ->orderByRaw('SUM(quantity) DESC')
             ->take(5)
             ->get()
-            ->map(function ($item) use ($today) {
+            ->map(function ($item) use ($currentMonth, $endOfMonth) {
                 return [
                     'name' => $item->product ? $item->product->name : 'Produk Tidak Dikenal',
                     'quantity' => TransactionItem::where('product_id', $item->product_id)
-                        ->whereHas('transaction', function ($query) use ($today) {
-                            $query->whereDate('created_at', $today);
+                        ->whereHas('transaction', function ($query) use ($currentMonth, $endOfMonth) {
+                            $query->whereBetween('created_at', [$currentMonth, $endOfMonth]);
                         })
                         ->sum('quantity'),
                 ];
@@ -239,5 +247,28 @@ class DashboardController extends Controller
         $user->delete();
 
         return redirect()->route('owner.employee-accounts')->with('success', 'Employee deleted successfully.');
+    }
+
+    // Method tambahan untuk optimasi performance (opsional)
+    private function getTopProductsOptimized($currentMonth, $endOfMonth)
+    {
+        return DB::table('transaction_items')
+            ->join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+            ->join('products', 'transaction_items.product_id', '=', 'products.id')
+            ->whereBetween('transactions.created_at', [$currentMonth, $endOfMonth])
+            ->groupBy('transaction_items.product_id', 'products.name')
+            ->select(
+                'products.name',
+                DB::raw('SUM(transaction_items.quantity) as quantity')
+            )
+            ->orderByDesc('quantity')
+            ->limit(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'quantity' => (int) $item->quantity
+                ];
+            });
     }
 }

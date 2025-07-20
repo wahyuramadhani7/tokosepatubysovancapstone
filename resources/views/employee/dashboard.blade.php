@@ -8,6 +8,11 @@
         color: #D1D5DB;
         padding: 20px;
     }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
 </style>
 <div class="w-full">
     <!-- Hero Section with Background -->
@@ -85,62 +90,35 @@
                 </div>
             </div>
 
-            <!-- Data Section (Tabel untuk Transaksi Harian dan Produk Terlaris) -->
+            <!-- Data Section (Diagram Batang untuk Transaksi Harian dan Produk Terlaris) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- Tabel untuk Transaksi Harian -->
+                <!-- Diagram Batang untuk Transaksi Harian -->
                 <div class="bg-gray-800 rounded-lg p-5 text-white">
                     <h3 class="text-lg font-semibold mb-1">Transaksi Harian</h3>
                     <p class="text-xs text-gray-400 mb-4">Laporan Transaksi Per Jam Hari Ini (hingga {{ now()->format('H:i') }} WIB)</p>
                     @php
                         $currentHour = now()->hour;
+                        $hasTransactions = !empty($hourlyData) && array_sum(array_slice($hourlyData, 0, $currentHour + 1)) > 0;
                     @endphp
-                    @if(empty($hourlyData) || array_sum(array_slice($hourlyData, 0, $currentHour + 1)) == 0)
+                    @if(!$hasTransactions)
                         <div class="no-data-message">Tidak ada transaksi hari ini hingga {{ now()->format('H:i') }} WIB</div>
                     @else
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th class="px-6 py-3 bg-gray-700 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jam</th>
-                                    <th class="px-6 py-3 bg-gray-700 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Jumlah Transaksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach(array_slice($labels, 0, $currentHour + 1) as $index => $label)
-                                    @if($hourlyData[$index] > 0)
-                                        <tr>
-                                            <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $label }}</td>
-                                            <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $hourlyData[$index] }} transaksi</td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <div class="chart-container">
+                            <canvas id="hourlyTransactionsChart"></canvas>
+                        </div>
                     @endif
                 </div>
 
-                <!-- Tabel untuk Produk Terlaris -->
+                <!-- Diagram Batang untuk Produk Terlaris -->
                 <div class="bg-gray-800 rounded-lg p-5 text-white">
                     <h3 class="text-lg font-semibold mb-1">Produk Terlaris</h3>
-                    <p class="text-xs text-gray-400 mb-4">Laporan Produk Terlaris Hari Ini</p>
+                    <p class="text-xs text-gray-400 mb-4">Laporan Produk Terlaris Bulan Ini ({{ now()->format('F Y') }})</p>
                     @if($topProducts->isEmpty())
-                        <div class="no-data-message">Tidak ada data produk terlaris hari ini</div>
+                        <div class="no-data-message">Tidak ada data produk terlaris bulan ini</div>
                     @else
-                        <table class="min-w-full">
-                            <thead>
-                                <tr>
-                                    <th class="px-6 py-3 bg-gray-700 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Nama Produk</th>
-                                    <th class="px-6 py-3 bg-gray-700 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Kuantitas Terjual</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($topProducts as $product)
-                                    <tr>
-                                        <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $product['name'] }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-300 bg-gray-800">{{ $product['quantity'] }} unit</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <div class="chart-container">
+                            <canvas id="topProductsChart"></canvas>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -189,7 +167,207 @@
     </div>
 </div>
 
-@push('scripts')
-<!-- Tidak ada script karena tidak menggunakan Chart.js -->
-@endpush
+<!-- Inline Script untuk memastikan dimuat -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+    // Debug: Cek apakah Chart.js berhasil dimuat
+    console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, starting chart initialization...');
+        
+        // Debug: Cek elemen canvas ada atau tidak
+        const hourlyCanvas = document.getElementById('hourlyTransactionsChart');
+        const productsCanvas = document.getElementById('topProductsChart');
+        console.log('Hourly canvas found:', hourlyCanvas !== null);
+        console.log('Products canvas found:', productsCanvas !== null);
+
+        // Konfigurasi untuk Chart.js dengan tema gelap
+        if (typeof Chart !== 'undefined') {
+            Chart.defaults.color = '#D1D5DB';
+            Chart.defaults.borderColor = '#374151';
+            Chart.defaults.backgroundColor = '#374151';
+        }
+
+        // Data untuk debugging
+        @php
+            $currentHour = now()->hour;
+            $hasTransactions = !empty($hourlyData) && array_sum(array_slice($hourlyData, 0, $currentHour + 1)) > 0;
+        @endphp
+
+        console.log('Has transactions:', {{ $hasTransactions ? 'true' : 'false' }});
+        console.log('Top products count:', {{ $topProducts->count() ?? 0 }});
+
+        // Fungsi untuk menghasilkan warna random yang cerah
+        function generateColors(count) {
+            const colors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+                '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+                '#F8C471', '#82E0AA', '#F9CA24', '#F0932B', '#EB4D4B',
+                '#6C5CE7', '#A29BFE', '#FD79A8', '#FDCB6E', '#E17055',
+                '#00B894', '#00CEC9', '#6C5CE7', '#A29BFE', '#FD79A8'
+            ];
+            
+            const result = [];
+            for (let i = 0; i < count; i++) {
+                result.push(colors[i % colors.length]);
+            }
+            return result;
+        }
+
+        // Chart untuk Transaksi Harian
+        @if($hasTransactions)
+            try {
+                const hourlyCtx = document.getElementById('hourlyTransactionsChart');
+                if (hourlyCtx) {
+                    const hourlyLabels = @json(array_slice($labels ?? [], 0, $currentHour + 1));
+                    const hourlyDataValues = @json(array_slice($hourlyData ?? [], 0, $currentHour + 1));
+                    
+                    console.log('Hourly labels:', hourlyLabels);
+                    console.log('Hourly data:', hourlyDataValues);
+                    
+                    // Filter data yang memiliki transaksi > 0
+                    const filteredHourlyData = [];
+                    const filteredHourlyLabels = [];
+                    for (let i = 0; i < hourlyDataValues.length; i++) {
+                        if (hourlyDataValues[i] > 0) {
+                            filteredHourlyData.push(hourlyDataValues[i]);
+                            filteredHourlyLabels.push(hourlyLabels[i]);
+                        }
+                    }
+
+                    console.log('Filtered hourly data:', filteredHourlyData);
+                    console.log('Filtered hourly labels:', filteredHourlyLabels);
+
+                    // Generate warna untuk setiap batang
+                    const hourlyColors = generateColors(filteredHourlyData.length);
+
+                    const hourlyChart = new Chart(hourlyCtx.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: filteredHourlyLabels,
+                            datasets: [{
+                                label: 'Jumlah Transaksi',
+                                data: filteredHourlyData,
+                                backgroundColor: hourlyColors,
+                                borderColor: hourlyColors.map(color => color + 'CC'), // Tambahkan transparansi untuk border
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    labels: {
+                                        color: '#D1D5DB'
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        color: '#D1D5DB',
+                                        stepSize: 1
+                                    },
+                                    grid: {
+                                        color: '#374151'
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        color: '#D1D5DB'
+                                    },
+                                    grid: {
+                                        color: '#374151'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    console.log('Hourly chart created successfully');
+                } else {
+                    console.error('Hourly canvas element not found');
+                }
+            } catch (error) {
+                console.error('Error creating hourly chart:', error);
+            }
+        @endif
+
+        // Chart untuk Produk Terlaris
+        @if(!$topProducts->isEmpty())
+            try {
+                const productsCtx = document.getElementById('topProductsChart');
+                if (productsCtx) {
+                    const productLabels = @json($topProducts->pluck('name')->toArray());
+                    const productData = @json($topProducts->pluck('quantity')->toArray());
+
+                    console.log('Product labels:', productLabels);
+                    console.log('Product data:', productData);
+
+                    // Generate warna untuk setiap produk
+                    const productColors = generateColors(productData.length);
+
+                    const productsChart = new Chart(productsCtx.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: productLabels,
+                            datasets: [{
+                                label: 'Kuantitas Terjual',
+                                data: productData,
+                                backgroundColor: productColors,
+                                borderColor: productColors.map(color => color + 'CC'), // Tambahkan transparansi untuk border
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    labels: {
+                                        color: '#D1D5DB'
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        color: '#D1D5DB',
+                                        stepSize: 1
+                                    },
+                                    grid: {
+                                        color: '#374151'
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        color: '#D1D5DB',
+                                        maxRotation: 45,
+                                        minRotation: 0
+                                    },
+                                    grid: {
+                                        color: '#374151'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    console.log('Products chart created successfully');
+                } else {
+                    console.error('Products canvas element not found');
+                }
+            } catch (error) {
+                console.error('Error creating products chart:', error);
+            }
+        @endif
+        
+        console.log('Chart initialization completed');
+    });
+</script>
+
 @endsection
