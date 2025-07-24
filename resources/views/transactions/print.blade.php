@@ -215,7 +215,7 @@
 
         <div class="footer">
             <p>Thank you for your purchase!</p>
-            <p>Barang Yang Tidak Sesuai dapat di Tukarkan.</p>
+            <p>Barang Tidak Sesuai Dapat Dtukarkan, Asalkan Belum Dipakai.</p>
             <p>Gabung grup WhatsApp kami untuk info</p>
             <p>diskon dan penawaran menarik!</p>
             <p>https://chat.whatsapp.com/CSXlDpfDfq92STaQKJ2a58?mode=ac_t</p>
@@ -386,7 +386,7 @@
 
             // Footer
             content += centerText('Thank you for your purchase!') + '\n';
-            content += centerText('Barang dibeli tidak dikembalikan') + '\n';
+            content += centerText('Barang Tidak Sesuai Dapat Ditukarkan, Asalkan Belum Dipakai') + '\n';
             content += centerText('Bisa masuk ke link dibawah ini') + '\n';
             content += centerText('Dapatkan info diskon menarik!') + '\n';
             content += centerText('WA: https://chat.whatsapp.com/CSXlDpfDfq92STaQKJ2a58?mode=ac_t') + '\n\n';

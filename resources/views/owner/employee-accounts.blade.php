@@ -36,7 +36,11 @@
 
         <!-- Account list section -->
         <div class="px-6 py-4">
-            <div class="text-sm font-medium text-gray-600 mb-2">Account Name</div>
+            <div class="grid grid-cols-3 gap-4 text-sm font-medium text-gray-600 mb-2">
+                <div>Account Name</div>
+                <div>Status</div>
+                <div class="text-right">Actions</div>
+            </div>
         </div>
 
         <!-- Empty state for no employees -->
@@ -63,11 +67,14 @@
                     @foreach ($employees as $index => $employee)
                         <div class="hover:bg-gray-50 transition-colors duration-200 {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-100' }}">
                             <div class="px-6 py-4">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="text-sm font-medium text-black">{{ $employee->name }}</div>
+                                <div class="grid grid-cols-3 gap-4 items-center">
+                                    <div class="text-sm font-medium text-black">{{ $employee->name }}</div>
+                                    <div>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $employee->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                            {{ $employee->is_active ? 'Active' : 'Inactive' }}
+                                        </span>
                                     </div>
-                                    <div class="flex space-x-2">
+                                    <div class="flex space-x-2 justify-end">
                                         <a href="{{ route('owner.employee-accounts.edit', $employee->id) }}" 
                                            class="text-gray-600 hover:text-gray-900 transition-colors duration-200">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

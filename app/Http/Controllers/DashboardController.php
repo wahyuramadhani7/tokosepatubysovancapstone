@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -184,6 +185,23 @@ class DashboardController extends Controller
     public function employeeAccounts()
     {
         $employees = User::where('role', 'employee')->get();
+
+        // Ambil semua sesi aktif dari storage sesi
+        $activeSessions = [];
+        if (config('session.driver') === 'database') {
+            $activeSessions = DB::table('sessions')
+                ->whereNotNull('user_id')
+                ->where('last_activity', '>=', now()->subMinutes(config('session.lifetime')))
+                ->pluck('user_id')
+                ->toArray();
+        }
+
+        // Tambahkan status aktif ke setiap employee
+        $employees = $employees->map(function ($employee) use ($activeSessions) {
+            $employee->is_active = in_array($employee->id, $activeSessions);
+            return $employee;
+        });
+
         return view('owner.employee-accounts', compact('employees'));
     }
 
