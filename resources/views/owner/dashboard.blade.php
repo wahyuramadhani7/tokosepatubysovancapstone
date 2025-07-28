@@ -19,14 +19,8 @@
 
     /* Keyframe Animations */
     @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes fadeIn {
@@ -35,113 +29,54 @@
     }
 
     @keyframes slideInFromLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-50px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+        from { opacity: 0; transform: translateX(-50px); }
+        to { opacity: 1; transform: translateX(0); }
     }
 
     @keyframes slideInFromRight {
-        from {
-            opacity: 0;
-            transform: translateX(50px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+        from { opacity: 0; transform: translateX(50px); }
+        to { opacity: 1; transform: translateX(0); }
     }
 
     @keyframes bounceIn {
-        0% {
-            opacity: 0;
-            transform: scale(0.3);
-        }
-        50% {
-            opacity: 1;
-            transform: scale(1.05);
-        }
-        70% {
-            transform: scale(0.9);
-        }
-        100% {
-            opacity: 1;
-            transform: scale(1);
-        }
+        0% { opacity: 0; transform: scale(0.3); }
+        50% { opacity: 1; transform: scale(1.05); }
+        70% { transform: scale(0.9); }
+        100% { opacity: 1; transform: scale(1); }
     }
 
     @keyframes pulse {
-        0% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
-        100% {
-            transform: scale(1);
-        }
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
     }
 
     @keyframes shimmer {
-        0% {
-            background-position: -200px 0;
-        }
-        100% {
-            background-position: calc(200px + 100%) 0;
-        }
+        0% { background-position: -200px 0; }
+        100% { background-position: calc(200px + 100%) 0; }
     }
 
     @keyframes rotateIn {
-        from {
-            transform: rotate(-200deg);
-            opacity: 0;
-        }
-        to {
-            transform: rotate(0deg);
-            opacity: 1;
-        }
+        from { transform: rotate(-200deg); opacity: 0; }
+        to { transform: rotate(0deg); opacity: 1; }
     }
 
     @keyframes countUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 
     /* Animation Classes */
-    .animate-fade-in-up {
-        animation: fadeInUp 0.8s ease-out forwards;
-        opacity: 0;
-    }
-
-    .animate-slide-in-left {
-        animation: slideInFromLeft 0.8s ease-out forwards;
-        opacity: 0;
-    }
-
-    .animate-slide-in-right {
-        animation: slideInFromRight 0.8s ease-out forwards;
-        opacity: 0;
-    }
-
-    .animate-bounce-in {
-        animation: bounceIn 0.8s ease-out forwards;
-        opacity: 0;
-    }
-
-    .animate-rotate-in {
-        animation: rotateIn 0.6s ease-out forwards;
-        opacity: 0;
-    }
+    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; }
+    .animate-slide-in-left { animation: slideInFromLeft 0.8s ease-out forwards; opacity: 0; }
+    .animate-slide-in-right { animation: slideInFromRight 0.8s ease-out forwards; opacity: 0; }
+    .animate-bounce-in { animation: bounceIn 0.8s ease-out forwards; opacity: 0; }
+    .animate-rotate-in { animation: rotateIn 0.6s ease-out forwards; opacity: 0; }
 
     /* Hover Effects */
     .card-hover {
@@ -154,26 +89,17 @@
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
 
-    .icon-bounce:hover {
-        animation: pulse 0.6s ease-in-out infinite;
-    }
+    .icon-bounce:hover { animation: pulse 0.6s ease-in-out infinite; }
 
     /* Shimmer Effect */
     .shimmer {
-        background: linear-gradient(
-            110deg,
-            transparent 40%,
-            rgba(255, 255, 255, 0.2) 50%,
-            transparent 60%
-        );
+        background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.2) 50%, transparent 60%);
         background-size: 200px 100%;
         animation: shimmer 2s infinite linear;
     }
 
     /* Chart Animation */
-    .chart-fade-in {
-        animation: fadeIn 1.2s ease-in-out;
-    }
+    .chart-fade-in { animation: fadeIn 1.2s ease-in-out; }
 
     /* Table Row Animation */
     .table-row {
@@ -188,15 +114,10 @@
     .table-row:nth-child(5) { animation-delay: 0.5s; }
 
     /* Hero Animation */
-    .hero-content {
-        animation: fadeIn 1.5s ease-in-out, pulse 2s ease-in-out infinite;
-    }
+    .hero-content { animation: fadeIn 1.5s ease-in-out; }
 
     /* Number Counter Animation */
-    .counter-number {
-        animation: countUp 1s ease-out forwards;
-        opacity: 0;
-    }
+    .counter-number { animation: countUp 1s ease-out forwards; opacity: 0; }
 
     /* Loading Animation for Charts */
     .chart-loading {
@@ -216,11 +137,6 @@
         animation: spin 1s linear infinite;
     }
 
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
     /* Staggered Animation Delays */
     .animate-delay-100 { animation-delay: 0.1s; }
     .animate-delay-200 { animation-delay: 0.2s; }
@@ -228,11 +144,10 @@
     .animate-delay-400 { animation-delay: 0.4s; }
     .animate-delay-500 { animation-delay: 0.5s; }
     .animate-delay-600 { animation-delay: 0.6s; }
+    .animate-delay-700 { animation-delay: 0.7s; }
 
     /* Smooth transitions for all interactive elements */
-    * {
-        transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
-    }
+    * { transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; }
 </style>
 
 <div class="w-full">
@@ -255,10 +170,10 @@
             <div class="mb-8">
                 <h2 class="text-2xl font-bold text-center mb-6 animate-fade-in-up animate-delay-200">LAPORAN HARIAN</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Total Product Card -->
+                    <!-- Total Units Card -->
                     <div class="border border-blue-300 rounded-lg overflow-hidden card-hover animate-slide-in-left animate-delay-300">
                         <div class="bg-blue-50 px-4 py-2 shimmer">
-                            <h3 class="text-gray-800 font-medium">Total Produk</h3>
+                            <h3 class="text-gray-800 font-medium">Total Unit</h3>
                         </div>
                         <div class="flex">
                             <div class="p-4 bg-white flex items-center justify-center icon-bounce" style="width: 5rem;">
@@ -268,7 +183,7 @@
                                 </svg>
                             </div>
                             <div class="flex-grow p-4 bg-gray-800 flex items-center justify-center">
-                                <span class="text-white text-xl font-bold counter-number animate-delay-500">{{ $totalProducts }}</span>
+                                <span class="text-white text-xl font-bold counter-number animate-delay-500">{{ $totalUnits }}</span>
                             </div>
                         </div>
                     </div>
@@ -313,8 +228,8 @@
                 </div>
             </div>
 
-            <!-- Data Section (Diagram Batang untuk Transaksi Harian dan Produk Terlaris) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Data Section (Diagram Batang untuk Transaksi Harian, Produk Terlaris, dan Distribusi Unit per Brand) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <!-- Diagram Batang untuk Transaksi Harian -->
                 <div class="bg-gray-800 rounded-lg p-5 text-white card-hover animate-slide-in-left animate-delay-600">
                     <h3 class="text-lg font-semibold mb-1">Transaksi Harian</h3>
@@ -341,6 +256,23 @@
                     @else
                         <div class="chart-container chart-fade-in">
                             <canvas id="topProductsChart"></canvas>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Diagram untuk Distribusi Unit per Brand -->
+                <div class="bg-gray-800 rounded-lg p-5 text-white card-hover animate-bounce-in animate-delay-800">
+                    <h3 class="text-lg font-semibold mb-1">Distribusi Unit per Brand</h3>
+                    <p class="text-xs text-gray-400 mb-4">Jumlah Unit per Brand ({{ now()->format('F Y') }})</p>
+                    @php
+                        $brandCounts = app(App\Http\Controllers\InventoryController::class)->index()->getData()['brandCounts'];
+                        $hasBrandData = !empty($brandCounts) && $brandCounts->sum() > 0;
+                    @endphp
+                    @if(!$hasBrandData)
+                        <div class="no-data-message">Tidak ada data unit per brand</div>
+                    @else
+                        <div class="chart-container chart-fade-in">
+                            <canvas id="brandUnitsChart"></canvas>
                         </div>
                     @endif
                 </div>
@@ -397,18 +329,10 @@
 <!-- Inline Script untuk memastikan dimuat -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-    // Debug: Cek apakah Chart.js berhasil dimuat
-    console.log('Chart.js loaded:', typeof Chart !== 'undefined');
-    
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, starting chart initialization...');
+        // Debug: Cek apakah Chart.js berhasil dimuat
+        console.log('Chart.js loaded:', typeof Chart !== 'undefined');
         
-        // Debug: Cek elemen canvas ada atau tidak
-        const hourlyCanvas = document.getElementById('hourlyTransactionsChart');
-        const productsCanvas = document.getElementById('topProductsChart');
-        console.log('Hourly canvas found:', hourlyCanvas !== null);
-        console.log('Products canvas found:', productsCanvas !== null);
-
         // Konfigurasi untuk Chart.js dengan tema gelap
         if (typeof Chart !== 'undefined') {
             Chart.defaults.color = '#D1D5DB';
@@ -416,16 +340,7 @@
             Chart.defaults.backgroundColor = '#374151';
         }
 
-        // Data untuk debugging
-        @php
-            $currentHour = now()->hour;
-            $hasTransactions = !empty($hourlyData) && array_sum(array_slice($hourlyData, 0, $currentHour + 1)) > 0;
-        @endphp
-
-        console.log('Has transactions:', {{ $hasTransactions ? 'true' : 'false' }});
-        console.log('Top products count:', {{ $topProducts->count() ?? 0 }});
-
-        // Fungsi untuk menghasilkan warna random yang cerah
+        // Fungsi untuk menghasilkan warna cerah
         function generateColors(count) {
             const colors = [
                 '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
@@ -434,7 +349,6 @@
                 '#6C5CE7', '#A29BFE', '#FD79A8', '#FDCB6E', '#E17055',
                 '#00B894', '#00CEC9', '#6C5CE7', '#A29BFE', '#FD79A8'
             ];
-            
             const result = [];
             for (let i = 0; i < count; i++) {
                 result.push(colors[i % colors.length]);
@@ -452,15 +366,16 @@
         }
 
         // Chart untuk Transaksi Harian
+        @php
+            $currentHour = now()->hour;
+            $hasTransactions = !empty($hourlyData) && array_sum(array_slice($hourlyData, 0, $currentHour + 1)) > 0;
+        @endphp
         @if($hasTransactions)
             try {
                 const hourlyCtx = document.getElementById('hourlyTransactionsChart');
                 if (hourlyCtx) {
                     const hourlyLabels = @json(array_slice($labels ?? [], 0, $currentHour + 1));
                     const hourlyDataValues = @json(array_slice($hourlyData ?? [], 0, $currentHour + 1));
-                    
-                    console.log('Hourly labels:', hourlyLabels);
-                    console.log('Hourly data:', hourlyDataValues);
                     
                     // Filter data yang memiliki transaksi > 0
                     const filteredHourlyData = [];
@@ -472,10 +387,6 @@
                         }
                     }
 
-                    console.log('Filtered hourly data:', filteredHourlyData);
-                    console.log('Filtered hourly labels:', filteredHourlyLabels);
-
-                    // Generate warna untuk setiap batang
                     const hourlyColors = generateColors(filteredHourlyData.length);
 
                     const hourlyChart = new Chart(hourlyCtx.getContext('2d'), {
@@ -486,7 +397,7 @@
                                 label: 'Jumlah Transaksi',
                                 data: filteredHourlyData,
                                 backgroundColor: hourlyColors,
-                                borderColor: hourlyColors.map(color => color + 'CC'), // Tambahkan transparansi untuk border
+                                borderColor: hourlyColors.map(color => color + 'CC'),
                                 borderWidth: 2
                             }]
                         },
@@ -496,37 +407,14 @@
                             animation: {
                                 duration: 2000,
                                 easing: 'easeInOutQuart',
-                                delay: function(context) {
-                                    return context.dataIndex * 200;
-                                }
+                                delay: function(context) { return context.dataIndex * 200; }
                             },
                             plugins: {
-                                legend: {
-                                    display: true,
-                                    labels: {
-                                        color: '#D1D5DB'
-                                    }
-                                }
+                                legend: { display: true, labels: { color: '#D1D5DB' } }
                             },
                             scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        color: '#D1D5DB',
-                                        stepSize: 1
-                                    },
-                                    grid: {
-                                        color: '#374151'
-                                    }
-                                },
-                                x: {
-                                    ticks: {
-                                        color: '#D1D5DB'
-                                    },
-                                    grid: {
-                                        color: '#374151'
-                                    }
-                                }
+                                y: { beginAtZero: true, ticks: { color: '#D1D5DB', stepSize: 1 }, grid: { color: '#374151' } },
+                                x: { ticks: { color: '#D1D5DB' }, grid: { color: '#374151' } }
                             }
                         }
                     });
@@ -548,10 +436,6 @@
                     const productLabels = @json($topProducts->pluck('name')->toArray());
                     const productData = @json($topProducts->pluck('quantity')->toArray());
 
-                    console.log('Product labels:', productLabels);
-                    console.log('Product data:', productData);
-
-                    // Generate warna untuk setiap produk
                     const productColors = generateColors(productData.length);
 
                     const productsChart = new Chart(productsCtx.getContext('2d'), {
@@ -562,7 +446,7 @@
                                 label: 'Kuantitas Terjual',
                                 data: productData,
                                 backgroundColor: productColors,
-                                borderColor: productColors.map(color => color + 'CC'), // Tambahkan transparansi untuk border
+                                borderColor: productColors.map(color => color + 'CC'),
                                 borderWidth: 2
                             }]
                         },
@@ -572,39 +456,14 @@
                             animation: {
                                 duration: 2000,
                                 easing: 'easeInOutBounce',
-                                delay: function(context) {
-                                    return context.dataIndex * 150;
-                                }
+                                delay: function(context) { return context.dataIndex * 150; }
                             },
                             plugins: {
-                                legend: {
-                                    display: true,
-                                    labels: {
-                                        color: '#D1D5DB'
-                                    }
-                                }
+                                legend: { display: true, labels: { color: '#D1D5DB' } }
                             },
                             scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        color: '#D1D5DB',
-                                        stepSize: 1
-                                    },
-                                    grid: {
-                                        color: '#374151'
-                                    }
-                                },
-                                x: {
-                                    ticks: {
-                                        color: '#D1D5DB',
-                                        maxRotation: 45,
-                                        minRotation: 0
-                                    },
-                                    grid: {
-                                        color: '#374151'
-                                    }
-                                }
+                                y: { beginAtZero: true, ticks: { color: '#D1D5DB', stepSize: 1 }, grid: { color: '#374151' } },
+                                x: { ticks: { color: '#D1D5DB', maxRotation: 45, minRotation: 0 }, grid: { color: '#374151' } }
                             }
                         }
                     });
@@ -617,14 +476,69 @@
                 console.error('Error creating products chart:', error);
             }
         @endif
-        
-        console.log('Chart initialization completed');
+
+        // Chart untuk Distribusi Unit per Brand
+        @if($hasBrandData)
+            try {
+                const brandCtx = document.getElementById('brandUnitsChart');
+                if (brandCtx) {
+                    const brandLabels = @json($brandCounts->keys()->toArray());
+                    const brandData = @json($brandCounts->values()->toArray());
+
+                    const brandColors = generateColors(brandData.length);
+
+                    const brandChart = new Chart(brandCtx.getContext('2d'), {
+                        type: 'pie',
+                        data: {
+                            labels: brandLabels,
+                            datasets: [{
+                                label: 'Jumlah Unit',
+                                data: brandData,
+                                backgroundColor: brandColors,
+                                borderColor: brandColors.map(color => color + 'CC'),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 2000,
+                                easing: 'easeInOutQuart',
+                                delay: function(context) { return context.dataIndex * 100; }
+                            },
+                            plugins: {
+                                legend: { display: true, labels: { color: '#D1D5DB' } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            label += context.raw + ' unit';
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    animateChart(brandChart);
+                    console.log('Brand units chart created successfully');
+                } else {
+                    console.error('Brand units canvas element not found');
+                }
+            } catch (error) {
+                console.error('Error creating brand units chart:', error);
+            }
+        @endif
 
         // Animasi number counter
         function animateCounters() {
             const counters = document.querySelectorAll('.counter-number');
             counters.forEach(counter => {
-                const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+                const target = parseInt(counter.textContent.replace(/[^\d]/g, '')) || 0;
                 let current = 0;
                 const increment = target / 50;
                 const timer = setInterval(() => {
@@ -642,7 +556,6 @@
             });
         }
 
-        // Mulai animasi counter setelah delay
         setTimeout(animateCounters, 1000);
     });
 </script>

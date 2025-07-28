@@ -6,11 +6,9 @@ use App\Models\User;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\Product;
+use App\Models\ProductUnit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -38,10 +36,8 @@ class DashboardController extends Controller
         $totalTransactions = Transaction::whereDate('created_at', $today)->count();
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
         
-        // Hitung produk dengan minimal satu ProductUnit aktif (stok > 0)
-        $totalProducts = Product::whereHas('productUnits', function ($query) {
-            $query->where('is_active', true);
-        })->count();
+        // Hitung total unit aktif (bukan total produk)
+        $totalUnits = ProductUnit::where('is_active', true)->count();
 
         // Produk terlaris berdasarkan transaksi bulan ini
         $topProducts = TransactionItem::select('product_id')
@@ -91,7 +87,7 @@ class DashboardController extends Controller
             'recentTransactions',
             'totalTransactions',
             'totalSales',
-            'totalProducts',
+            'totalUnits', // Mengganti totalProducts dengan totalUnits
             'topProducts',
             'hourlyData',
             'labels'
@@ -121,10 +117,8 @@ class DashboardController extends Controller
         $totalTransactions = Transaction::whereDate('created_at', $today)->count();
         $totalSales = Transaction::whereDate('created_at', $today)->sum('final_amount');
         
-        // Hitung produk dengan minimal satu ProductUnit aktif (stok > 0)
-        $totalProducts = Product::whereHas('productUnits', function ($query) {
-            $query->where('is_active', true);
-        })->count();
+        // Hitung total unit aktif (bukan total produk)
+        $totalUnits = ProductUnit::where('is_active', true)->count();
 
         // Produk terlaris berdasarkan transaksi bulan ini
         $topProducts = TransactionItem::select('product_id')
@@ -174,7 +168,7 @@ class DashboardController extends Controller
             'recentTransactions',
             'totalTransactions',
             'totalSales',
-            'totalProducts',
+            'totalUnits', // Mengganti totalProducts dengan totalUnits
             'topProducts',
             'hourlyData',
             'labels'
