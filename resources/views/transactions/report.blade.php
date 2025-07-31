@@ -623,6 +623,7 @@
                                 <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase tracking-wider font-['Cinzel']">Produk</th>
                                 <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase tracking-wider font-['Cinzel']">Total</th>
                                 <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase tracking-wider font-['Cinzel']">Diskon</th>
+                                <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase tracking-wider font-['Cinzel']">Catatan</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-brand-gold/20 dark:divide-brand-gold/40">
@@ -673,10 +674,11 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-base font-medium text-brand-gold">Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-base font-medium text-brand-gold">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-base text-brand-dark-600 dark:text-brand-dark-400" x-text="getTransactionNote({{ $transaction->id }}) || '-'"></td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-6 py-4 text-center text-base text-brand-dark-600 dark:text-brand-dark-400">
+                                    <td colspan="8" class="px-6 py-4 text-center text-base text-brand-dark-600 dark:text-brand-dark-400">
                                         Tidak ada transaksi ditemukan.
                                     </td>
                                 </tr>
@@ -733,6 +735,7 @@
                                     <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase tracking-wider font-['Cinzel']">Produk</th>
                                     <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase tracking-wider font-['Cinzel']">Total</th>
                                     <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase tracking-wider font-['Cinzel']">Diskon</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase tracking-wider font-['Cinzel']">Catatan</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-brand-gold/20 dark:divide-brand-gold/40">
@@ -783,10 +786,11 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-base font-medium text-brand-gold">Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-base font-medium text-brand-gold">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-base text-brand-dark-600 dark:text-brand-dark-400" x-text="getTransactionNote({{ $transaction->id }}) || '-'"></td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="px-6 py-4 text-center text-base text-brand-dark-600 dark:text-brand-dark-400">
+                                        <td colspan="8" class="px-6 py-4 text-center text-base text-brand-dark-600 dark:text-brand-dark-400">
                                             Tidak ada transaksi ditemukan.
                                         </td>
                                     </tr>
@@ -905,6 +909,10 @@
                         document.getElementById('month').value = '{{ \Carbon\Carbon::now()->format('m') }}';
                         document.getElementById('year').value = '{{ \Carbon\Carbon::now()->year }}';
                     }
+                },
+                getTransactionNote(transactionId) {
+                    const notes = JSON.parse(localStorage.getItem('transactionNotes') || '{}');
+                    return notes[transactionId] || '';
                 }
             }));
         });

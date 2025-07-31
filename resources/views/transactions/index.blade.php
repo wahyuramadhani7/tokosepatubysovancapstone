@@ -190,7 +190,7 @@
         .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #F59E0B;
         }
-        input, select {
+        input, select, textarea {
             background: #F9FAFB;
             border: 1px solid #D4AF37;
             color: #1F2937;
@@ -198,17 +198,17 @@
             padding: 0.75rem;
             transition: all 0.3s ease;
         }
-        .dark input, .dark select {
+        .dark input, .dark select, .dark textarea {
             background: #374151;
             border: 1px solid #FBBF24;
             color: #F3F4F6;
         }
-        input:focus, select:focus {
+        input:focus, select:focus, textarea:focus {
             border-color: #D4AF37;
             box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
             outline: none;
         }
-        .dark input:focus, .dark select:focus {
+        .dark input:focus, .dark select:focus, .dark textarea:focus {
             border-color: #FBBF24;
             box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
         }
@@ -272,6 +272,22 @@
         .dark .product-list::-webkit-scrollbar-thumb:hover {
             background: #F59E0B;
         }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            max-width: 90%;
+            width: 500px;
+        }
         @media (max-width: 640px) {
             .container {
                 padding-left: 1rem;
@@ -286,7 +302,7 @@
                 padding: 0.65rem 1.25rem;
                 font-size: 0.95rem;
             }
-            input, select {
+            input, select, textarea {
                 padding: 0.65rem;
                 font-size: 0.95rem;
             }
@@ -306,6 +322,9 @@
             .product-list {
                 max-height: 100px;
             }
+            .modal-content {
+                width: 95%;
+            }
         }
         @media (min-width: 641px) {
             .desktop-mode .container {
@@ -322,7 +341,8 @@
                 font-size: 1rem;
             }
             .desktop-mode input,
-            .desktop-mode select {
+            .desktop-mode select,
+            .desktop-mode textarea {
                 padding: 0.75rem;
                 font-size: 1rem;
             }
@@ -545,6 +565,35 @@
             </div>
         </div>
 
+        <!-- Notes Modal -->
+        <div x-show="showNotesModal" class="modal" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-1" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-1" x-transition:leave-end="opacity-0">
+            <div class="modal-content card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-brand-dark-800 dark:text-brand-dark-50 font-['Cinzel']">Catatan Transaksi</h2>
+                    <button @click="closeNotesModal" class="text-brand-dark-600 dark:text-brand-dark-300 hover:text-brand-gold p-2 rounded-full hover:bg-brand-dark-100 dark:hover:bg-brand-dark-700 hover-scale glow">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 mb-2">Catatan (misal: salah metode pembayaran, mesin error)</label>
+                    <textarea x-model="currentNote" rows="4" class="w-full text-base" placeholder="Masukkan catatan untuk transaksi ini..."></textarea>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button @click="closeNotesModal" class="btn-primary px-5 py-2 text-base flex items-center hover-scale ripple">
+                        Batal
+                    </button>
+                    <button @click="saveNote" class="btn-primary px-5 py-2 text-base flex items-center hover-scale ripple">
+                        <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Transactions Table -->
         <div class="card rounded-xl overflow-hidden fade-in">
             <div class="overflow-x-auto custom-scrollbar">
@@ -574,12 +623,13 @@
                                 </div>
                             </th>
                             <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Status</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Catatan</th>
                             <th class="px-6 py-4 text-right text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Aksi</th>
                         </tr>
                     </thead>
                     <tbody x-show="loading" class="text-center py-12">
                         <tr>
-                            <td colspan="9">
+                            <td colspan="10">
                                 <div class="flex justify-center items-center">
                                     <svg class="animate-spin h-8 w-8 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -626,7 +676,15 @@
                                         'badge-danger': transaction.payment_status === 'cancelled'
                                     }" x-text="translateStatus(transaction.payment_status)"></span>
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-base text-brand-dark-600 dark:text-brand-dark-400" x-text="transaction.note || '-'"></span>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right space-x-3">
+                                    <button @click="openNotesModal(transaction.id, transaction.note)" class="inline-flex items-center p-2 bg-brand-dark-100 dark:bg-brand-dark-700 text-brand-dark-800 dark:text-brand-dark-100 rounded-lg hover:bg-brand-primary hover:text-brand-gold hover-scale glow" title="Tambah/Edit Catatan">
+                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
                                     <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id)" class="inline-flex items-center p-2 bg-brand-dark-100 dark:bg-brand-dark-700 text-brand-dark-800 dark:text-brand-dark-100 rounded-lg hover:bg-brand-primary hover:text-brand-gold hover-scale glow" title="Cetak Struk">
                                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -639,7 +697,7 @@
                     <!-- Empty State -->
                     <tbody x-show="!loading && filteredTransactions.length === 0" class="text-center py-12">
                         <tr>
-                            <td colspan="9">
+                            <td colspan="10">
                                 <div class="bg-brand-dark-100 dark:bg-brand-dark-700 rounded-xl inline-block p-6">
                                     <svg class="h-12 w-12 text-brand-gold/50 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -718,6 +776,9 @@
                     errorMessage: '',
                     loading: false,
                     desktopMode: false,
+                    showNotesModal: false,
+                    currentNote: '',
+                    currentTransactionId: null,
 
                     init() {
                         // Load dark mode preference from localStorage
@@ -765,10 +826,13 @@
                             if (!data.success) {
                                 throw new Error(data.message || 'Gagal mengambil data transaksi.');
                             }
+                            // Load notes from localStorage
+                            const storedNotes = JSON.parse(localStorage.getItem('transactionNotes') || '{}');
                             this.transactions = data.transactions.map(transaction => ({
                                 ...transaction,
                                 total_amount: parseFloat(transaction.total_amount) || 0,
-                                final_amount: parseFloat(transaction.final_amount) || 0
+                                final_amount: parseFloat(transaction.final_amount) || 0,
+                                note: storedNotes[transaction.id] || ''
                             }));
                             this.sortResults(this.transactions);
                             this.filteredTransactions = [...this.transactions];
@@ -884,6 +948,34 @@
                         this.sortDirection = (this.sortColumn === column && this.sortDirection === 'asc') ? 'desc' : 'asc';
                         this.sortColumn = column;
                         this.sortResults(this.filteredTransactions);
+                    },
+
+                    openNotesModal(transactionId, note) {
+                        this.currentTransactionId = transactionId;
+                        this.currentNote = note || '';
+                        this.showNotesModal = true;
+                    },
+
+                    closeNotesModal() {
+                        this.showNotesModal = false;
+                        this.currentTransactionId = null;
+                        this.currentNote = '';
+                    },
+
+                    saveNote() {
+                        if (this.currentTransactionId) {
+                            // Update transaction note in memory
+                            const transaction = this.transactions.find(t => t.id === this.currentTransactionId);
+                            if (transaction) {
+                                transaction.note = this.currentNote.trim();
+                                this.filteredTransactions = [...this.transactions];
+                            }
+                            // Save to localStorage
+                            const storedNotes = JSON.parse(localStorage.getItem('transactionNotes') || '{}');
+                            storedNotes[this.currentTransactionId] = this.currentNote.trim();
+                            localStorage.setItem('transactionNotes', JSON.stringify(storedNotes));
+                        }
+                        this.closeNotesModal();
                     },
 
                     get totalPages() {
