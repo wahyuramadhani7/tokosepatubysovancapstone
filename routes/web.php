@@ -83,6 +83,7 @@ Route::get('/inventory/status', [InventoryController::class, 'status'])->name('i
         Route::get('/transactions/fetch', [TransactionController::class, 'fetch'])->name('transactions.fetch');
         Route::get('transaction/report', [TransactionController::class, 'report'])->name('transactions.report');
         Route::get('/add-product/{unitCode}', [TransactionController::class, 'addProductByQr'])->name('transactions.add_product');
+        
     });
 
     // Remove duplicate report route

@@ -424,7 +424,16 @@
                         </svg>
                         Laporan Transaksi
                     </h1>
-                    <p class="text-base text-brand-dark-600 dark:text-brand-dark-400 mt-2">Ringkasan Penjualan {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
+                    <p class="text-base text-brand-dark-600 dark:text-brand-dark-400 mt-2">
+                        Ringkasan Penjualan 
+                        @if ($reportType === 'monthly')
+                            Bulanan
+                        @elseif ($reportType === 'weekly')
+                            Mingguan ({{ \Carbon\Carbon::parse($weekRange['start'])->translatedFormat('d F Y') }} - {{ \Carbon\Carbon::parse($weekRange['end'])->translatedFormat('d F Y') }})
+                        @else
+                            Harian
+                        @endif
+                    </p>
                 </div>
             </div>
         </div>
@@ -456,23 +465,24 @@
                         </svg>
                         <select name="report_type" id="report_type" x-model="reportType" @change="toggleFilters(); document.getElementById('filter-form').submit()" class="pl-10 w-full text-base sm:text-lg">
                             <option value="daily" {{ $reportType === 'daily' ? 'selected' : '' }}>Harian</option>
+                            <option value="weekly" {{ $reportType === 'weekly' ? 'selected' : '' }}>Mingguan</option>
                             <option value="monthly" {{ $reportType === 'monthly' ? 'selected' : '' }}>Bulanan</option>
                         </select>
                     </div>
                 </div>
-                <div x-show="reportType === 'daily'" x-transition id="daily-filter">
+                <div x-show="reportType === 'daily' || reportType === 'weekly'" x-transition id="date-filter">
                     <label for="date" class="block text-sm sm:text-base font-medium text-brand-dark-600 dark:text-brand-dark-300 mb-2">Tanggal</label>
                     <div class="relative">
                         <svg class="h-5 w-5 text-brand-gold absolute left-3 top-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <input type="date" name="date" id="date" value="{{ $reportType === 'daily' ? $date : '' }}" class="pl-10 w-full text-base sm:text-lg">
+                        <input type="date" name="date" id="date" value="{{ $reportType === 'daily' || $reportType === 'weekly' ? $date : '' }}" class="pl-10 w-full text-base sm:text-lg">
                     </div>
                 </div>
-                <div x-show="reportType === 'monthly'" x-transition id="monthly-filter">
+                <div x-show="reportType === 'monthly'" x-transition id="month-filter">
                     <label for="month" class="block text-sm sm:text-base font-medium text-brand-dark-600 dark:text-brand-dark-300 mb-2">Bulan</label>
                     <div class="relative">
-                        <svg class="h-5 w-5 text-brand-gold absolute left-3 top-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="h-5 w-5 text-brand-gold absolute left-3 top-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 27 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <select name="month" id="month" class="pl-10 w-full text-base sm:text-lg">
@@ -544,7 +554,16 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-400">Total Penjualan {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
+                    <p class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-400">
+                        Total Penjualan 
+                        @if ($reportType === 'monthly')
+                            Bulanan
+                        @elseif ($reportType === 'weekly')
+                            Mingguan
+                        @else
+                            Harian
+                        @endif
+                    </p>
                     <p class="text-2xl font-bold text-brand-dark-800 dark:text-brand-dark-50">
                         Rp {{ number_format($totalSales, 0, ',', '.') }}
                     </p>
@@ -557,7 +576,16 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-400">Jumlah Transaksi {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
+                    <p class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-400">
+                        Jumlah Transaksi 
+                        @if ($reportType === 'monthly')
+                            Bulanan
+                        @elseif ($reportType === 'weekly')
+                            Mingguan
+                        @else
+                            Harian
+                        @endif
+                    </p>
                     <p class="text-2xl font-bold text-brand-dark-800 dark:text-brand-dark-50">
                         {{ $totalTransactions }}
                     </p>
@@ -570,7 +598,16 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-400">Total Diskon {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
+                    <p class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-400">
+                        Total Diskon 
+                        @if ($reportType === 'monthly')
+                            Bulanan
+                        @elseif ($reportType === 'weekly')
+                            Mingguan
+                        @else
+                            Harian
+                        @endif
+                    </p>
                     <p class="text-2xl font-bold text-brand-dark-800 dark:text-brand-dark-50">
                         Rp {{ number_format($totalDiscount, 0, ',', '.') }}
                     </p>
@@ -583,7 +620,16 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-400">Total Produk Terjual {{ $reportType === 'monthly' ? 'Bulanan' : 'Harian' }}</p>
+                    <p class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-400">
+                        Total Produk Terjual 
+                        @if ($reportType === 'monthly')
+                            Bulanan
+                        @elseif ($reportType === 'weekly')
+                            Mingguan
+                        @else
+                            Harian
+                        @endif
+                    </p>
                     <p class="text-2xl font-bold text-brand-dark-800 dark:text-brand-dark-50">
                         {{ $totalProductsSold }}
                     </p>
@@ -838,7 +884,7 @@
                 dateFormat: "Y-m-d",
                 altInput: true,
                 altFormat: "d/m/Y",
-                defaultDate: "{{ $reportType === 'daily' ? $date : '' }}",
+                defaultDate: "{{ $reportType === 'daily' || $reportType === 'weekly' ? $date : '' }}",
                 locale: {
                     firstDayOfWeek: 1 // Mulai dari Senin
                 },
@@ -881,6 +927,8 @@
                     });
                     // Ensure initial dark mode state is applied
                     document.documentElement.classList.toggle('dark', this.darkMode);
+                    // Initialize filter visibility
+                    this.toggleFilters();
                 },
                 toggleDesktopMode() {
                     this.desktopMode = !this.desktopMode;
@@ -894,17 +942,17 @@
                     }
                 },
                 toggleFilters() {
-                    const dailyFilter = document.getElementById('daily-filter');
-                    const monthlyFilter = document.getElementById('monthly-filter');
+                    const dateFilter = document.getElementById('date-filter');
+                    const monthFilter = document.getElementById('month-filter');
                     const yearFilter = document.getElementById('year-filter');
                     if (this.reportType === 'monthly') {
-                        dailyFilter.style.display = 'none';
-                        monthlyFilter.style.display = 'block';
+                        dateFilter.style.display = 'none';
+                        monthFilter.style.display = 'block';
                         yearFilter.style.display = 'block';
                         document.getElementById('date').value = '';
                     } else {
-                        dailyFilter.style.display = 'block';
-                        monthlyFilter.style.display = 'none';
+                        dateFilter.style.display = 'block';
+                        monthFilter.style.display = 'none';
                         yearFilter.style.display = 'none';
                         document.getElementById('month').value = '{{ \Carbon\Carbon::now()->format('m') }}';
                         document.getElementById('year').value = '{{ \Carbon\Carbon::now()->year }}';

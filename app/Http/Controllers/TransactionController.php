@@ -262,7 +262,7 @@ class TransactionController extends Controller
         return view('transactions.print', compact('transaction'));
     }
 
-     public function report(Request $request)
+    public function report(Request $request)
     {
         $date = $request->input('date', Carbon::today('Asia/Jakarta')->format('Y-m-d'));
         $month = $request->input('month', Carbon::today('Asia/Jakarta')->format('m'));
@@ -275,6 +275,10 @@ class TransactionController extends Controller
         if ($reportType === 'monthly') {
             $query->whereYear('created_at', $year)
                   ->whereMonth('created_at', $month);
+        } elseif ($reportType === 'weekly') {
+            $startOfWeek = Carbon::parse($date, 'Asia/Jakarta')->startOfWeek();
+            $endOfWeek = Carbon::parse($date, 'Asia/Jakarta')->endOfWeek();
+            $query->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
         } else {
             $query->whereDate('created_at', $date);
         }
@@ -283,7 +287,6 @@ class TransactionController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
-        // Filter berdasarkan nama produk jika ada input pencarian
         if ($productSearch) {
             $query->whereHas('items.product', function ($q) use ($productSearch) {
                 $q->where('name', 'like', '%' . $productSearch . '%');
@@ -298,6 +301,14 @@ class TransactionController extends Controller
             return $transaction->items->sum('quantity');
         });
 
+        // Include week range for display in weekly report
+        $weekRange = $reportType === 'weekly' 
+            ? [
+                'start' => $startOfWeek->format('Y-m-d'),
+                'end' => $endOfWeek->format('Y-m-d')
+            ] 
+            : null;
+
         return view('transactions.report', compact(
             'transactions',
             'totalSales',
@@ -308,7 +319,8 @@ class TransactionController extends Controller
             'month',
             'year',
             'reportType',
-            'productSearch' // Kirim variabel productSearch ke view untuk mempertahankan input
+            'productSearch',
+            'weekRange'
         ));
     }
 
