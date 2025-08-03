@@ -80,6 +80,32 @@ class DashboardController extends Controller
                 $hourlyData[] = $hourlyTransactions->get($hour, 0);
             }
 
+            // Detil semua transaksi hari ini
+            $recentTransactions = Transaction::whereDate('created_at', $today)
+                ->with(['user' => function ($query) {
+                    $query->select('id', 'name');
+                }, 'items.product' => function ($query) {
+                    $query->select('id', 'name');
+                }])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($transaction) {
+                    return [
+                        'id' => $transaction->id,
+                        'created_at' => $transaction->created_at->format('d-m-Y H:i'),
+                        'user' => $transaction->user ? ['name' => $transaction->user->name] : ['name' => 'Unknown'],
+                        'items' => $transaction->items->map(function ($item) {
+                            return [
+                                'product' => $item->product ? ['name' => $item->product->name] : ['name' => 'Produk Tidak Dikenal'],
+                            ];
+                        })->toArray(),
+                        'final_amount' => $transaction->final_amount,
+                        'status' => $transaction->status ?? 'Selesai',
+                    ];
+                })->toArray();
+
+            Log::info('Recent Transactions:', ['count' => count($recentTransactions), 'data' => $recentTransactions]);
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -89,6 +115,7 @@ class DashboardController extends Controller
                     'top_products' => $topProducts,
                     'hourly_data' => $hourlyData,
                     'labels' => $labels,
+                    'recent_transactions' => $recentTransactions,
                 ],
             ], 200);
         } catch (\Exception $e) {

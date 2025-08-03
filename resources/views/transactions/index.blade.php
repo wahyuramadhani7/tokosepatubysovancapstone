@@ -14,7 +14,7 @@
             background: linear-gradient(135deg, #FAFAFA 0%, #F3F4F6 100%);
             color: #1F2937;
             min-height: 100vh;
-            padding-top: 5rem;
+            padding-top: 4rem;
             position: relative;
             overflow-x: hidden;
         }
@@ -49,8 +49,8 @@
             color: #FAFAFA;
             font-family: 'Cinzel', serif;
             font-weight: 700;
-            border-radius: 12px;
-            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
             border: 1px solid #D4AF37;
             transition: all 0.3s ease;
             position: relative;
@@ -98,7 +98,7 @@
         .card {
             background: #FFFFFF;
             border: 1px solid #D4AF37;
-            border-radius: 12px;
+            border-radius: 10px;
             box-shadow: 0 6px 16px rgba(212, 175, 55, 0.15);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
@@ -108,16 +108,16 @@
             box-shadow: 0 6px 16px rgba(251, 191, 36, 0.15);
         }
         .card:hover {
-            transform: translateY(-6px);
+            transform: translateY(-4px);
             box-shadow: 0 8px 20px rgba(212, 175, 55, 0.25);
         }
         .dark .card:hover {
             box-shadow: 0 8px 20px rgba(251, 191, 36, 0.25);
         }
         .badge {
-            padding: 0.5rem 1.25rem;
+            padding: 0.4rem 1rem;
             border-radius: 9999px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
             transition: all 0.3s ease;
         }
@@ -168,18 +168,18 @@
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
         .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #F3F4F6;
-            border-radius: 12px;
+            border-radius: 10px;
         }
         .dark .custom-scrollbar::-webkit-scrollbar-track {
             background: #374151;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #D4AF37;
-            border-radius: 12px;
+            border-radius: 10px;
         }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #FBBF24;
@@ -194,8 +194,8 @@
             background: #F9FAFB;
             border: 1px solid #D4AF37;
             color: #1F2937;
-            border-radius: 10px;
-            padding: 0.75rem;
+            border-radius: 8px;
+            padding: 0.5rem;
             transition: all 0.3s ease;
         }
         .dark input, .dark select, .dark textarea {
@@ -205,24 +205,18 @@
         }
         input:focus, select:focus, textarea:focus {
             border-color: #D4AF37;
-            box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+            box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
             outline: none;
         }
         .dark input:focus, .dark select:focus, .dark textarea:focus {
             border-color: #FBBF24;
-            box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
-        }
-        tbody tr:hover {
-            background: rgba(212, 175, 55, 0.1) !important;
-        }
-        .dark tbody tr:hover {
-            background: rgba(251, 191, 36, 0.1) !important;
+            box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
         }
         .fade-in {
             animation: fadeIn 0.4s ease-out;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         @media print {
@@ -232,16 +226,16 @@
             .no-print { display: none !important; }
         }
         .glow:hover {
-            box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
         }
         .dark .glow:hover {
-            box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
         }
         .product-list {
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
-            max-height: 120px;
+            max-height: 80px;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: #D4AF37 #F3F4F6;
@@ -278,32 +272,91 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
         .modal-content {
-            max-width: 90%;
-            width: 500px;
+            max-width: 95%;
+            width: 450px;
         }
+        /* Mobile Styles */
         @media (max-width: 640px) {
+            .container {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+            .grid {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .btn-primary {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+            input, select, textarea {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            .card {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            h2 {
+                font-size: 1.1rem;
+            }
+            .product-list {
+                max-height: 70px;
+            }
+            .modal-content {
+                width: 90%;
+                padding: 1rem;
+            }
+            /* Transaction Card Grid */
+            .transaction-details-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                align-items: start;
+            }
+            .transaction-details-grid .full-span {
+                grid-column: 1 / -1;
+            }
+            .transaction-details-grid .label {
+                font-size: 0.8rem;
+                line-height: 1.2;
+            }
+            .transaction-details-grid .value {
+                font-size: 0.9rem;
+                line-height: 1.2;
+            }
+            .transaction-details-grid .badge {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.8rem;
+            }
+        }
+        /* Tablet Styles */
+        @media (min-width: 641px) and (max-width: 1023px) {
             .container {
                 padding-left: 1rem;
                 padding-right: 1rem;
             }
             .grid {
-                display: flex;
-                flex-direction: column;
-                gap: 1.5rem;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.25rem;
             }
             .btn-primary {
-                padding: 0.65rem 1.25rem;
+                padding: 0.6rem 1.25rem;
                 font-size: 0.95rem;
             }
             input, select, textarea {
-                padding: 0.65rem;
+                padding: 0.6rem;
                 font-size: 0.95rem;
             }
             .card {
@@ -315,18 +368,20 @@
             h2 {
                 font-size: 1.25rem;
             }
-            th, td {
-                font-size: 0.85rem;
-                padding: 0.5rem;
-            }
             .product-list {
-                max-height: 100px;
+                max-height: 80px;
             }
-            .modal-content {
-                width: 95%;
+            .transaction-details-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            .transaction-details-grid .full-span {
+                grid-column: 1 / -1;
             }
         }
-        @media (min-width: 641px) {
+        /* Desktop Styles */
+        @media (min-width: 1024px) {
             .desktop-mode .container {
                 padding-left: 1.5rem;
                 padding-right: 1.5rem;
@@ -350,18 +405,21 @@
                 padding: 2rem;
             }
             .desktop-mode h1 {
-                font-size: 2.25rem;
+                font-size: 2rem;
             }
             .desktop-mode h2 {
                 font-size: 1.5rem;
             }
-            .desktop-mode th,
-            .desktop-mode td {
-                font-size: 0.875rem;
-                padding: 1rem;
-            }
             .desktop-mode .product-list {
-                max-height: 120px;
+                max-height: 100px;
+            }
+            .desktop-mode .transaction-details-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.25rem;
+            }
+            .desktop-mode .transaction-details-grid .full-span {
+                grid-column: 1 / -1;
             }
         }
     </style>
@@ -594,92 +652,31 @@
             </div>
         </div>
 
-        <!-- Transactions Table -->
-        <div class="card rounded-xl overflow-hidden fade-in">
-            <div class="overflow-x-auto custom-scrollbar">
-                <table class="min-w-full divide-y divide-brand-gold/20 dark:divide-brand-gold/40">
-                    <thead>
-                        <tr class="bg-brand-dark-50 dark:bg-brand-dark-800">
-                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase tracking-wider cursor-pointer font-['Cinzel']" @click="sortBy('id')">
-                                <div class="flex items-center">
-                                    ID
-                                    <span x-show="sortColumn === 'id'" x-text="sortDirection === 'asc' ? '▲' : '▼'" class="ml-1"></span>
+        <!-- Transactions Card Grid -->
+        <div class="card rounded-xl p-6 fade-in">
+            <!-- Loading State -->
+            <div x-show="loading" class="text-center py-12">
+                <div class="flex justify-center items-center">
+                    <svg class="animate-spin h-8 w-8 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V1l4 4-4 4z"></path>
+                    </svg>
+                    <span class="ml-3 text-brand-dark-600 dark:text-brand-dark-300 text-base">Memuat transaksi...</span>
+                </div>
+            </div>
+
+            <!-- Transactions Grid -->
+            <div x-show="!loading && filteredTransactions.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="transaction in paginatedTransactions" :key="transaction.id">
+                    <div :class="{'bg-brand-gold/10 dark:bg-brand-gold/20': isNewTransaction(transaction.id)}" class="card p-4 sm:p-5 transition-all duration-200 hover-scale">
+                        <div class="flex flex-col gap-3">
+                            <!-- Transaction Header -->
+                            <div class="flex justify-between items-start border-b border-brand-gold/20 dark:border-brand-gold/40 pb-2">
+                                <div>
+                                    <span class="text-lg font-semibold text-brand-dark-800 dark:text-brand-dark-100 font-['Cinzel']" x-text="transaction.invoice_number"></span>
+                                    <div class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="formatTime(transaction.created_at)"></div>
                                 </div>
-                            </th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase cursor-pointer font-['Cinzel']" @click="sortBy('date')">
-                                <div class="flex items-center">
-                                    Jam
-                                    <span x-show="sortColumn === 'date'" x-text="sortDirection === 'asc' ? '▲' : '▼'" class="ml-1"></span>
-                                </div>
-                            </th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Pelanggan</th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Produk</th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Metode</th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Diskon</th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase cursor-pointer font-['Cinzel']" @click="sortBy('total')">
-                                <div class="flex items-center">
-                                    Total
-                                    <span x-show="sortColumn === 'total'" x-text="sortDirection === 'asc' ? '▲' : '▼'" class="ml-1"></span>
-                                </div>
-                            </th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Status</th>
-                            <th class="px-6 py-4 text-left text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Catatan</th>
-                            <th class="px-6 py-4 text-right text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 uppercase font-['Cinzel']">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody x-show="loading" class="text-center py-12">
-                        <tr>
-                            <td colspan="10">
-                                <div class="flex justify-center items-center">
-                                    <svg class="animate-spin h-8 w-8 text-brand-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V1l4 4-4 4z"></path>
-                                    </svg>
-                                    <span class="ml-3 text-brand-dark-600 dark:text-brand-dark-300 text-base">Memuat transaksi...</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                    <tbody x-show="!loading && filteredTransactions.length > 0">
-                        <template x-for="transaction in paginatedTransactions" :key="transaction.id">
-                            <tr :class="{'bg-brand-gold/10 dark:bg-brand-gold/20': isNewTransaction(transaction.id)}" class="transition-colors duration-200">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-base font-medium text-brand-dark-800 dark:text-brand-dark-100" x-text="transaction.invoice_number"></span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="formatTime(transaction.created_at)"></span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-base font-medium text-brand-dark-800 dark:text-brand-dark-100" x-text="transaction.customer_name || 'Tanpa Nama'"></div>
-                                    <div class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="transaction.customer_phone || '-'"></div>
-                                </td>
-                                <td class="px-6 py-4" aria-label="Daftar Produk">
-                                    <div class="product-list" x-html="getProductNames(transaction.items)"></div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="badge" :class="{
-                                        'badge-success': transaction.payment_method === 'cash',
-                                        'badge-neutral': transaction.payment_method === 'credit_card',
-                                        'badge-info': transaction.payment_method === 'transfer' || transaction.payment_method === 'debit'
-                                    }" x-text="translatePaymentMethod(transaction.payment_method, transaction.card_type)"></span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-base font-medium text-brand-gold" x-text="formatRupiah(calculateDiscount(transaction))"></span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-base font-medium text-brand-gold" x-text="formatRupiah(transaction.final_amount)"></span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="badge" :class="{
-                                        'badge-success': transaction.payment_status === 'paid',
-                                        'badge-warning': transaction.payment_status === 'pending',
-                                        'badge-danger': transaction.payment_status === 'cancelled'
-                                    }" x-text="translateStatus(transaction.payment_status)"></span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-base text-brand-dark-600 dark:text-brand-dark-400" x-text="transaction.note || '-'"></span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right space-x-3">
+                                <div class="flex space-x-2">
                                     <button @click="openNotesModal(transaction.id, transaction.note)" class="inline-flex items-center p-2 bg-brand-dark-100 dark:bg-brand-dark-700 text-brand-dark-800 dark:text-brand-dark-100 rounded-lg hover:bg-brand-primary hover:text-brand-gold hover-scale glow" title="Tambah/Edit Catatan">
                                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -690,36 +687,78 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                         </svg>
                                     </a>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                    <!-- Empty State -->
-                    <tbody x-show="!loading && filteredTransactions.length === 0" class="text-center py-12">
-                        <tr>
-                            <td colspan="10">
-                                <div class="bg-brand-dark-100 dark:bg-brand-dark-700 rounded-xl inline-block p-6">
-                                    <svg class="h-12 w-12 text-brand-gold/50 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
                                 </div>
-                                <h3 class="text-lg sm:text-xl font-semibold text-brand-dark-800 dark:text-brand-dark-100 font-['Cinzel'] mt-4">Tidak Ada Transaksi</h3>
-                                <p class="text-base text-brand-dark-600 dark:text-brand-dark-400 max-w-sm mx-auto">Belum ada transaksi untuk filter yang dipilih.</p>
-                                <div class="mt-6">
-                                    <a href="{{ route('transactions.create') }}" class="btn-primary px-5 py-2 text-base sm:text-lg flex items-center mx-auto hover-scale ripple">
-                                        <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
-                                        Buat Transaksi Baru
-                                    </a>
+                            </div>
+                            <!-- Transaction Details -->
+                            <div class="transaction-details-grid">
+                                <div>
+                                    <span class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 label">Pelanggan</span>
+                                    <div class="text-base font-medium text-brand-dark-800 dark:text-brand-dark-100 value" x-text="transaction.customer_name || 'Tanpa Nama'"></div>
+                                    <div class="text-sm text-brand-dark-600 dark:text-brand-dark-400" x-text="transaction.customer_phone || '-'"></div>
                                 </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                <div>
+                                    <span class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 label">Produk</span>
+                                    <div class="product-list" x-html="getProductNames(transaction.items)"></div>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 label">Metode</span>
+                                    <div>
+                                        <span class="badge" :class="{
+                                            'badge-success': transaction.payment_method === 'cash',
+                                            'badge-neutral': transaction.payment_method === 'credit_card',
+                                            'badge-info': transaction.payment_method === 'transfer' || transaction.payment_method === 'debit'
+                                        }" x-text="translatePaymentMethod(transaction.payment_method, transaction.card_type)"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 label">Diskon</span>
+                                    <div class="text-base font-medium text-brand-gold value" x-text="formatRupiah(calculateDiscount(transaction))"></div>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 label">Total</span>
+                                    <div class="text-base font-medium text-brand-gold value" x-text="formatRupiah(transaction.final_amount)"></div>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 label">Status</span>
+                                    <div>
+                                        <span class="badge" :class="{
+                                            'badge-success': transaction.payment_status === 'paid',
+                                            'badge-warning': transaction.payment_status === 'pending',
+                                            'badge-danger': transaction.payment_status === 'cancelled'
+                                        }" x-text="translateStatus(transaction.payment_status)"></span>
+                                    </div>
+                                </div>
+                                <div class="full-span">
+                                    <span class="text-sm font-medium text-brand-dark-600 dark:text-brand-dark-300 label">Catatan</span>
+                                    <div class="text-base text-brand-dark-600 dark:text-brand-dark-400 value" x-text="transaction.note || '-'"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
+
+            <!-- Empty State -->
+            <div x-show="!loading && filteredTransactions.length === 0" class="text-center py-12">
+                <div class="bg-brand-dark-100 dark:bg-brand-dark-700 rounded-xl inline-block p-6">
+                    <svg class="h-12 w-12 text-brand-gold/50 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg sm:text-xl font-semibold text-brand-dark-800 dark:text-brand-dark-100 font-['Cinzel'] mt-4">Tidak Ada Transaksi</h3>
+                <p class="text-base text-brand-dark-600 dark:text-brand-dark-400 max-w-sm mx-auto">Belum ada transaksi untuk filter yang dipilih.</p>
+                <div class="mt-6">
+                    <a href="{{ route('transactions.create') }}" class="btn-primary px-5 py-2 text-base sm:text-lg flex items-center mx-auto hover-scale ripple">
+                        <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Buat Transaksi Baru
+                    </a>
+                </div>
+            </div>
+
             <!-- Pagination -->
-            <div x-show="!loading && filteredTransactions.length > 0" class="flex items-center justify-between p-6 bg-brand-dark-50 dark:bg-brand-dark-800 border-t border-brand-gold/20 dark:border-brand-gold/40">
+            <div x-show="!loading && filteredTransactions.length > 0" class="flex items-center justify-between p-6 bg-brand-dark-50 dark:bg-brand-dark-800 border-t border-brand-gold/20 dark:border-brand-gold/40 mt-6">
                 <div class="text-base text-brand-dark-600 dark:text-brand-dark-300">
                     Menampilkan <span class="font-medium text-brand-dark-800 dark:text-brand-dark-100" x-text="paginationFrom()"></span> - <span x-text="paginationTo()"></span> dari <span class="font-medium text-brand-dark-800 dark:text-brand-dark-100" x-text="filteredTransactions.length"></span> transaksi
                 </div>
@@ -863,9 +902,9 @@
                         if (index >= 0) {
                             this.goToPage(Math.floor(index / this.perPage) + 1);
                             this.$nextTick(() => {
-                                const newRow = document.querySelector(`tr.bg-brand-gold/10`);
-                                if (newRow) {
-                                    newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                const newCard = document.querySelector(`div.bg-brand-gold\\/10`);
+                                if (newCard) {
+                                    newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 }
                             });
                         }
@@ -1025,5 +1064,6 @@
                 };
             }
         </script>
+    </main>
 </body>
 </html>
