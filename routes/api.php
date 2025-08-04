@@ -4,6 +4,18 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\InventoryController;
 use App\Http\Controllers\API\DashboardController;
+use App\Http\Controllers\API\TransactionController;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group.
+|
+*/
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -24,8 +36,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/stock-opname/{index}', [InventoryController::class, 'deleteReport']);
     Route::delete('/stock-opname', [InventoryController::class, 'deleteAllReports']);
 
+    // Transaction endpoints
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('api.transactions.index');
+    Route::post('/transactions', [TransactionController::class, 'store'])->name('api.transactions.store');
+    Route::get('/transactions/add-product/{unitCode}', [TransactionController::class, 'addProduct'])->name('api.transactions.add-product');
+
     // Dashboard endpoint
     Route::get('/dashboard', [DashboardController::class, 'index']);
 });
-
-?>
