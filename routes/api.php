@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/{id}', [InventoryController::class, 'show']);
     Route::get('/products/{id}/json', [InventoryController::class, 'json']);
     Route::get('/products/{productId}/units/{unitCode}', [InventoryController::class, 'showUnit']);
+    Route::get('/units', [InventoryController::class, 'getUnits']); // New endpoint for units
     Route::put('/products/{id}', [InventoryController::class, 'update']);
     Route::delete('/products/{id}', [InventoryController::class, 'destroy']);
     
@@ -43,4 +44,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Dashboard endpoint
     Route::get('/dashboard', [DashboardController::class, 'index']);
+});
+
+// Catch-all for invalid routes to return JSON
+Route::fallback(function () {
+    return response()->json([
+        'success' => false,
+        'message' => 'Route not found',
+    ], 404);
 });
