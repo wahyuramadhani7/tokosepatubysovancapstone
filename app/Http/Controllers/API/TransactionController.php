@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Models\Product;
 use App\Models\ProductUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -31,9 +33,19 @@ class TransactionController extends Controller
      */
     private function clearSearchCaches()
     {
-        $keys = Cache::getRedis()->keys('transaction_search_*');
-        foreach ($keys as $key) {
-            Cache::forget(str_replace(Cache::getPrefix(), '', $key));
+        try {
+            if (config('cache.default') === 'database') {
+                DB::table('cache')
+                    ->where('key', 'like', 'transaction_search_%')
+                    ->delete();
+            } else {
+                $keys = Cache::store('redis')->getRedis()->keys('transaction_search_*');
+                foreach ($keys as $key) {
+                    Cache::forget(str_replace(Cache::getPrefix(), '', $key));
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to clear search caches: ' . $e->getMessage());
         }
     }
 
@@ -81,9 +93,10 @@ class TransactionController extends Controller
                     Cache::put($cacheKey, $transactions, now()->addMinutes(1));
                 }
             } catch (\Exception $e) {
+                Log::error('Failed to fetch transactions: ' . $e->getMessage());
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to fetch transactions: ' . $e->getMessage(),
+                    'message' => 'Gagal mengambil transaksi: ' . $e->getMessage(),
                 ], 500);
             }
         }
@@ -96,6 +109,15 @@ class TransactionController extends Controller
             'success' => true,
             'data' => [
                 'transactions' => collect($transactions->items())->map(function ($transaction) {
+                    $paymentMethod = $transaction->payment_method;
+                    $cardType = $transaction->card_type;
+                    if (strpos($paymentMethod, 'debit_') === 0) {
+                        $cardType = ucfirst(str_replace('debit_', '', $paymentMethod));
+                        $paymentMethod = 'debit';
+                    } elseif ($paymentMethod === 'qris') {
+                        $paymentMethod = 'QRIS';
+                    }
+
                     return [
                         'id' => $transaction->id,
                         'invoice_number' => $transaction->invoice_number,
@@ -105,8 +127,8 @@ class TransactionController extends Controller
                         'tax_amount' => (float) $transaction->tax_amount,
                         'discount_amount' => (float) $transaction->discount_amount,
                         'final_amount' => (float) $transaction->final_amount,
-                        'payment_method' => $transaction->payment_method,
-                        'card_type' => $transaction->card_type,
+                        'payment_method' => $paymentMethod,
+                        'card_type' => $cardType,
                         'payment_status' => $transaction->payment_status,
                         'customer_name' => $transaction->customer_name,
                         'customer_phone' => $transaction->customer_phone,
@@ -120,8 +142,8 @@ class TransactionController extends Controller
                                 'product_name' => $item->product?->name,
                                 'product_unit_id' => $item->product_unit_id,
                                 'unit_code' => $item->productUnit?->unit_code,
-                                'color' => $item->productUnit?->color,
-                                'size' => $item->productUnit?->size,
+                                'color' => $item->product?->color ?? '-',
+                                'size' => $item->product?->size ?? '-',
                                 'quantity' => (int) $item->quantity,
                                 'price' => (float) $item->price,
                                 'discount' => (float) $item->discount,
@@ -151,6 +173,8 @@ class TransactionController extends Controller
      */
     public function store(Request $request)
     {
+        Log::info('Menerima request transaksi', $request->all());
+
         $validator = Validator::make($request->all(), [
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:20',
@@ -159,17 +183,17 @@ class TransactionController extends Controller
             'card_type' => 'required_if:payment_method,debit|in:Mandiri,BRI,BCA|nullable',
             'discount_amount' => 'required|numeric|min:0',
             'products' => 'required|array|min:1',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.unit_code' => 'required|exists:product_units,unit_code',
+            'products.*.unit_code' => 'required|exists:product_units,unit_code,is_active,1',
             'products.*.discount_price' => 'nullable|numeric|min:0',
             'products.*.quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:1000',
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validasi gagal: ' . json_encode($validator->errors()));
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($validator->errors()->toArray()))),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -179,25 +203,68 @@ class TransactionController extends Controller
                 $totalAmount = 0;
                 $items = [];
 
-                foreach ($request->products as $product) {
+                foreach ($request->products as $index => $product) {
+                    // Validasi unit produk
                     $unit = ProductUnit::where('unit_code', $product['unit_code'])
                         ->where('is_active', true)
-                        ->firstOrFail();
-                    $price = $product['discount_price'] ?? $unit->selling_price;
+                        ->first();
+                    if (!$unit) {
+                        Log::error('Unit produk tidak ditemukan', [
+                            'unit_code' => $product['unit_code'],
+                            'index' => $index,
+                        ]);
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Unit produk dengan kode {$product['unit_code']} tidak ditemukan atau tidak aktif.",
+                        ], 404);
+                    }
+
+                    // Validasi produk berdasarkan product_id dari unit
+                    $productModel = Product::where('id', $unit->product_id)
+                        ->where('stock', '>=', $product['quantity'])
+                        ->first();
+                    if (!$productModel) {
+                        Log::error('Produk tidak ditemukan atau stok tidak cukup', [
+                            'product_id' => $unit->product_id,
+                            'unit_code' => $product['unit_code'],
+                            'quantity' => $product['quantity'],
+                            'index' => $index,
+                        ]);
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Produk untuk unit kode {$product['unit_code']} tidak ditemukan atau stok tidak cukup.",
+                        ], 404);
+                    }
+
+                    $price = $product['discount_price'] ?? $productModel->selling_price;
                     $subtotal = $price * $product['quantity'];
                     $totalAmount += $subtotal;
 
                     $items[] = [
-                        'product_id' => $product['product_id'],
+                        'product_id' => $unit->product_id,
                         'product_unit_id' => $unit->id,
                         'quantity' => $product['quantity'],
                         'price' => $price,
-                        'discount' => $unit->selling_price - $price,
+                        'discount' => $productModel->selling_price - $price,
                         'subtotal' => $subtotal,
                     ];
+
+                    // Kurangi stok dan nonaktifkan unit
+                    $productModel->decrement('stock', $product['quantity']);
+                    $unit->update(['is_active' => false]);
                 }
 
                 $discountAmount = (float) $request->discount_amount;
+                if ($discountAmount > $totalAmount) {
+                    Log::error('Diskon melebihi total jumlah', [
+                        'discount_amount' => $discountAmount,
+                        'total_amount' => $totalAmount,
+                    ]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Harga akhir tidak boleh melebihi subtotal.',
+                    ], 422);
+                }
                 $finalAmount = max(0, $totalAmount - $discountAmount);
 
                 $transaction = Transaction::create([
@@ -207,7 +274,9 @@ class TransactionController extends Controller
                     'tax_amount' => 0,
                     'discount_amount' => $discountAmount,
                     'final_amount' => $finalAmount,
-                    'payment_method' => $request->payment_method,
+                    'payment_method' => $request->payment_method === 'debit' 
+                        ? 'debit_' . strtolower($request->card_type) 
+                        : $request->payment_method,
                     'card_type' => $request->card_type,
                     'payment_status' => 'paid',
                     'customer_name' => $request->customer_name,
@@ -243,9 +312,11 @@ class TransactionController extends Controller
                 // Clear search caches
                 $this->clearSearchCaches();
 
+                Log::info('Transaksi berhasil dibuat', ['transaction_id' => $transaction->id]);
+
                 return response()->json([
                     'success' => true,
-                    'message' => 'Transaction created successfully',
+                    'message' => 'Transaksi berhasil dibuat',
                     'data' => [
                         'transaction_id' => $transaction->id,
                         'invoice_number' => $transaction->invoice_number,
@@ -253,9 +324,10 @@ class TransactionController extends Controller
                 ], 201);
             });
         } catch (\Exception $e) {
+            Log::error('Gagal membuat transaksi: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create transaction: ' . $e->getMessage(),
+                'message' => 'Gagal membuat transaksi: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -309,8 +381,8 @@ class TransactionController extends Controller
                         'product_name' => $item->product?->name,
                         'product_unit_id' => $item->product_unit_id,
                         'unit_code' => $item->productUnit?->unit_code,
-                        'color' => $item->productUnit?->color,
-                        'size' => $item->productUnit?->size,
+                        'color' => $item->product?->color ?? '-',
+                        'size' => $item->product?->size ?? '-',
                         'quantity' => (int) $item->quantity,
                         'price' => (float) $item->price,
                         'discount' => (float) $item->discount,
@@ -335,27 +407,39 @@ class TransactionController extends Controller
                 ->first();
 
             if (!$unit) {
+                Log::error('Unit produk tidak ditemukan: ' . $unitCode);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unit produk tidak ditemukan',
+                    'message' => 'Unit produk tidak ditemukan atau sudah tidak aktif.',
                 ], 404);
             }
 
-            $product = $unit->product;
+            $product = Product::where('id', $unit->product_id)
+                ->where('stock', '>', 0)
+                ->first();
+
+            if (!$product) {
+                Log::error('Produk tidak ditemukan atau stok habis: ' . $unit->product_id);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk tidak ditemukan atau stok habis.',
+                ], 404);
+            }
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'product_id' => $unit->product_id,
-                    'product_name' => $product?->name,
-                    'color' => $unit->color,
-                    'size' => $unit->size,
-                    'selling_price' => (float) $unit->selling_price,
-                    'discount_price' => $unit->discount_price ? (float) $unit->discount_price : null,
+                    'product_name' => $product->name,
+                    'color' => $product->color ?? '-',
+                    'size' => $product->size ?? '-',
+                    'selling_price' => (float) $product->selling_price,
+                    'discount_price' => $product->discount_price ? (float) $product->discount_price : null,
                     'unit_code' => $unit->unit_code,
                 ],
             ], 200, ['Cache-Control' => 'no-cache']);
         } catch (\Exception $e) {
+            Log::error('Gagal memuat unit produk: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal memuat unit produk: ' . $e->getMessage(),

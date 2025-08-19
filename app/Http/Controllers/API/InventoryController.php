@@ -33,9 +33,10 @@ class InventoryController extends Controller
      */
     private function clearSearchCaches()
     {
-        $keys = Cache::getRedis()->keys('product_search_*');
-        foreach ($keys as $key) {
-            Cache::forget(str_replace(Cache::getPrefix(), '', $key));
+        if (Cache::supportsTags()) {
+            Cache::tags(['product_search'])->flush();
+        } else {
+            Cache::flush();
         }
     }
 
@@ -59,8 +60,8 @@ class InventoryController extends Controller
         $products = $noCache ? null : Cache::get($cacheKey);
 
         if (!$products) {
-            $query = Product::withCount(['productUnits' => function ($query) {
-                $query->where('is_active', true);
+            $query = Product::with(['productUnits' => function ($query) {
+                $query->where('is_active', true)->select('id', 'product_id', 'unit_code', 'qr_code', 'is_active');
             }])
             ->whereHas('productUnits', function ($query) {
                 $query->where('is_active', true);
@@ -75,7 +76,6 @@ class InventoryController extends Controller
                 $query->where('size', 'like', '%' . $sizeTerm . '%');
             });
 
-            // Apply dynamic sorting
             $query->orderBy($orderBy, $sort);
 
             $products = $query->paginate($perPage)
@@ -88,7 +88,11 @@ class InventoryController extends Controller
                 ]);
 
             if (!$noCache) {
-                Cache::put($cacheKey, $products, now()->addMinutes(1));
+                if (Cache::supportsTags()) {
+                    Cache::tags(['product_search'])->put($cacheKey, $products, now()->addMinutes(1));
+                } else {
+                    Cache::put($cacheKey, $products, now()->addMinutes(1));
+                }
             }
         }
 
@@ -146,9 +150,16 @@ class InventoryController extends Controller
                         'color' => $product->color,
                         'selling_price' => $product->selling_price,
                         'discount_price' => $product->discount_price,
-                        'stock' => $product->product_units_count,
+                        'stock' => $product->productUnits->count(),
+                        'units' => $product->productUnits->map(function ($unit) {
+                            return [
+                                'unit_code' => $unit->unit_code,
+                                'qr_code' => $unit->qr_code,
+                                'is_active' => $unit->is_active,
+                            ];
+                        })->toArray(),
                     ];
-                }),
+                })->toArray(),
                 'pagination' => [
                     'current_page' => $products->currentPage(),
                     'last_page' => $products->lastPage(),
@@ -244,7 +255,6 @@ class InventoryController extends Controller
                 ]);
             }
 
-            // Clear search caches to ensure new products appear
             $this->clearSearchCaches();
 
             DB::commit();
@@ -308,7 +318,7 @@ class InventoryController extends Controller
                         'qr_code' => $unit->qr_code,
                         'is_active' => $unit->is_active,
                     ];
-                }),
+                })->toArray(),
             ]
         ], 200, ['Cache-Control' => 'no-cache']);
     }
@@ -510,6 +520,7 @@ class InventoryController extends Controller
                 }
             }
 
+            $newProductIds = [];
             for ($i = 1; $i < count($validated['sizes']); $i++) {
                 $sizeData = $validated['sizes'][$i];
                 if ($sizeData['stock'] == 0) {
@@ -522,6 +533,8 @@ class InventoryController extends Controller
                     'selling_price' => $validated['selling_price'],
                     'discount_price' => $validated['discount_price'] ?? null,
                 ]);
+
+                $newProductIds[] = $newProduct->id;
 
                 $units = [];
                 for ($j = 0; $j < $sizeData['stock']; $j++) {
@@ -538,7 +551,7 @@ class InventoryController extends Controller
                     Cache::forever($this->getUnitCacheKey($newProduct->id, $unit->unit_code), [
                         'product_id' => $newProduct->id,
                         'unit_code' => $unit->unit_code,
-                        'qr_code' => $unit->qr_code,
+                        'qr_code' => $qrCode,
                         'is_active' => true,
                     ]);
                 }
@@ -570,11 +583,37 @@ class InventoryController extends Controller
 
             $this->clearSearchCaches();
 
+            // Reload the updated product with its units
+            $updatedProduct = Product::with(['productUnits' => function ($query) {
+                $query->where('is_active', true);
+            }])->find($product->id);
+
+            $brand = explode(' ', trim($updatedProduct->name))[0];
+            $model = trim(str_replace($brand, '', $updatedProduct->name));
+
             DB::commit();
             return response()->json([
                 'success' => true,
                 'message' => 'Produk dan unit berhasil diperbarui',
-                'product_id' => $product->id,
+                'data' => [
+                    'id' => $updatedProduct->id,
+                    'brand' => $brand,
+                    'model' => $model,
+                    'name' => $updatedProduct->name,
+                    'size' => $updatedProduct->size,
+                    'color' => $updatedProduct->color,
+                    'selling_price' => $updatedProduct->selling_price,
+                    'discount_price' => $updatedProduct->discount_price,
+                    'stock' => $updatedProduct->productUnits->count(),
+                    'units' => $updatedProduct->productUnits->map(function ($unit) {
+                        return [
+                            'unit_code' => $unit->unit_code,
+                            'qr_code' => $unit->qr_code,
+                            'is_active' => $unit->is_active,
+                        ];
+                    })->toArray(),
+                ],
+                'new_products' => $newProductIds,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
