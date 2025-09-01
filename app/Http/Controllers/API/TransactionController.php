@@ -183,7 +183,7 @@ class TransactionController extends Controller
             'card_type' => 'required_if:payment_method,debit|in:Mandiri,BRI,BCA|nullable',
             'discount_amount' => 'required|numeric|min:0',
             'products' => 'required|array|min:1',
-            'products.*.unit_code' => 'required|exists:product_units,unit_code,is_active,1',
+            'products.*.unit_code' => 'required|string',
             'products.*.discount_price' => 'nullable|numeric|min:0',
             'products.*.quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:1000',
@@ -204,12 +204,13 @@ class TransactionController extends Controller
                 $items = [];
 
                 foreach ($request->products as $index => $product) {
-                    // Validasi unit produk
-                    $unit = ProductUnit::where('unit_code', $product['unit_code'])
+                    // Validasi unit produk dengan case-insensitive
+                    $unit = ProductUnit::whereRaw('LOWER(unit_code) = ?', [strtolower($product['unit_code'])])
                         ->where('is_active', true)
                         ->first();
+
                     if (!$unit) {
-                        Log::error('Unit produk tidak ditemukan', [
+                        Log::error('Unit produk tidak ditemukan atau tidak aktif', [
                             'unit_code' => $product['unit_code'],
                             'index' => $index,
                         ]);
@@ -219,21 +220,35 @@ class TransactionController extends Controller
                         ], 404);
                     }
 
-                    // Validasi produk berdasarkan product_id dari unit
+                    // Validasi produk dengan penguncian untuk mencegah race condition
                     $productModel = Product::where('id', $unit->product_id)
-                        ->where('stock', '>=', $product['quantity'])
+                        ->lockForUpdate()
                         ->first();
+
                     if (!$productModel) {
-                        Log::error('Produk tidak ditemukan atau stok tidak cukup', [
+                        Log::error('Produk tidak ditemukan', [
                             'product_id' => $unit->product_id,
                             'unit_code' => $product['unit_code'],
-                            'quantity' => $product['quantity'],
                             'index' => $index,
                         ]);
                         return response()->json([
                             'success' => false,
-                            'message' => "Produk untuk unit kode {$product['unit_code']} tidak ditemukan atau stok tidak cukup.",
+                            'message' => "Produk untuk unit kode {$product['unit_code']} tidak ditemukan.",
                         ], 404);
+                    }
+
+                    if ($productModel->stock < $product['quantity']) {
+                        Log::error('Stok tidak cukup', [
+                            'product_id' => $unit->product_id,
+                            'unit_code' => $product['unit_code'],
+                            'available_stock' => $productModel->stock,
+                            'requested_quantity' => $product['quantity'],
+                            'index' => $index,
+                        ]);
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Stok tidak cukup untuk unit kode {$product['unit_code']}. Stok tersedia: {$productModel->stock}.",
+                        ], 422);
                     }
 
                     $price = $product['discount_price'] ?? $productModel->selling_price;
@@ -262,7 +277,7 @@ class TransactionController extends Controller
                     ]);
                     return response()->json([
                         'success' => false,
-                        'message' => 'Harga akhir tidak boleh melebihi subtotal.',
+                        'message' => 'Diskon tidak boleh melebihi total jumlah.',
                     ], 422);
                 }
                 $finalAmount = max(0, $totalAmount - $discountAmount);
@@ -324,7 +339,9 @@ class TransactionController extends Controller
                 ], 201);
             });
         } catch (\Exception $e) {
-            Log::error('Gagal membuat transaksi: ' . $e->getMessage());
+            Log::error('Gagal membuat transaksi: ' . $e->getMessage(), [
+                'stack_trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal membuat transaksi: ' . $e->getMessage(),
@@ -402,15 +419,15 @@ class TransactionController extends Controller
     public function addProduct($unitCode)
     {
         try {
-            $unit = ProductUnit::where('unit_code', $unitCode)
+            $unit = ProductUnit::whereRaw('LOWER(unit_code) = ?', [strtolower($unitCode)])
                 ->where('is_active', true)
                 ->first();
 
             if (!$unit) {
-                Log::error('Unit produk tidak ditemukan: ' . $unitCode);
+                Log::error('Unit produk tidak ditemukan atau tidak aktif: ' . $unitCode);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unit produk tidak ditemukan atau sudah tidak aktif.',
+                    'message' => 'Unit produk tidak ditemukan atau tidak aktif.',
                 ], 404);
             }
 
