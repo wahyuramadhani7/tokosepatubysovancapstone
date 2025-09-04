@@ -243,7 +243,7 @@
                 <div class="lg:col-span-2 space-y-6">
                     <!-- Scan Options -->
                     <div class="grid grid-cols-1 gap-4">
-                        <div class="bg-gray-dark rounded-lg p-6 text-white hover-scale">
+                        <div class="bg-[#292929] rounded-lg p-6 text-white hover-scale">
                             <h3 class="text-lg font-semibold mb-4">Scan Kamera</h3>
                             <div class="flex justify-center">
                                 <div class="bg-gray-300 rounded-lg p-8" x-show="!isScannerOpen">
@@ -502,7 +502,7 @@
                 getColorCode(color) {
                     const colorMap = {
                         'Merah': '#DC2626',
-                        'Hitam': '#1F2937',
+                        'Hitam': '#292929',
                         'Putih': '#FAFAFA',
                         'Biru': '#2563EB',
                         'Navy': '#1E3A8A',
