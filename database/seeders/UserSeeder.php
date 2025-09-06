@@ -17,8 +17,8 @@ class UserSeeder extends Seeder
         // Akun Pemilik
         User::create([
             'name' => 'Mas Sovan',
-            'email' => 'ownertoko@gmail.com',
-            'password' => Hash::make('superadmintoko'),
+            'email' => 'sovan01@gmail.com',
+            'password' => Hash::make('password123'),
             'role' => 'owner',
             'email_verified_at' => now(),
             'created_at' => now(),

@@ -149,7 +149,7 @@
             display: none;
             width: 20px;
             height: 20px;
-            border: 2px solid #ffffff;
+            border: 2px solidï¿½solid #ffffff;
             border-top: 2px solid transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -213,13 +213,18 @@
             <div class="mb-4 text-left relative">
                 <label for="password" class="block text-sm text-orange-500 mb-1 transition-all duration-300">Password</label>
                 <input type="password" id="password" name="password" required
-                    class="w-full px-4 py-2 rounded-md border border-gray-400 bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 input-focus-effect">
+                    class="w-full px-4 py-2 rounded-md border border-gray-400 bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 input7676-focus-effect">
                 <button type="button" id="togglePassword" class="absolute right-3 top-9 text-orange-500 hover:text-orange-600 transition-all duration-300 hover:scale-110">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                     </svg>
                 </button>
+            </div>
+
+            <div class="mb-4 flex items-center text-left">
+                <input type="checkbox" id="rememberMe" name="rememberMe" class="mr-2 h-4 w-4 text-orange-500 focus:ring-orange-400 border-gray-400 rounded">
+                <label for="rememberMe" class="text-sm text-orange-500">Remember me</label>
             </div>
 
             <div class="mb-6 text-left">
@@ -264,6 +269,38 @@
         const loginButton = document.getElementById('loginButton');
         const buttonText = document.getElementById('buttonText');
         const loadingSpinner = document.querySelector('.loading-spinner');
+        const rememberMe = document.getElementById('rememberMe');
+
+        // Load saved credentials if they exist
+        window.onload = function() {
+            // Check for saved credentials
+            const savedUsername = localStorage.getItem('savedUsername');
+            const savedPassword = localStorage.getItem('savedPassword');
+            const savedRememberMe = localStorage.getItem('rememberMe');
+
+            if (savedUsername && savedPassword && savedRememberMe === 'true') {
+                usernameInput.value = savedUsername;
+                passwordInput.value = savedPassword;
+                rememberMe.checked = true;
+            }
+
+            // Check for server-side errors (Laravel session errors)
+            @if ($errors->has('email') || $errors->has('password'))
+                errorMessage.textContent = 'Password Salah!';
+                errorPopup.classList.remove('hidden');
+                document.querySelector('.bg-gray-900').classList.add('shake-error');
+                setTimeout(() => {
+                    document.querySelector('.bg-gray-900').classList.remove('shake-error');
+                }, 500);
+            @endif
+
+            // Add floating animation to particles
+            const particles = document.querySelectorAll('.particle');
+            particles.forEach((particle, index) => {
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDuration = (Math.random() * 10 + 5) + 's';
+            });
+        };
 
         // Ripple effect function
         function createRipple(event) {
@@ -288,31 +325,10 @@
         // Add ripple effect to login button
         loginButton.addEventListener('click', createRipple);
 
-        window.onload = function() {
-            // Check for server-side errors (Laravel session errors)
-            @if ($errors->has('email') || $errors->has('password'))
-                errorMessage.textContent = 'Password Salah!';
-                errorPopup.classList.remove('hidden');
-                // Add shake animation to form
-                document.querySelector('.bg-gray-900').classList.add('shake-error');
-                setTimeout(() => {
-                    document.querySelector('.bg-gray-900').classList.remove('shake-error');
-                }, 500);
-            @endif
-
-            // Add floating animation to particles
-            const particles = document.querySelectorAll('.particle');
-            particles.forEach((particle, index) => {
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.animationDuration = (Math.random() * 10 + 5) + 's';
-            });
-        };
-
         togglePassword.addEventListener('click', () => {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
             
-            // Add pulse animation
             togglePassword.style.animation = 'pulse 0.3s ease-in-out';
             setTimeout(() => {
                 togglePassword.style.animation = '';
@@ -324,13 +340,25 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                 </svg>` :
                 `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5m0 0L21 21"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a18 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5m0 0L21 21"></path>
                 </svg>`;
         });
 
         loginForm.addEventListener('submit', (e) => {
             console.log('Form submitted');
             
+            // Save credentials if "Remember me" is checked
+            if (rememberMe.checked) {
+                localStorage.setItem('savedUsername', usernameInput.value);
+                localStorage.setItem('savedPassword', passwordInput.value);
+                localStorage.setItem('rememberMe', 'true');
+            } else {
+                // Clear saved credentials if "Remember me" is unchecked
+                localStorage.removeItem('savedUsername');
+                localStorage.removeItem('savedPassword');
+                localStorage.setItem('rememberMe', 'false');
+            }
+
             // Show loading animation
             buttonText.textContent = 'LOADING...';
             loadingSpinner.style.display = 'block';
