@@ -6,6 +6,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VisitorMonitoringController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,10 +19,19 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Redirect root to login
+// Redirect root to appropriate dashboard based on role or login if guest
 Route::get('/', function () {
+    if (Auth::check()) {
+        if (Auth::user()->role === 'owner') {
+            return redirect()->route('owner.dashboard');
+        } elseif (Auth::user()->role === 'employee') {
+            return redirect()->route('employee.dashboard');
+        }
+        // Fallback for users with no valid role
+        return redirect()->route('login');
+    }
     return redirect()->route('login');
-})->middleware('guest');
+});
 
 // Public routes for product and unit details without rate limiting
 Route::prefix('inventory')->group(function () {
@@ -29,11 +39,6 @@ Route::prefix('inventory')->group(function () {
     Route::get('/{product}/unit/{unitCode}', [InventoryController::class, 'showUnit'])->name('inventory.show_unit');
     Route::get('/{product}/json', [InventoryController::class, 'json'])->name('inventory.json');
 });
-
-// Main dashboard route after login
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
 // Routes for employee dashboard
 Route::middleware(['auth', 'role:employee'])->group(function () {
@@ -67,9 +72,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('inventory/stock-opname', [InventoryController::class, 'stockOpname'])->name('inventory.stock_opname');
         Route::post('inventory/update-stock', [InventoryController::class, 'updateStock'])->name('inventory.update_stock');
         Route::post('/inventory/save-report', [InventoryController::class, 'saveReport'])->name('inventory.save_report');
-Route::delete('/inventory/delete-report/{index}', [InventoryController::class, 'deleteReport'])->name('inventory.delete_report');
-Route::delete('inventory/delete-all-reports', [InventoryController::class, 'deleteAllReports'])->name('inventory.delete_all_reports');
-Route::get('/inventory/status', [InventoryController::class, 'status'])->name('inventory.status');
+        Route::delete('/inventory/delete-report/{index}', [InventoryController::class, 'deleteReport'])->name('inventory.delete_report');
+        Route::delete('inventory/delete-all-reports', [InventoryController::class, 'deleteAllReports'])->name('inventory.delete_all_reports');
+        Route::get('/inventory/status', [InventoryController::class, 'status'])->name('inventory.status');
     });
 
     // Transactions Routes
@@ -83,11 +88,7 @@ Route::get('/inventory/status', [InventoryController::class, 'status'])->name('i
         Route::get('/transactions/fetch', [TransactionController::class, 'fetch'])->name('transactions.fetch');
         Route::get('transaction/report', [TransactionController::class, 'report'])->name('transactions.report');
         Route::get('/add-product/{unitCode}', [TransactionController::class, 'addProductByQr'])->name('transactions.add_product');
-        
     });
-
-    // Remove duplicate report route
-    // Route::get('/transactions/reports/sales', [TransactionController::class, 'report'])->name('transactions.report');
 
     // Visitor Monitoring Routes
     Route::get('/visitor-monitoring', [VisitorMonitoringController::class, 'index'])->name('visitor-monitoring.index');
@@ -109,5 +110,12 @@ require __DIR__ . '/auth.php';
 
 // Catch-all route for invalid URLs (only for unauthenticated users)
 Route::fallback(function () {
+    if (Auth::check()) {
+        if (Auth::user()->role === 'owner') {
+            return redirect()->route('owner.dashboard');
+        } elseif (Auth::user()->role === 'employee') {
+            return redirect()->route('employee.dashboard');
+        }
+    }
     return redirect()->route('login');
 })->middleware('guest');

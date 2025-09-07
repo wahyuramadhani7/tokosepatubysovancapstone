@@ -6,6 +6,7 @@
     <title>Laporan Transaksi - Sepatu by Sovan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.14.1/cdn.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -15,6 +16,12 @@
                         'green-custom': '#4ADE80',
                         'gray-dark': '#374151',
                         'gray-medium': '#6B7280'
+                    },
+                    fontFamily: {
+                        'libre-baskerville': ['Libre Baskerville', 'serif']
+                    },
+                    borderRadius: {
+                        'xl': '1rem',
                     }
                 }
             },
@@ -24,7 +31,7 @@
     <style>
         [x-cloak] { display: none !important; }
         body {
-            font-family: sans-serif;
+            font-family: 'Libre Baskerville', serif;
             background: #F3F4F6;
             color: #1F2937;
             min-height: 100vh;
@@ -56,28 +63,28 @@
         .dark .btn-primary:hover {
             background: #FF6B35;
         }
-        .btn-secondary {
-            background: #6B7280;
+        .btn-back {
+            background: #FF6B35;
             color: #FFFFFF;
             border-radius: 0.5rem;
             padding: 0.5rem 1rem;
             font-weight: 500;
             transition: all 0.2s ease;
         }
-        .dark .btn-secondary {
-            background: #4B5563;
+        .dark .btn-back {
+            background: #F97316;
         }
-        .btn-secondary:hover {
-            background: #4B5563;
+        .btn-back:hover {
+            background: #EA580C;
             transform: translateY(-2px);
         }
-        .dark .btn-secondary:hover {
-            background: #6B7280;
+        .dark .btn-back:hover {
+            background: #FF6B35;
         }
         .card {
             background: #FFFFFF;
             border: 1px solid #D1D5DB;
-            border-radius: 0.5rem;
+            border-radius: 1rem;
             transition: transform 0.2s ease;
         }
         .dark .card {
@@ -90,6 +97,7 @@
         .report-card {
             background: #292929;
             border: 1px solid #3D3D3D;
+            border-radius: 1rem;
         }
         .dark .report-card {
             background: #292929;
@@ -119,6 +127,7 @@
             border-radius: 0.5rem;
             padding: 0.5rem;
             transition: all 0.2s ease;
+            font-family: 'Libre Baskerville', serif;
         }
         .dark input, .dark select {
             background: #374151;
@@ -143,12 +152,19 @@
         .transaction-card {
             background: #F9FAFB;
             border: 1px solid #D1D5DB;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             padding: 0.75rem;
         }
         .dark .transaction-card {
             background: #374151;
             border: 1px solid #6B7280;
+        }
+        .transaction-details > div:not(:last-child) {
+            border-top: 1px solid #D1D5DB;
+            padding-top: 0.75rem;
+        }
+        .dark .transaction-details > div:not(:last-child) {
+            border-top: 1px solid #6B7280;
         }
         .transaction-item {
             border-bottom: 1px solid #D1D5DB;
@@ -180,16 +196,20 @@
                 flex-direction: column;
                 gap: 0.5rem;
             }
-            .btn-primary, .btn-secondary {
+            .btn-primary, .btn-back {
                 padding: 0.4rem 0.8rem;
-                font-size: 0.75rem;
+                font-size: 0.875rem;
             }
             input, select {
                 padding: 0.4rem;
-                font-size: 0.75rem;
+                font-size: 0.875rem;
             }
             .card {
                 padding: 0.5rem;
+                border-radius: 0.75rem;
+            }
+            .report-card {
+                border-radius: 0.75rem;
             }
             h1 {
                 font-size: 1.25rem;
@@ -199,16 +219,17 @@
             }
             .transaction-card {
                 padding: 0.5rem;
+                border-radius: 0.5rem;
             }
             .transaction-details {
                 grid-template-columns: 1fr;
             }
             .transaction-details p {
-                font-size: 0.75rem;
+                font-size: 0.875rem;
                 margin-bottom: 0.25rem;
             }
             .transaction-item p {
-                font-size: 0.7rem;
+                font-size: 0.75rem;
             }
         }
     </style>
@@ -223,7 +244,7 @@
                     <h1 class="text-xl font-bold text-gray-100 dark:text-gray-200 flex items-center">
                         Laporan Transaksi
                     </h1>
-                    <p class="text-gray-300 dark:text-gray-400 mt-1 text-sm">
+                    <p class="text-gray-300 dark:text-gray-400 mt-1 text-base">
                         Ringkasan Penjualan 
                         @if ($reportType === 'monthly')
                             Bulanan
@@ -234,7 +255,7 @@
                         @endif
                     </p>
                 </div>
-                <a href="{{ route('transactions.index') }}" class="btn-secondary flex items-center">
+                <a href="{{ route('transactions.index') }}" class="btn-back flex items-center">
                     <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -263,7 +284,7 @@
             </div>
             <div x-show="showFilters" class="grid grid-cols-1 md:grid-cols-3 gap-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
                 <div>
-                    <label for="report_type" class="block text-xs font-medium text-gray-100 dark:text-gray-200 mb-1">Tipe Laporan</label>
+                    <label for="report_type" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Tipe Laporan</label>
                     <select name="report_type" id="report_type" x-model="reportType" @change="toggleFilters(); document.getElementById('filter-form').submit()" class="w-full">
                         <option value="daily" {{ $reportType === 'daily' ? 'selected' : '' }}>Harian</option>
                         <option value="weekly" {{ $reportType === 'weekly' ? 'selected' : '' }}>Mingguan</option>
@@ -271,11 +292,11 @@
                     </select>
                 </div>
                 <div x-show="reportType === 'daily' || reportType === 'weekly'" x-transition id="date-filter">
-                    <label for="date" class="block text-xs font-medium text-gray-100 dark:text-gray-200 mb-1">Tanggal</label>
+                    <label for="date" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Tanggal</label>
                     <input type="date" name="date" id="date" value="{{ $reportType === 'daily' || $reportType === 'weekly' ? $date : '' }}" class="w-full">
                 </div>
                 <div x-show="reportType === 'monthly'" x-transition id="month-filter">
-                    <label for="month" class="block text-xs font-medium text-gray-100 dark:text-gray-200 mb-1">Bulan</label>
+                    <label for="month" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Bulan</label>
                     <select name="month" id="month" class="w-full">
                         @foreach (range(1, 12) as $m)
                             <option value="{{ sprintf('%02d', $m) }}" {{ $month == sprintf('%02d', $m) ? 'selected' : '' }}>
@@ -285,7 +306,7 @@
                     </select>
                 </div>
                 <div x-show="reportType === 'monthly'" x-transition id="year-filter">
-                    <label for="year" class="block text-xs font-medium text-gray-100 dark:text-gray-200 mb-1">Tahun</label>
+                    <label for="year" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Tahun</label>
                     <select name="year" id="year" class="w-full">
                         @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year) as $y)
                             <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
@@ -294,7 +315,7 @@
                 </div>
                 @if (Auth::user()->role === 'owner' || Auth::user()->role === 'admin')
                     <div>
-                        <label for="user_id" class="block text-xs font-medium text-gray-100 dark:text-gray-200 mb-1">Kasir</label>
+                        <label for="user_id" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Kasir</label>
                         <select name="user_id" id="user_id" class="w-full">
                             <option value="">Semua Kasir</option>
                             @foreach (\App\Models\User::all() as $user)
@@ -306,7 +327,7 @@
                     </div>
                 @endif
                 <div>
-                    <label for="product_search" class="block text-xs font-medium text-gray-100 dark:text-gray-200 mb-1">Cari Produk</label>
+                    <label for="product_search" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Cari Produk</label>
                     <input type="text" name="product_search" id="product_search" value="{{ $productSearch ?? '' }}" placeholder="Masukkan nama produk" class="w-full">
                 </div>
             </div>
@@ -329,7 +350,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                         Total Penjualan 
                         @if ($reportType === 'monthly')
                             Bulanan
@@ -351,7 +372,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                         Jumlah Transaksi 
                         @if ($reportType === 'monthly')
                             Bulanan
@@ -373,7 +394,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                         Total Diskon 
                         @if ($reportType === 'monthly')
                             Bulanan
@@ -395,7 +416,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                         Total Produk Terjual 
                         @if ($reportType === 'monthly')
                             Bulanan
@@ -436,34 +457,34 @@
                 <div class="p-4">
                     @forelse ($methodTransactions as $index => $transaction)
                         <div class="transaction-card mb-3" x-data="{ showProducts: false }">
-                            <div class="grid grid-cols-2 gap-2 transaction-details">
+                            <div class="grid grid-cols-2 gap-2 transaction-details pt-2">
                                 <div>
-                                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">No. Invoice</p>
-                                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $transaction->invoice_number }}</p>
-                                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mt-1 mb-1">Tanggal</p>
-                                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ $transaction->created_at->format('d/m/Y H:i') }}</p>
+                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">No. Invoice</p>
+                                    <p class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $transaction->invoice_number }}</p>
+                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mt-1 mb-1">Tanggal</p>
+                                    <p class="text-base text-gray-900 dark:text-gray-100">{{ $transaction->created_at->format('d/m/Y H:i') }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">Kasir</p>
-                                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ $transaction->user->name }}</p>
-                                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mt-1 mb-1">Pelanggan</p>
-                                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ $transaction->customer_name ?? '-' }}</p>
+                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Kasir</p>
+                                    <p class="text-base text-gray-900 dark:text-gray-100">{{ $transaction->user->name }}</p>
+                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mt-1 mb-1">Pelanggan</p>
+                                    <p class="text-base text-gray-900 dark:text-gray-100">{{ $transaction->customer_name ?? '-' }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">Total</p>
-                                    <p class="text-sm font-semibold text-orange-custom">Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</p>
+                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Total</p>
+                                    <p class="text-base font-semibold text-orange-custom">Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">Diskon</p>
-                                    <p class="text-sm font-semibold text-orange-custom">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</p>
+                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Diskon</p>
+                                    <p class="text-base font-semibold text-orange-custom">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</p>
                                 </div>
                                 <div class="col-span-2">
-                                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">Catatan</p>
-                                    <p class="text-sm text-gray-900 dark:text-gray-100" x-text="getTransactionNote({{ $transaction->id }}) || '-'"></p>
+                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Catatan</p>
+                                    <p class="text-base text-gray-900 dark:text-gray-100" x-text="getTransactionNote({{ $transaction->id }}) || '-'"></p>
                                 </div>
                             </div>
                             <div class="mt-2">
-                                <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">
+                                <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">
                                     <span @click="showProducts = !showProducts" class="toggle-button">
                                         Produk
                                         <svg x-show="!showProducts" class="h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -484,38 +505,38 @@
                                     @endphp
                                     @forelse ($filteredItems as $item)
                                         <div class="transaction-item">
-                                            <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Nama:</span> {{ $item->product->name ?? '-' }}</p>
-                                            <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Ukuran:</span> {{ $item->product->size ?? '-' }}</p>
-                                            <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Warna:</span> {{ $item->product->color ?? '-' }}</p>
-                                            <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Kode Unit:</span> {{ $item->productUnit->unit_code ?? '-' }}</p>
-                                            <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Harga:</span> Rp {{ number_format($item->subtotal, 0, ',', '.') }}</p>
+                                            <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Nama:</span> {{ $item->product->name ?? '-' }}</p>
+                                            <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Ukuran:</span> {{ $item->product->size ?? '-' }}</p>
+                                            <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Warna:</span> {{ $item->product->color ?? '-' }}</p>
+                                            <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Kode Unit:</span> {{ $item->productUnit->unit_code ?? '-' }}</p>
+                                            <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Harga:</span> Rp {{ number_format($item->subtotal, 0, ',', '.') }}</p>
                                         </div>
                                     @empty
-                                        <p class="text-xs text-gray-medium dark:text-gray-400">Tidak ada produk yang cocok.</p>
+                                        <p class="text-sm text-gray-medium dark:text-gray-400">Tidak ada produk yang cocok.</p>
                                     @endforelse
                                 </div>
                             </div>
                         </div>
                     @empty
-                        <p class="text-sm text-gray-medium dark:text-gray-400 text-center">Tidak ada transaksi ditemukan.</p>
+                        <p class="text-base text-gray-medium dark:text-gray-400 text-center">Tidak ada transaksi ditemukan.</p>
                     @endforelse
                 </div>
                 <div class="p-4 border-t border-gray-200 dark:border-gray-600">
-                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                         Total Penjualan ({{ ucfirst($method === 'qris' ? 'QRIS' : $method) }}): 
-                        <span class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                        <span class="text-base font-bold text-gray-900 dark:text-gray-100">
                             Rp {{ number_format($methodTransactions->sum('final_amount'), 0, ',', '.') }}
                         </span>
                     </p>
-                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                         Total Diskon ({{ ucfirst($method === 'qris' ? 'QRIS' : $method) }}): 
-                        <span class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                        <span class="text-base font-bold text-gray-900 dark:text-gray-100">
                             Rp {{ number_format($methodTransactions->sum('discount_amount'), 0, ',', '.') }}
                         </span>
                     </p>
-                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                         Total Produk Terjual ({{ ucfirst($method === 'qris' ? 'QRIS' : $method) }}): 
-                        <span class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                        <span class="text-base font-bold text-gray-900 dark:text-gray-100">
                             {{ $methodTransactions->sum(function ($transaction) use ($productSearch) {
                                 return $productSearch
                                     ? $transaction->items->filter(function ($item) use ($productSearch) {
@@ -541,34 +562,34 @@
                     <div class="p-4">
                         @forelse ($paymentMethods[$method] as $index => $transaction)
                             <div class="transaction-card mb-3" x-data="{ showProducts: false }">
-                                <div class="grid grid-cols-2 gap-2 transaction-details">
+                                <div class="grid grid-cols-2 gap-2 transaction-details pt-2">
                                     <div>
-                                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">No. Invoice</p>
-                                        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $transaction->invoice_number }}</p>
-                                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mt-1 mb-1">Tanggal</p>
-                                        <p class="text-sm text-gray-900 dark:text-gray-100">{{ $transaction->created_at->format('d/m/Y H:i') }}</p>
+                                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">No. Invoice</p>
+                                        <p class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $transaction->invoice_number }}</p>
+                                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mt-1 mb-1">Tanggal</p>
+                                        <p class="text-base text-gray-900 dark:text-gray-100">{{ $transaction->created_at->format('d/m/Y H:i') }}</p>
                                     </div>
                                     <div>
-                                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">Kasir</p>
-                                        <p class="text-sm text-gray-900 dark:text-gray-100">{{ $transaction->user->name }}</p>
-                                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mt-1 mb-1">Pelanggan</p>
-                                        <p class="text-sm text-gray-900 dark:text-gray-100">{{ $transaction->customer_name ?? '-' }}</p>
+                                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Kasir</p>
+                                        <p class="text-base text-gray-900 dark:text-gray-100">{{ $transaction->user->name }}</p>
+                                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mt-1 mb-1">Pelanggan</p>
+                                        <p class="text-base text-gray-900 dark:text-gray-100">{{ $transaction->customer_name ?? '-' }}</p>
                                     </div>
                                     <div>
-                                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">Total</p>
-                                        <p class="text-sm font-semibold text-orange-custom">Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</p>
+                                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Total</p>
+                                        <p class="text-base font-semibold text-orange-custom">Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</p>
                                     </div>
                                     <div>
-                                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">Diskon</p>
-                                        <p class="text-sm font-semibold text-orange-custom">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</p>
+                                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Diskon</p>
+                                        <p class="text-base font-semibold text-orange-custom">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</p>
                                     </div>
                                     <div class="col-span-2">
-                                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">Catatan</p>
-                                        <p class="text-sm text-gray-900 dark:text-gray-100" x-text="getTransactionNote({{ $transaction->id }}) || '-'"></p>
+                                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Catatan</p>
+                                        <p class="text-base text-gray-900 dark:text-gray-100" x-text="getTransactionNote({{ $transaction->id }}) || '-'"></p>
                                     </div>
                                 </div>
                                 <div class="mt-2">
-                                    <p class="text-xs font-medium text-gray-medium dark:text-gray-400 mb-1">
+                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">
                                         <span @click="showProducts = !showProducts" class="toggle-button">
                                             Produk
                                             <svg x-show="!showProducts" class="h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -589,38 +610,38 @@
                                         @endphp
                                         @forelse ($filteredItems as $item)
                                             <div class="transaction-item">
-                                                <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Nama:</span> {{ $item->product->name ?? '-' }}</p>
-                                                <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Ukuran:</span> {{ $item->product->size ?? '-' }}</p>
-                                                <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Warna:</span> {{ $item->product->color ?? '-' }}</p>
-                                                <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Kode Unit:</span> {{ $item->productUnit->unit_code ?? '-' }}</p>
-                                                <p class="text-xs text-gray-900 dark:text-gray-100"><span class="font-medium">Harga:</span> Rp {{ number_format($item->subtotal, 0, ',', '.') }}</p>
+                                                <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Nama:</span> {{ $item->product->name ?? '-' }}</p>
+                                                <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Ukuran:</span> {{ $item->product->size ?? '-' }}</p>
+                                                <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Warna:</span> {{ $item->product->color ?? '-' }}</p>
+                                                <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Kode Unit:</span> {{ $item->productUnit->unit_code ?? '-' }}</p>
+                                                <p class="text-sm text-gray-900 dark:text-gray-100"><span class="font-medium">Harga:</span> Rp {{ number_format($item->subtotal, 0, ',', '.') }}</p>
                                             </div>
                                         @empty
-                                            <p class="text-xs text-gray-medium dark:text-gray-400">Tidak ada produk yang cocok.</p>
+                                            <p class="text-sm text-gray-medium dark:text-gray-400">Tidak ada produk yang cocok.</p>
                                         @endforelse
                                     </div>
                                 </div>
                             </div>
                         @empty
-                            <p class="text-sm text-gray-medium dark:text-gray-400 text-center">Tidak ada transaksi ditemukan.</p>
+                            <p class="text-base text-gray-medium dark:text-gray-400 text-center">Tidak ada transaksi ditemukan.</p>
                         @endforelse
                     </div>
                     <div class="p-4 border-t border-gray-200 dark:border-gray-600">
-                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                             Total Penjualan (Debit {{ $cardType }}): 
-                            <span class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                            <span class="text-base font-bold text-gray-900 dark:text-gray-100">
                                 Rp {{ number_format($paymentMethods[$method]->sum('final_amount'), 0, ',', '.') }}
                             </span>
                         </p>
-                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                             Total Diskon (Debit {{ $cardType }}): 
-                            <span class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                            <span class="text-base font-bold text-gray-900 dark:text-gray-100">
                                 Rp {{ number_format($paymentMethods[$method]->sum('discount_amount'), 0, ',', '.') }}
                             </span>
                         </p>
-                        <p class="text-xs font-medium text-gray-medium dark:text-gray-400">
+                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400">
                             Total Produk Terjual (Debit {{ $cardType }}): 
-                            <span class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                            <span class="text-base font-bold text-gray-900 dark:text-gray-100">
                                 {{ $paymentMethods[$method]->sum(function ($transaction) use ($productSearch) {
                                     return $productSearch
                                         ? $transaction->items->filter(function ($item) use ($productSearch) {

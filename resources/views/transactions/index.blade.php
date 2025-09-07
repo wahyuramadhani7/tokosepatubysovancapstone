@@ -197,6 +197,13 @@
             color: #EF4444;
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
+        .transaction-details > div:not(:last-child) {
+            border-top: 1px solid #D1D5DB;
+            padding-top: 0.75rem;
+        }
+        .dark .transaction-details > div:not(:last-child) {
+            border-top: 1px solid #4B5563;
+        }
         @media (max-width: 640px) {
             .header-section h1 {
                 font-size: 1.25rem;
@@ -238,15 +245,14 @@
 <body class="min-h-screen custom-scrollbar" x-data="transactionListApp()" x-init="init()">
     <!-- Custom Header -->
     <header class="custom-header">
-        <div class="close-icon" @click="window.history.back()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
+        <div class="logo" style="margin-left: 20px;">
+            <img src="{{ asset('images/logo2.jpg') }}" alt="Sepatu by Sovan Logo" class="h-10 w-auto sm:h-12 md:h-16">
         </div>
-        <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="dashboard-button card-hover">
-            Kembali ke Dashboard
+        <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="dashboard-button card-hover" title="Kembali ke Dashboard">
+            <i class="fas fa-home"></i>
         </a>
     </header>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <main class="container mx-auto px-4 sm:px-6 py-12 max-w-7xl">
         <!-- Success Alert -->
@@ -438,7 +444,7 @@
                                 </div>
                             </div>
                             <!-- Transaction Details -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="transaction-details grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
                                 <div>
                                     <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Pelanggan</span>
                                     <div class="text-gray-900 dark:text-gray-100" x-text="transaction.customer_name || 'Tanpa Nama'"></div>

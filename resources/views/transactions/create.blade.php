@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -16,6 +17,9 @@
                         'green-custom': '#4ADE80',
                         'gray-dark': '#374151',
                         'gray-medium': '#6B7280'
+                    },
+                    fontFamily: {
+                        'libre-baskerville': ['Libre Baskerville', 'serif']
                     }
                 }
             },
@@ -25,7 +29,7 @@
     <style>
         [x-cloak] { display: none !important; }
         body {
-            font-family: sans-serif;
+            font-family: 'Libre Baskerville', serif;
             background: #F3F4F6;
             color: #1F2937;
             min-height: 100vh;
@@ -94,6 +98,7 @@
             border-radius: 0.5rem;
             padding: 0.75rem;
             transition: all 0.2s ease;
+            font-family: 'Libre Baskerville', serif;
         }
         .dark input, .dark select, .dark textarea {
             background: #374151;
