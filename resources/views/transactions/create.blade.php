@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="id" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" :class="{ 'dark': darkMode }">
+<html lang="id" x-data="{ darkMode: false }" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buat Transaksi Baru - Sepatu by Sovan</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.14.1/cdn.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <script>
@@ -349,45 +349,6 @@
                                 <input type="text" name="customer_phone" placeholder="Masukkan nomor telepon" value="{{ old('customer_phone') }}" class="w-full px-3 py-2 text-base rounded-lg">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Transaksi <span class="text-red-600 dark:text-red-400">*</span></label>
-                                <select name="transaction_type" id="transaction_type" x-model="transactionType" @change="updatePlatformVisibility" class="w-full px-3 py-2 text-base rounded-lg" required>
-                                    <option value="" disabled {{ old('transaction_type') ? '' : 'selected' }}>Pilih jenis transaksi</option>
-                                    <option value="offline" {{ old('transaction_type') == 'offline' ? 'selected' : '' }}>Offline</option>
-                                    <option value="online" {{ old('transaction_type') == 'online' ? 'selected' : '' }}>Online</option>
-                                </select>
-                            </div>
-                            <div x-show="transactionType === 'online'" x-cloak>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platform Online <span class="text-red-600 dark:text-red-400">*</span></label>
-                                <select name="online_platform" id="online_platform" x-model="onlinePlatform" class="w-full px-3 py-2 text-base rounded-lg">
-                                    <option value="" disabled {{ old('online_platform') ? '' : 'selected' }}>Pilih platform</option>
-                                    <option value="Shopee" {{ old('online_platform') == 'Shopee' ? 'selected' : '' }}>Shopee</option>
-                                    <option value="Tokopedia" {{ old('online_platform') == 'Tokopedia' ? 'selected' : '' }}>Tokopedia</option>
-                                    <option value="Lazada" {{ old('online_platform') == 'Lazada' ? 'selected' : '' }}>Lazada</option>
-                                    <option value="Blibli" {{ old('online_platform') == 'Blibli' ? 'selected' : '' }}>Blibli</option>
-                                    <option value="custom" {{ old('online_platform') == 'custom' ? 'selected' : '' }}>Lainnya</option>
-                                </select>
-                            </div>
-                            <div x-show="transactionType === 'online' && onlinePlatform === 'custom'" x-cloak>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Platform Lain</label>
-                                <input type="text" name="custom_platform" x-model="customPlatform" placeholder="Masukkan nama platform" value="{{ old('custom_platform') }}" class="w-full px-3 py-2 text-base rounded-lg">
-                            </div>
-                            <div x-show="transactionType === 'online'" x-cloak>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kurir <span class="text-red-600 dark:text-red-400">*</span></label>
-                                <select name="courier" id="courier" x-model="courier" class="w-full px-3 py-2 text-base rounded-lg">
-                                    <option value="" disabled {{ old('courier') ? '' : 'selected' }}>Pilih kurir</option>
-                                    <option value="JNE" {{ old('courier') == 'JNE' ? 'selected' : '' }}>JNE</option>
-                                    <option value="J&T" {{ old('courier') == 'J&T' ? 'selected' : '' }}>J&T</option>
-                                    <option value="SiCepat" {{ old('courier') == 'SiCepat' ? 'selected' : '' }}>SiCepat</option>
-                                    <option value="GoSend" {{ old('courier') == 'GoSend' ? 'selected' : '' }}>GoSend</option>
-                                    <option value="GrabExpress" {{ old('courier') == 'GrabExpress' ? 'selected' : '' }}>GrabExpress</option>
-                                    <option value="custom" {{ old('courier') == 'custom' ? 'selected' : '' }}>Lainnya</option>
-                                </select>
-                            </div>
-                            <div x-show="transactionType === 'online' && courier === 'custom'" x-cloak>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Kurir Lain</label>
-                                <input type="text" name="custom_courier" x-model="customCourier" placeholder="Masukkan nama kurir" value="{{ old('custom_courier') }}" class="w-full px-3 py-2 text-base rounded-lg">
-                            </div>
-                            <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Metode Pembayaran <span class="text-red-600 dark:text-red-400">*</span></label>
                                 <select name="payment_method" id="payment_method" x-model="paymentMethod" @change="updateCardTypeVisibility" class="w-full px-3 py-2 text-base rounded-lg" required>
                                     <option value="" disabled {{ old('payment_method') ? '' : 'selected' }}>Pilih metode pembayaran</option>
@@ -399,7 +360,7 @@
                             </div>
                             <div x-show="paymentMethod === 'debit'" x-cloak>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe Kartu <span class="text-red-600 dark:text-red-400">*</span></label>
-                                <select name="card_type" id="card_type" x-model="cardType" class="w-full px-3 py-2 text-base rounded-lg">
+                                <select name="card_type" id="card_type" class="w-full px-3 py-2 text-base rounded-lg" x-model="cardType">
                                     <option value="" disabled {{ old('card_type') ? '' : 'selected' }}>Pilih tipe kartu</option>
                                     <option value="Mandiri" {{ old('card_type') == 'Mandiri' ? 'selected' : '' }}>Mandiri</option>
                                     <option value="BRI" {{ old('card_type') == 'BRI' ? 'selected' : '' }}>BRI</option>
@@ -497,11 +458,6 @@
                 new_total: '',
                 paymentMethod: '',
                 cardType: '',
-                transactionType: '',
-                onlinePlatform: '',
-                customPlatform: '',
-                courier: '',
-                customCourier: '',
                 isScannerOpen: false,
                 qrScanner: null,
                 scanError: '',
@@ -516,9 +472,7 @@
                     this.darkMode = localStorage.getItem('darkMode') === 'true';
                     this.$watch('darkMode', value => {
                         localStorage.setItem('darkMode', value);
-                        document.documentElement.classList.toggle('dark', value);
                     });
-                    document.documentElement.classList.toggle('dark', this.darkMode);
                     this.initialize();
                 },
 
@@ -535,11 +489,6 @@
                     this.new_total = '{{ old('discount_amount') }}';
                     this.paymentMethod = '{{ old('payment_method') }}';
                     this.cardType = '{{ old('card_type') }}';
-                    this.transactionType = '{{ old('transaction_type') }}' || 'offline';
-                    this.onlinePlatform = '{{ old('online_platform') }}';
-                    this.customPlatform = '{{ old('custom_platform') }}';
-                    this.courier = '{{ old('courier') }}';
-                    this.customCourier = '{{ old('custom_courier') }}';
                 },
 
                 loadPaginatedUnits() {
@@ -672,65 +621,11 @@
                     }
                 },
 
-                updatePlatformVisibility() {
-                    if (this.transactionType !== 'online') {
-                        this.onlinePlatform = '';
-                        this.customPlatform = '';
-                        this.courier = '';
-                        this.customCourier = '';
-                    }
-                },
-
                 validateForm(event) {
                     if (this.cart.length === 0) {
                         event.preventDefault();
                         this.popupTitle = 'Keranjang Kosong';
                         this.popupMessage = 'Tambahkan unit produk terlebih dahulu.';
-                        this.popupType = 'error';
-                        this.showPopup = true;
-                        return false;
-                    }
-
-                    if (!this.transactionType) {
-                        event.preventDefault();
-                        this.popupTitle = 'Jenis Transaksi Kosong';
-                        this.popupMessage = 'Silakan pilih jenis transaksi (Online/Offline)!';
-                        this.popupType = 'error';
-                        this.showPopup = true;
-                        return false;
-                    }
-
-                    if (this.transactionType === 'online' && !this.onlinePlatform) {
-                        event.preventDefault();
-                        this.popupTitle = 'Platform Online Kosong';
-                        this.popupMessage = 'Silakan pilih platform online!';
-                        this.popupType = 'error';
-                        this.showPopup = true;
-                        return false;
-                    }
-
-                    if (this.transactionType === 'online' && this.onlinePlatform === 'custom' && !this.customPlatform.trim()) {
-                        event.preventDefault();
-                        this.popupTitle = 'Nama Platform Lain Kosong';
-                        this.popupMessage = 'Silakan masukkan nama platform lain!';
-                        this.popupType = 'error';
-                        this.showPopup = true;
-                        return false;
-                    }
-
-                    if (this.transactionType === 'online' && !this.courier) {
-                        event.preventDefault();
-                        this.popupTitle = 'Kurir Kosong';
-                        this.popupMessage = 'Silakan pilih kurir!';
-                        this.popupType = 'error';
-                        this.showPopup = true;
-                        return false;
-                    }
-
-                    if (this.transactionType === 'online' && this.courier === 'custom' && !this.customCourier.trim()) {
-                        event.preventDefault();
-                        this.popupTitle = 'Nama Kurir Lain Kosong';
-                        this.popupMessage = 'Silakan masukkan nama kurir lain!';
                         this.popupType = 'error';
                         this.showPopup = true;
                         return false;

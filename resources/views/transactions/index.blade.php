@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.2/cdn.min.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script>
         tailwind.config = {
             theme: {
@@ -104,6 +105,17 @@
         .custom-header .dashboard-button:hover {
             background-color: #FF5722;
         }
+        .dark-mode-toggle {
+            background-color: #FF4500;
+            color: #FFFFFF;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .dark-mode-toggle:hover {
+            background-color: #FF5722;
+        }
         .card {
             background: rgba(255, 255, 255, 0.95);
             border: 1px solid #D1D5DB;
@@ -199,17 +211,24 @@
             color: #EF4444;
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
-        .transaction-card .badge-info {
-            background: rgba(59, 130, 246, 0.1);
-            color: #3B82F6;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
         .transaction-details > div:not(:last-child) {
             border-top: 1px solid #D1D5DB;
             padding-top: 0.875rem;
         }
         .dark .transaction-details > div:not(:last-child) {
             border-top: 1px solid #4B5563;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
         @media (max-width: 640px) {
             body {
@@ -258,11 +277,20 @@
         <div class="logo" style="margin-left: 20px;">
             <img src="{{ asset('images/logo2.jpg') }}" alt="Sepatu by Sovan Logo" class="h-12 w-auto sm:h-14 md:h-18">
         </div>
-        <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="dashboard-button card-hover" title="Kembali ke Dashboard">
-            <i class="fas fa-home"></i>
-        </a>
+        <div class="flex items-center space-x-4">
+            <button @click="toggleDarkMode" class="dark-mode-toggle" :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                <svg x-show="!darkMode" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg x-show="darkMode" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 01 8.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+            <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="dashboard-button card-hover" title="Kembali ke Dashboard">
+                <i class="fas fa-home"></i>
+            </a>
+        </div>
     </header>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <main class="container mx-auto px-4 sm:px-6 py-12 max-w-7xl">
         <!-- Success Alert -->
@@ -351,7 +379,7 @@
                 </button>
             </div>
             <div x-show="showFilters" class="p-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-base font-medium mb-1">Tanggal</label>
                         <input type="date" x-model="dateFilter" @change="fetchTransactions" class="w-full text-base">
@@ -373,14 +401,6 @@
                             <option value="paid">Lunas</option>
                             <option value="pending">Pending</option>
                             <option value="cancelled">Dibatalkan</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-base font-medium mb-1">Jenis Transaksi</label>
-                        <select x-model="transactionTypeFilter" @change="fetchTransactions" class="w-full text-base">
-                            <option value="">Semua Jenis</option>
-                            <option value="online">Online</option>
-                            <option value="offline">Offline</option>
                         </select>
                     </div>
                 </div>
@@ -483,12 +503,6 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Jenis Transaksi</span>
-                                    <div>
-                                        <span class="badge badge-info" x-text="translateTransactionType(transaction.transaction_type)"></span>
-                                    </div>
-                                </div>
-                                <div>
                                     <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Diskon</span>
                                     <div class="text-orange-custom" x-text="formatRupiah(calculateDiscount(transaction))"></div>
                                 </div>
@@ -585,7 +599,6 @@
                     paymentMethodFilter: '',
                     statusFilter: '',
                     dateFilter: '',
-                    transactionTypeFilter: '',
                     currentPage: 1,
                     perPage: 10,
                     sortColumn: 'id',
@@ -654,9 +667,7 @@
                         this.loading = true;
                         this.errorMessage = '';
                         try {
-                            const url = `{{ route('transactions.fetch') }}?date=${this.dateFilter}&payment_method=${this.paymentMethodFilter}&status=${this.statusFilter}&transaction_type=${this.transactionTypeFilter}`;
-                            console.log('Fetching transactions from:', url); // Debugging
-                            const response = await fetch(url);
+                            const response = await fetch(`{{ route('transactions.fetch') }}?date=${this.dateFilter}&payment_method=${this.paymentMethodFilter}&status=${this.statusFilter}`);
                             if (!response.ok) {
                                 throw new Error('Gagal mengambil data transaksi.');
                             }
@@ -665,16 +676,12 @@
                                 throw new Error(data.message || 'Gagal mengambil data transaksi.');
                             }
                             const storedNotes = JSON.parse(localStorage.getItem('transactionNotes') || '{}');
-                            this.transactions = data.transactions.map(transaction => {
-                                console.log('Transaction:', transaction.id, 'Type:', transaction.transaction_type); // Debugging
-                                return {
-                                    ...transaction,
-                                    total_amount: parseFloat(transaction.total_amount) || 0,
-                                    final_amount: parseFloat(transaction.final_amount) || 0,
-                                    transaction_type: transaction.transaction_type || 'offline', // Fallback to offline
-                                    note: storedNotes[transaction.id] || ''
-                                };
-                            });
+                            this.transactions = data.transactions.map(transaction => ({
+                                ...transaction,
+                                total_amount: parseFloat(transaction.total_amount) || 0,
+                                final_amount: parseFloat(transaction.final_amount) || 0,
+                                note: storedNotes[transaction.id] || ''
+                            }));
                             this.sortResults(this.transactions);
                             this.filteredTransactions = [...this.transactions];
                             this.currentPage = 1;
@@ -743,13 +750,6 @@
                         }[status] || status;
                     },
 
-                    translateTransactionType(type) {
-                        return {
-                            online: 'Online',
-                            offline: 'Offline'
-                        }[type] || 'Offline'; // Fallback to Offline
-                    },
-
                     getProductNames(items) {
                         if (!items || !items.length) return '<span class="text-base text-gray-medium dark:text-gray-400">-</span>';
                         return items.map(item => `
@@ -767,7 +767,6 @@
                     resetFilters() {
                         this.paymentMethodFilter = '';
                         this.statusFilter = '';
-                        this.transactionTypeFilter = '';
                         this.dateFilter = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
                         this.fetchTransactions();
                     },

@@ -6,6 +6,7 @@
     <title>Laporan Transaksi - Sepatu by Sovan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.14.1/cdn.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -80,6 +81,18 @@
         }
         .dark .btn-back:hover {
             background: #FF6B35;
+        }
+        .btn-export {
+            background: #4ADE80;
+            color: #FFFFFF;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .btn-export:hover {
+            background: #22C55E;
+            transform: translateY(-2px);
         }
         .card {
             background: #FFFFFF;
@@ -186,16 +199,6 @@
         .dark .toggle-button {
             color: #F97316;
         }
-        .badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-        }
-        .badge-info {
-            background: rgba(59, 130, 246, 0.1);
-            color: #3B82F6;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
         @media (max-width: 640px) {
             .container {
                 padding-left: 0.25rem;
@@ -206,7 +209,7 @@
                 flex-direction: column;
                 gap: 0.5rem;
             }
-            .btn-primary, .btn-back {
+            .btn-primary, .btn-back, .btn-export {
                 padding: 0.4rem 0.8rem;
                 font-size: 0.875rem;
             }
@@ -265,17 +268,25 @@
                         @endif
                     </p>
                 </div>
-                <a href="{{ route('transactions.index') }}" class="btn-back flex items-center">
-                    <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                    Kembali ke Transaksi
-                </a>
+                <div class="flex gap-2">
+                    <a href="{{ route('transactions.index') }}" class="btn-back flex items-center">
+                        <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Kembali ke Transaksi
+                    </a>
+                    <button @click="exportToPDF()" class="btn-export flex items-center">
+                        <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export PDF
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Filter Form -->
-        <form method="GET" action="{{ route('transactions.report') }}" id="filter-form" class="report-card mb-4 p-4 fade-in" x-data="{ showFilters: true, reportType: '{{ $reportType }}', transactionType: '{{ $transactionType ?? '' }}' }">
+        <form method="GET" action="{{ route('transactions.report') }}" id="filter-form" class="report-card mb-4 p-4 fade-in" x-data="{ showFilters: true, reportType: '{{ $reportType }}' }">
             <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-600 pb-3 mb-3">
                 <h2 class="text-base font-semibold text-gray-100 dark:text-gray-200 flex items-center">
                     <svg class="h-5 w-5 mr-2 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -292,7 +303,7 @@
                     </svg>
                 </button>
             </div>
-            <div x-show="showFilters" class="grid grid-cols-1 md:grid-cols-4 gap-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
+            <div x-show="showFilters" class="grid grid-cols-1 md:grid-cols-3 gap-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
                 <div>
                     <label for="report_type" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Tipe Laporan</label>
                     <select name="report_type" id="report_type" x-model="reportType" @change="toggleFilters(); document.getElementById('filter-form').submit()" class="w-full">
@@ -340,14 +351,6 @@
                     <label for="product_search" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Cari Produk</label>
                     <input type="text" name="product_search" id="product_search" value="{{ $productSearch ?? '' }}" placeholder="Masukkan nama produk" class="w-full">
                 </div>
-                <div>
-                    <label for="transaction_type" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Jenis Transaksi</label>
-                    <select name="transaction_type" id="transaction_type" x-model="transactionType" @change="document.getElementById('filter-form').submit()" class="w-full">
-                        <option value="">Semua Jenis</option>
-                        <option value="online" {{ $transactionType == 'online' ? 'selected' : '' }}>Online</option>
-                        <option value="offline" {{ $transactionType == 'offline' ? 'selected' : '' }}>Offline</option>
-                    </select>
-                </div>
             </div>
             <div class="mt-4 flex justify-end">
                 <button type="submit" class="btn-primary flex items-center">
@@ -360,7 +363,7 @@
         </form>
 
         <!-- Summary -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div class="card p-4 flex items-center fade-in">
                 <div class="bg-orange-custom rounded-full p-3 mr-3">
                     <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -385,7 +388,7 @@
             </div>
             <div class="card p-4 flex items-center fade-in">
                 <div class="bg-orange-custom rounded-full p-3 mr-3">
-                    <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 14" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                 </div>
@@ -474,7 +477,7 @@
                 </div>
                 <div class="p-4">
                     @forelse ($methodTransactions as $index => $transaction)
-                        <div class="transaction-card mb-3" x-data="{ showProducts: false }" x-init="console.log('Transaction:', {{ $transaction->id }}, 'Type:', '{{ $transaction->transaction_type ?? 'offline' }}')">
+                        <div class="transaction-card mb-3" x-data="{ showProducts: false }">
                             <div class="grid grid-cols-2 gap-2 transaction-details pt-2">
                                 <div>
                                     <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">No. Invoice</p>
@@ -495,12 +498,6 @@
                                 <div>
                                     <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Diskon</p>
                                     <p class="text-base font-semibold text-orange-custom">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Jenis Transaksi</p>
-                                    <p class="text-base text-gray-900 dark:text-gray-100">
-                                        <span class="badge badge-info" x-text="translateTransactionType('{{ $transaction->transaction_type ?? 'offline' }}')"></span>
-                                    </p>
                                 </div>
                                 <div class="col-span-2">
                                     <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Catatan</p>
@@ -585,7 +582,7 @@
                     </div>
                     <div class="p-4">
                         @forelse ($paymentMethods[$method] as $index => $transaction)
-                            <div class="transaction-card mb-3" x-data="{ showProducts: false }" x-init="console.log('Transaction:', {{ $transaction->id }}, 'Type:', '{{ $transaction->transaction_type ?? 'offline' }}')">
+                            <div class="transaction-card mb-3" x-data="{ showProducts: false }">
                                 <div class="grid grid-cols-2 gap-2 transaction-details pt-2">
                                     <div>
                                         <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">No. Invoice</p>
@@ -606,12 +603,6 @@
                                     <div>
                                         <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Diskon</p>
                                         <p class="text-base font-semibold text-orange-custom">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Jenis Transaksi</p>
-                                        <p class="text-base text-gray-900 dark:text-gray-100">
-                                            <span class="badge badge-info" x-text="translateTransactionType('{{ $transaction->transaction_type ?? 'offline' }}')"></span>
-                                        </p>
                                     </div>
                                     <div class="col-span-2">
                                         <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Catatan</p>
@@ -709,7 +700,6 @@
             document.getElementById('user_id')?.addEventListener('change', () => filterForm.submit());
             document.getElementById('product_search')?.addEventListener('input', debounce(() => filterForm.submit(), 500));
             document.getElementById('date')?.addEventListener('change', () => filterForm.submit());
-            document.getElementById('transaction_type')?.addEventListener('change', () => filterForm.submit());
         });
 
         document.addEventListener('alpine:init', () => {
@@ -717,7 +707,6 @@
                 darkMode: localStorage.getItem('darkMode') === 'true',
                 showFilters: true,
                 reportType: '{{ $reportType }}',
-                transactionType: '{{ $transactionType ?? '' }}',
                 init() {
                     this.$watch('darkMode', value => {
                         localStorage.setItem('darkMode', value);
@@ -725,7 +714,6 @@
                     });
                     document.documentElement.classList.toggle('dark', this.darkMode);
                     this.toggleFilters();
-                    console.log('Initial transaction type:', this.transactionType); // Debugging
                 },
                 toggleFilters() {
                     const dateFilter = document.getElementById('date-filter');
@@ -744,15 +732,185 @@
                         document.getElementById('year').value = '{{ \Carbon\Carbon::now()->year }}';
                     }
                 },
-                translateTransactionType(type) {
-                    return {
-                        online: 'Online',
-                        offline: 'Offline'
-                    }[type] || 'Offline'; // Fallback to Offline
-                },
                 getTransactionNote(transactionId) {
                     const notes = JSON.parse(localStorage.getItem('transactionNotes') || '{}');
                     return notes[transactionId] || '';
+                },
+                exportToPDF() {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+
+                    // Set font to match the webpage
+                    doc.setFont('Libre Baskerville', 'normal');
+                    doc.setFontSize(12);
+
+                    // Header
+                    doc.setFontSize(16);
+                    doc.setFont('Libre Baskerville', 'bold');
+                    doc.text('Laporan Transaksi - Sepatu by Sovan', 10, 10);
+                    doc.setFontSize(10);
+                    doc.setFont('Libre Baskerville', 'normal');
+                    const reportPeriod = this.reportType === 'monthly' ? 'Bulanan' : 
+                                       this.reportType === 'weekly' ? 'Mingguan' : 'Harian';
+                    doc.text(`Ringkasan Penjualan ${reportPeriod}`, 10, 20);
+                    doc.setLineWidth(0.5);
+                    doc.line(10, 25, 200, 25);
+
+                    // Summary Section
+                    doc.setFontSize(12);
+                    doc.setFont('Libre Baskerville', 'bold');
+                    doc.text('Ringkasan', 10, 35);
+                    doc.setFontSize(10);
+                    doc.setFont('Libre Baskerville', 'normal');
+                    doc.text(`Total Penjualan: Rp ${'{{ number_format($totalSales, 0, ",", ".") }}'}`, 10, 45);
+                    doc.text(`Jumlah Transaksi: ${'{{ $totalTransactions }}'}`, 10, 55);
+                    doc.text(`Total Diskon: Rp ${'{{ number_format($totalDiscount, 0, ",", ".") }}'}`, 10, 65);
+                    doc.text(`Total Produk Terjual: ${'{{ $totalProductsSold }}'}`, 10, 75);
+                    doc.line(10, 80, 200, 80);
+
+                    // Transactions by Payment Method
+                    let yPosition = 90;
+                    const pageHeight = doc.internal.pageSize.height;
+                    const marginBottom = 20;
+
+                    // Helper function to check and add new page if needed
+                    const checkPageBreak = (requiredHeight) => {
+                        if (yPosition + requiredHeight > pageHeight - marginBottom) {
+                            doc.addPage();
+                            yPosition = 10;
+                        }
+                    };
+
+                    // Non-Debit Payment Methods
+                    @foreach ($nonDebitMethods as $method => $methodTransactions)
+                        checkPageBreak(20);
+                        doc.setFontSize(12);
+                        doc.setFont('Libre Baskerville', 'bold');
+                        doc.text(`Metode Pembayaran: {{ ucfirst($method === 'qris' ? 'QRIS' : $method) }}`, 10, yPosition);
+                        yPosition += 10;
+
+                        @forelse ($methodTransactions as $transaction)
+                            checkPageBreak(60);
+                            doc.setFontSize(10);
+                            doc.setFont('Libre Baskerville', 'normal');
+                            doc.text(`No. Invoice: {{ $transaction->invoice_number }}`, 10, yPosition);
+                            doc.text(`Tanggal: {{ $transaction->created_at->format('d/m/Y H:i') }}`, 10, yPosition + 5);
+                            doc.text(`Kasir: {{ $transaction->user->name }}`, 10, yPosition + 10);
+                            doc.text(`Pelanggan: {{ $transaction->customer_name ?? '-' }}`, 10, yPosition + 15);
+                            doc.text(`Total: Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}`, 10, yPosition + 20);
+                            doc.text(`Diskon: Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}`, 10, yPosition + 25);
+                            doc.text(`Catatan: ${this.getTransactionNote({{ $transaction->id }}) || '-'}`, 10, yPosition + 30);
+                            yPosition += 35;
+
+                            // Products
+                            checkPageBreak(20);
+                            doc.text('Produk:', 15, yPosition);
+                            yPosition += 5;
+
+                            @php
+                                $filteredItems = $productSearch
+                                    ? $transaction->items->filter(function ($item) use ($productSearch) {
+                                          return stripos($item->product->name ?? '', $productSearch) !== false;
+                                      })
+                                    : $transaction->items;
+                            @endphp
+                            @forelse ($filteredItems as $item)
+                                checkPageBreak(25);
+                                doc.text(`Nama: {{ $item->product->name ?? '-' }}`, 20, yPosition);
+                                doc.text(`Ukuran: {{ $item->product->size ?? '-' }}`, 20, yPosition + 5);
+                                doc.text(`Warna: {{ $item->product->color ?? '-' }}`, 20, yPosition + 10);
+                                doc.text(`Kode Unit: {{ $item->productUnit->unit_code ?? '-' }}`, 20, yPosition + 15);
+                                doc.text(`Harga: Rp {{ number_format($item->subtotal, 0, ',', '.') }}`, 20, yPosition + 20);
+                                yPosition += 25;
+                            @empty
+                                doc.text('Tidak ada produk yang cocok.', 20, yPosition);
+                                yPosition += 10;
+                            @endforelse
+                            yPosition += 5;
+                        @empty
+                            checkPageBreak(10);
+                            doc.text('Tidak ada transaksi ditemukan.', 10, yPosition);
+                            yPosition += 10;
+                        @endforelse
+
+                        checkPageBreak(20);
+                        doc.text(`Total Penjualan: Rp {{ number_format($methodTransactions->sum('final_amount'), 0, ',', '.') }}`, 10, yPosition);
+                        doc.text(`Total Diskon: Rp {{ number_format($methodTransactions->sum('discount_amount'), 0, ',', '.') }}`, 10, yPosition + 5);
+                        doc.text(`Total Produk Terjual: ${'{{ $methodTransactions->sum(function ($transaction) use ($productSearch) { return $productSearch ? $transaction->items->filter(function ($item) use ($productSearch) { return stripos($item->product->name ?? '', $productSearch) !== false; })->sum('quantity') : $transaction->items->sum('quantity'); }) }}'}`, 10, yPosition + 10);
+                        yPosition += 20;
+                        doc.line(10, yPosition, 200, yPosition);
+                        yPosition += 5;
+                    @endforeach
+
+                    // Debit Payment Methods
+                    @foreach ($debitMethods as $method => $cardType)
+                        @if ($paymentMethods->has($method))
+                            checkPageBreak(20);
+                            doc.setFontSize(12);
+                            doc.setFont('Libre Baskerville', 'bold');
+                            doc.text(`Metode Pembayaran: Debit ({{ $cardType }})`, 10, yPosition);
+                            yPosition += 10;
+
+                            @forelse ($paymentMethods[$method] as $transaction)
+                                checkPageBreak(60);
+                                doc.setFontSize(10);
+                                doc.setFont('Libre Baskerville', 'normal');
+                                doc.text(`No. Invoice: {{ $transaction->invoice_number }}`, 10, yPosition);
+                                doc.text(`Tanggal: {{ $transaction->created_at->format('d/m/Y H:i') }}`, 10, yPosition + 5);
+                                doc.text(`Kasir: {{ $transaction->user->name }}`, 10, yPosition + 10);
+                                doc.text(`Pelanggan: {{ $transaction->customer_name ?? '-' }}`, 10, yPosition + 15);
+                                doc.text(`Total: Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}`, 10, yPosition + 20);
+                                doc.text(`Diskon: Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}`, 10, yPosition + 25);
+                                doc.text(`Catatan: ${this.getTransactionNote({{ $transaction->id }}) || '-'}`, 10, yPosition + 30);
+                                yPosition += 35;
+
+                                // Products
+                                checkPageBreak(20);
+                                doc.text('Produk:', 15, yPosition);
+                                yPosition += 5;
+
+                                @php
+                                    $filteredItems = $productSearch
+                                        ? $transaction->items->filter(function ($item) use ($productSearch) {
+                                              return stripos($item->product->name ?? '', $productSearch) !== false;
+                                          })
+                                        : $transaction->items;
+                                @endphp
+                                @forelse ($filteredItems as $item)
+                                    checkPageBreak(25);
+                                    doc.text(`Nama: {{ $item->product->name ?? '-' }}`, 20, yPosition);
+                                    doc.text(`Ukuran: {{ $item->product->size ?? '-' }}`, 20, yPosition + 5);
+                                    doc.text(`Warna: {{ $item->product->color ?? '-' }}`, 20, yPosition + 10);
+                                    doc.text(`Kode Unit: {{ $item->productUnit->unit_code ?? '-' }}`, 20, yPosition + 15);
+                                    doc.text(`Harga: Rp {{ number_format($item->subtotal, 0, ',', '.') }}`, 20, yPosition + 20);
+                                    yPosition += 25;
+                                @empty
+                                    doc.text('Tidak ada produk yang cocok.', 20, yPosition);
+                                    yPosition += 10;
+                                @endforelse
+                                yPosition += 5;
+                            @empty
+                                checkPageBreak(10);
+                                doc.text('Tidak ada transaksi ditemukan.', 10, yPosition);
+                                yPosition += 10;
+                            @endforelse
+
+                            checkPageBreak(20);
+                            doc.text(`Total Penjualan: Rp {{ number_format($paymentMethods[$method]->sum('final_amount'), 0, ',', '.') }}`, 10, yPosition);
+                            doc.text(`Total Diskon: Rp {{ number_format($paymentMethods[$method]->sum('discount_amount'), 0, ',', '.') }}`, 10, yPosition + 5);
+                            doc.text(`Total Produk Terjual: ${'{{ $paymentMethods[$method]->sum(function ($transaction) use ($productSearch) { return $productSearch ? $transaction->items->filter(function ($item) use ($productSearch) { return stripos($item->product->name ?? '', $productSearch) !== false; })->sum('quantity') : $transaction->items->sum('quantity'); }) }}'}`, 10, yPosition + 10);
+                            yPosition += 20;
+                            doc.line(10, yPosition, 200, yPosition);
+                            yPosition += 5;
+                        @endif
+                    @endforeach
+
+                    // Save PDF
+                    doc.save(`Laporan_Transaksi_${this.reportType}_${new Date().toISOString().slice(0, 10)}.pdf`);
                 }
             }));
         });
