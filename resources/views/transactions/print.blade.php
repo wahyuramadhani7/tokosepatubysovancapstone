@@ -99,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="autoConnectAndPrint()">
     <div class="receipt">
         <div class="header">
             <div class="store-name">Sepatu by Sovan</div>
@@ -134,6 +134,16 @@
             <div class="invoice-row">
                 <span>Email:</span>
                 <span>{{ $transaction->customer_email }}</span>
+            </div>
+            @endif
+            @if($transaction->transaction_type === 'online')
+            <div class="invoice-row">
+                <span>Platform:</span>
+                <span>{{ $transaction->online_platform ?? '-' }}</span>
+            </div>
+            <div class="invoice-row">
+                <span>Courier:</span>
+                <span>{{ $transaction->courier ?? '-' }}</span>
             </div>
             @endif
         </div>
@@ -195,12 +205,21 @@
             <div class="invoice-row">
                 <span>Payment:</span>
                 <span>
-                    @switch($transaction->payment_method)
-                        @case('cash') Tunai @break
-                        @case('credit_card') QRIS @break
-                        @case('transfer') Transfer Bank @break
-                        @default {{ $transaction->payment_method }}
-                    @endswitch
+                    @php
+                        $paymentMethod = $transaction->payment_method;
+                        if (strpos($paymentMethod, 'debit_') === 0) {
+                            $cardType = ucfirst(str_replace('debit_', '', $paymentMethod));
+                            echo "Debit $cardType";
+                        } elseif ($paymentMethod === 'qris') {
+                            echo 'QRIS';
+                        } elseif ($paymentMethod === 'cash') {
+                            echo 'Tunai';
+                        } elseif ($paymentMethod === 'transfer') {
+                            echo 'Transfer Bank';
+                        } else {
+                            echo $paymentMethod;
+                        }
+                    @endphp
                 </span>
             </div>
             @if($transaction->notes)
@@ -282,6 +301,10 @@
             @if($transaction->customer_email)
             content += `Email: ${truncateText('{{ $transaction->customer_email }}', 33)}\n`;
             @endif
+            @if($transaction->transaction_type === 'online')
+            content += `Platform: ${truncateText('{{ $transaction->online_platform ?? '-' }}', 33)}\n`;
+            content += `Kurir: ${truncateText('{{ $transaction->courier ?? '-' }}', 33)}\n`;
+            @endif
             content += `----------------------------------------\n`;
 
             // Items
@@ -306,7 +329,21 @@
             content += `Diskon: Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}\n`;
             @endif
             content += `*TOTAL: Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}*\n`;
-            content += `Pembayaran: ${truncateText(`@switch($transaction->payment_method) @case('cash') Tunai @break @case('credit_card') QRIS @break @case('transfer') Transfer Bank @break @default {{ $transaction->payment_method }} @endswitch`, 33)}\n`;
+            content += `Pembayaran: ${truncateText(`@php
+                $paymentMethod = $transaction->payment_method;
+                if (strpos($paymentMethod, 'debit_') === 0) {
+                    $cardType = ucfirst(str_replace('debit_', '', $paymentMethod));
+                    echo "Debit $cardType";
+                } elseif ($paymentMethod === 'qris') {
+                    echo 'QRIS';
+                } elseif ($paymentMethod === 'cash') {
+                    echo 'Tunai';
+                } elseif ($paymentMethod === 'transfer') {
+                    echo 'Transfer Bank';
+                } else {
+                    echo $paymentMethod;
+                }
+                @endphp`, 33)}\n`;
             @if($transaction->notes)
             content += `Catatan: ${truncateText('{{ $transaction->notes }}', 33)}\n`;
             @endif
@@ -314,6 +351,7 @@
             content += `Terima kasih atas pembelian Anda!\n`;
             content += `Barang yang tidak sesuai dapat ditukarkan.\n`;
 
+            console.log('WhatsApp Content:', content); // Logging untuk debugging
             return content;
         }
 
@@ -354,6 +392,10 @@
             @if($transaction->customer_email)
             content += `${padRight('Email:', 15)}${truncateText('{{ $transaction->customer_email }}', 33)}\n`;
             @endif
+            @if($transaction->transaction_type === 'online')
+            content += `${padRight('Platform:', 15)}${truncateText('{{ $transaction->online_platform ?? '-' }}', 33)}\n`;
+            content += `${padRight('Courier:', 15)}${truncateText('{{ $transaction->courier ?? '-' }}', 33)}\n`;
+            @endif
             content += '-'.repeat(48) + '\n';
 
             // Items
@@ -378,7 +420,21 @@
             content += `${padRight('Discount:', 15)}Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}\n`;
             @endif
             content += `${padRight('TOTAL:', 15)}Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}\n`;
-            content += `${padRight('Payment:', 15)}${truncateText(`@switch($transaction->payment_method) @case('cash') Tunai @break @case('credit_card') QRIS @break @case('transfer') Transfer Bank @break @default {{ $transaction->payment_method }} @endswitch`, 33)}\n`;
+            content += `${padRight('Payment:', 15)}${truncateText(`@php
+                $paymentMethod = $transaction->payment_method;
+                if (strpos($paymentMethod, 'debit_') === 0) {
+                    $cardType = ucfirst(str_replace('debit_', '', $paymentMethod));
+                    echo "Debit $cardType";
+                } elseif ($paymentMethod === 'qris') {
+                    echo 'QRIS';
+                } elseif ($paymentMethod === 'cash') {
+                    echo 'Tunai';
+                } elseif ($paymentMethod === 'transfer') {
+                    echo 'Transfer Bank';
+                } else {
+                    echo $paymentMethod;
+                }
+                @endphp`, 33)}\n`;
             @if($transaction->notes)
             content += `${padRight('Notes:', 15)}${truncateText('{{ $transaction->notes }}', 33)}\n`;
             @endif
@@ -394,6 +450,7 @@
             // Cut paper (if supported)
             content += String.fromCharCode(0x1D, 0x56, 0x00);
 
+            console.log('Receipt Content:', content); // Logging untuk debugging
             return content;
         }
 
@@ -411,17 +468,45 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
+        // Fungsi untuk menyimpan informasi perangkat ke localStorage
+        function savePrinterDevice(device) {
+            localStorage.setItem('printerDevice', JSON.stringify({
+                name: device.name,
+                id: device.id
+            }));
+        }
+
+        // Fungsi untuk mendapatkan informasi perangkat dari localStorage
+        function getSavedPrinter() {
+            const printer = localStorage.getItem('printerDevice');
+            return printer ? JSON.parse(printer) : null;
+        }
+
         // Fungsi untuk koneksi dan cetak ke printer Bluetooth
-        async function connectAndPrint() {
+        async function connectAndPrint(manual = false) {
             const status = document.getElementById('status');
             try {
-                // Cari perangkat Bluetooth
-                const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
-                });
+                let device;
+                const savedPrinter = getSavedPrinter();
 
-                status.textContent = 'Connecting to ' + device.name + '...';
+                if (!manual && savedPrinter) {
+                    // Coba koneksi ke printer yang tersimpan
+                    status.textContent = `Mencoba menyambung ke ${savedPrinter.name}...`;
+                    device = await navigator.bluetooth.requestDevice({
+                        filters: [{ name: savedPrinter.name }],
+                        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+                    });
+                } else {
+                    // Pilih perangkat secara manual
+                    status.textContent = 'Mencari perangkat Bluetooth...';
+                    device = await navigator.bluetooth.requestDevice({
+                        acceptAllDevices: true,
+                        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+                    });
+                    savePrinterDevice(device); // Simpan perangkat yang dipilih
+                }
+
+                status.textContent = `Menyambung ke ${device.name}...`;
                 
                 // Sambungkan ke perangkat
                 const server = await device.gatt.connect();
@@ -435,11 +520,11 @@
                 let chunks = chunkBuffer(buffer, 128);
                 for (let i = 0; i < chunks.length; i++) {
                     await characteristic.writeValue(chunks[i]);
-                    status.textContent = `Sending text chunk ${i + 1}/${chunks.length}...`;
+                    status.textContent = `Mengirim potongan teks ${i + 1}/${chunks.length}...`;
                     await delay(150);
                 }
 
-                status.textContent = 'Printing successful!';
+                status.textContent = 'Pencetakan berhasil!';
                 // Redirect ke halaman index setelah 2 detik
                 setTimeout(() => {
                     window.location.href = '{{ route('transactions.index') }}';
@@ -447,6 +532,23 @@
             } catch (error) {
                 status.textContent = 'Error: ' + error.message;
                 console.error('Bluetooth Error:', error);
+                if (!manual) {
+                    status.textContent += ' Silakan pilih printer secara manual.';
+                }
+            }
+        }
+
+        // Fungsi untuk mencoba koneksi otomatis saat halaman dimuat
+        async function autoConnectAndPrint() {
+            if (navigator.bluetooth) {
+                const savedPrinter = getSavedPrinter();
+                if (savedPrinter) {
+                    await connectAndPrint(false); // Coba koneksi otomatis
+                } else {
+                    document.getElementById('status').textContent = 'Tidak ada printer tersimpan. Silakan pilih printer secara manual.';
+                }
+            } else {
+                document.getElementById('status').textContent = 'Error: Browser tidak mendukung Web Bluetooth API.';
             }
         }
     </script>

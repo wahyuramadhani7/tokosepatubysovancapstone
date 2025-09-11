@@ -182,24 +182,6 @@
                 <span id="buttonText">LOGIN</span>
                 <div class="loading-spinner ml-1 sm:ml-2"></div>
             </button>
-
-            <button type="button" id="fingerprintButton"
-                class="w-full bg-blue-600 text-white py-1.5 rounded-md font-bold text-base button-hover-effect ripple-effect flex items-center justify-center mb-2 sm:py-2 sm:text-lg">
-                <svg class="w-4 h-4 mr-1 sm:w-5 sm:h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2zm0 0c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2zm0 0c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2zm4 0c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2zm0 0c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2z"></path>
-                </svg>
-                <span id="fingerprintButtonText">LOGIN WITH FINGERPRINT</span>
-                <div class="loading-spinner ml-1 sm:ml-2"></div>
-            </button>
-
-            <button type="button" id="registerFingerprintButton"
-                class="w-full bg-green-600 text-white py-1.5 rounded-md font-bold text-base button-hover-effect ripple-effect flex items-center justify-center sm:py-2 sm:text-lg">
-                <svg class="w-4 h-4 mr-1 sm:w-5 sm:h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2zm0 0c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2zm0 0c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2zm4 0c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2zm0 0c0-1.104-.896-2-2-2s-2 .896-2 2c0 1.105.896 2 2 2s2-.895 2-2z"></path>
-                </svg>
-                <span id="registerFingerprintButtonText">REGISTER FINGERPRINT</span>
-                <div class="loading-spinner ml-1 sm:ml-2"></div>
-            </button>
         </form>
 
         <div id="errorPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
@@ -215,20 +197,6 @@
                 </div>
             </div>
         </div>
-
-        <div id="successPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
-            <div class="flex items-center justify-center min-h-screen">
-                <div class="bg-white p-4 rounded-lg shadow-md text-center fade-in-scale">
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                    </div>
-                    <p id="successMessage" class="text-green-600 font-bold mb-3 text-sm sm:text-base">Fingerprint Registered Successfully!</p>
-                    <button id="closeSuccessPopup" class="bg-orange-500 text-white px-4 py-1 rounded-md hover:bg-orange-600 transition-all duration-200 button-hover-effect text-sm sm:px-6 sm:py-2">OK</button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -241,15 +209,8 @@
         const closePopup = document.getElementById('closePopup');
         const loginButton = document.getElementById('loginButton');
         const buttonText = document.getElementById('buttonText');
-        const fingerprintButton = document.getElementById('fingerprintButton');
-        const fingerprintButtonText = document.getElementById('fingerprintButtonText');
-        const registerFingerprintButton = document.getElementById('registerFingerprintButton');
-        const registerFingerprintButtonText = document.getElementById('registerFingerprintButtonText');
-        const successPopup = document.getElementById('successPopup');
-        const successMessage = document.getElementById('successMessage');
-        const closeSuccessPopup = document.getElementById('closeSuccessPopup');
         const rememberMe = document.getElementById('rememberMe');
-        const loadingSpinners = document.querySelectorAll('.loading-spinner');
+        const loadingSpinner = document.querySelector('.loading-spinner');
 
         // Load saved credentials if they exist
         window.onload = function() {
@@ -279,16 +240,6 @@
                 particle.style.top = Math.random() * 100 + '%';
                 particle.style.animationDuration = (Math.random() * 5 + 4) + 's';
             });
-
-            // Check if WebAuthn is supported
-            if (!window.PublicKeyCredential) {
-                fingerprintButton.disabled = true;
-                fingerprintButton.classList.add('opacity-50', 'cursor-not-allowed');
-                fingerprintButtonText.textContent = 'FINGERPRINT NOT SUPPORTED';
-                registerFingerprintButton.disabled = true;
-                registerFingerprintButton.classList.add('opacity-50', 'cursor-not-allowed');
-                registerFingerprintButtonText.textContent = 'FINGERPRINT NOT SUPPORTED';
-            }
         };
 
         // Ripple effect function
@@ -312,7 +263,7 @@
         }
 
         // Add ripple effect to buttons
-        [loginButton, fingerprintButton, registerFingerprintButton, closePopup, closeSuccessPopup].forEach(button => {
+        [loginButton, closePopup].forEach(button => {
             button.addEventListener('click', createRipple);
         });
 
@@ -349,185 +300,13 @@
             }
 
             buttonText.textContent = 'LOADING...';
-            loadingSpinners[0].style.display = 'block';
+            loadingSpinner.style.display = 'block';
             loginButton.disabled = true;
             loginButton.classList.add('opacity-75');
         });
 
-        function base64urlToArrayBuffer(base64url) {
-            let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-            const padding = base64.length % 4;
-            if (padding) {
-                base64 += '='.repeat(4 - padding);
-            }
-            const binaryString = window.atob(base64);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
-
-        function arrayBufferToBase64url(buffer) {
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-        }
-
-        async function registerFingerprint() {
-            try {
-                if (!usernameInput.value) {
-                    errorMessage.textContent = 'Please enter a username before registering fingerprint!';
-                    errorPopup.classList.remove('hidden');
-                    document.querySelector('.bg-gray-900').classList.add('shake-error');
-                    setTimeout(() => {
-                        document.querySelector('.bg-gray-900').classList.remove('shake-error');
-                    }, 400);
-                    return;
-                }
-
-                registerFingerprintButtonText.textContent = 'REGISTERING...';
-                loadingSpinners[2].style.display = 'block';
-                registerFingerprintButton.disabled = true;
-                registerFingerprintButton.classList.add('opacity-75');
-
-                if (!window.PublicKeyCredential) {
-                    throw new Error('WebAuthn is not supported in this browser');
-                }
-
-                const challenge = arrayBufferToBase64url(crypto.getRandomValues(new Uint8Array(32)));
-                const publicKey = {
-                    challenge: base64urlToArrayBuffer(challenge),
-                    rp: { name: 'Sepatu by Sovan', id: window.location.hostname },
-                    user: {
-                        id: new TextEncoder().encode(usernameInput.value),
-                        name: usernameInput.value,
-                        displayName: usernameInput.value
-                    },
-                    pubKeyCredParams: [
-                        { type: 'public-key', alg: -7 },
-                        { type: 'public-key', alg: -257 }
-                    ],
-                    authenticatorSelection: {
-                        authenticatorAttachment: 'platform',
-                        userVerification: 'required'
-                    },
-                    timeout: 60000,
-                    attestation: 'none'
-                };
-
-                const credential = await navigator.credentials.create({ publicKey });
-                const credentialData = {
-                    id: credential.id,
-                    rawId: arrayBufferToBase64url(credential.rawId),
-                    type: credential.type,
-                    response: {
-                        clientDataJSON: arrayBufferToBase64url(credential.response.clientDataJSON),
-                        attestationObject: arrayBufferToBase64url(credential.response.attestationObject)
-                    }
-                };
-
-                localStorage.setItem(`fingerprintCredentialId_${usernameInput.value}`, credential.id);
-                successMessage.textContent = 'Fingerprint Registered Successfully!';
-                successPopup.classList.remove('hidden');
-
-            } catch (error) {
-                console.error('Fingerprint registration failed:', error);
-                errorMessage.textContent = 'Fingerprint Registration Failed: ' + error.message;
-                errorPopup.classList.remove('hidden');
-                document.querySelector('.bg-gray-900').classList.add('shake-error');
-                setTimeout(() => {
-                    document.querySelector('.bg-gray-900').classList.remove('shake-error');
-                }, 400);
-            } finally {
-                registerFingerprintButtonText.textContent = 'REGISTER FINGERPRINT';
-                loadingSpinners[2].style.display = 'none';
-                registerFingerprintButton.disabled = false;
-                registerFingerprintButton.classList.remove('opacity-75');
-            }
-        }
-
-        async function authenticateWithFingerprint() {
-            try {
-                if (!usernameInput.value) {
-                    errorMessage.textContent = 'Please enter a username before using fingerprint!';
-                    errorPopup.classList.remove('hidden');
-                    document.querySelector('.bg-gray-900').classList.add('shake-error');
-                    setTimeout(() => {
-                        document.querySelector('.bg-gray-900').classList.remove('shake-error');
-                    }, 400);
-                    return;
-                }
-
-                fingerprintButtonText.textContent = 'SCANNING...';
-                loadingSpinners[1].style.display = 'block';
-                fingerprintButton.disabled = true;
-                fingerprintButton.classList.add('opacity-75');
-
-                if (!window.PublicKeyCredential) {
-                    throw new Error('WebAuthn is not supported in this browser');
-                }
-
-                const credentialId = localStorage.getItem(`fingerprintCredentialId_${usernameInput.value}`);
-                if (!credentialId) {
-                    throw new Error('No fingerprint registered for this user');
-                }
-
-                const challenge = arrayBufferToBase64url(crypto.getRandomValues(new Uint8Array(32)));
-                const publicKey = {
-                    challenge: base64urlToArrayBuffer(challenge),
-                    allowCredentials: [{
-                        id: base64urlToArrayBuffer(credentialId),
-                        type: 'public-key',
-                        transports: ['internal']
-                    }],
-                    timeout: 60000,
-                    userVerification: 'required'
-                };
-
-                const credential = await navigator.credentials.get({ publicKey });
-                const authData = {
-                    id: credential.id,
-                    rawId: arrayBufferToBase64url(credential.rawId),
-                    type: credential.type,
-                    response: {
-                        authenticatorData: arrayBufferToBase64url(credential.response.authenticatorData),
-                        clientDataJSON: arrayBufferToBase64url(credential.response.clientDataJSON),
-                        signature: arrayBufferToBase64url(credential.response.signature),
-                        userHandle: credential.response.userHandle ? arrayBufferToBase64url(credential.response.userHandle) : null
-                    }
-                };
-
-                loginForm.submit();
-
-            } catch (error) {
-                console.error('Fingerprint authentication failed:', error);
-                errorMessage.textContent = 'Fingerprint Authentication Failed: ' + error.message;
-                errorPopup.classList.remove('hidden');
-                document.querySelector('.bg-gray-900').classList.add('shake-error');
-                setTimeout(() => {
-                    document.querySelector('.bg-gray-900').classList.remove('shake-error');
-                }, 400);
-            } finally {
-                fingerprintButtonText.textContent = 'LOGIN WITH FINGERPRINT';
-                loadingSpinners[1].style.display = 'none';
-                fingerprintButton.disabled = false;
-                fingerprintButton.classList.remove('opacity-75');
-            }
-        }
-
-        fingerprintButton.addEventListener('click', authenticateWithFingerprint);
-        registerFingerprintButton.addEventListener('click', registerFingerprint);
-
         closePopup.addEventListener('click', () => {
             errorPopup.classList.add('hidden');
-        });
-
-        closeSuccessPopup.addEventListener('click', () => {
-            successPopup.classList.add('hidden');
         });
 
         [usernameInput, passwordInput].forEach(input => {

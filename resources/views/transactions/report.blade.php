@@ -186,6 +186,16 @@
         .dark .toggle-button {
             color: #F97316;
         }
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+        }
+        .badge-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
         @media (max-width: 640px) {
             .container {
                 padding-left: 0.25rem;
@@ -265,7 +275,7 @@
         </div>
 
         <!-- Filter Form -->
-        <form method="GET" action="{{ route('transactions.report') }}" id="filter-form" class="report-card mb-4 p-4 fade-in" x-data="{ showFilters: true, reportType: '{{ $reportType }}' }">
+        <form method="GET" action="{{ route('transactions.report') }}" id="filter-form" class="report-card mb-4 p-4 fade-in" x-data="{ showFilters: true, reportType: '{{ $reportType }}', transactionType: '{{ $transactionType ?? '' }}' }">
             <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-600 pb-3 mb-3">
                 <h2 class="text-base font-semibold text-gray-100 dark:text-gray-200 flex items-center">
                     <svg class="h-5 w-5 mr-2 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -282,7 +292,7 @@
                     </svg>
                 </button>
             </div>
-            <div x-show="showFilters" class="grid grid-cols-1 md:grid-cols-3 gap-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
+            <div x-show="showFilters" class="grid grid-cols-1 md:grid-cols-4 gap-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
                 <div>
                     <label for="report_type" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Tipe Laporan</label>
                     <select name="report_type" id="report_type" x-model="reportType" @change="toggleFilters(); document.getElementById('filter-form').submit()" class="w-full">
@@ -330,6 +340,14 @@
                     <label for="product_search" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Cari Produk</label>
                     <input type="text" name="product_search" id="product_search" value="{{ $productSearch ?? '' }}" placeholder="Masukkan nama produk" class="w-full">
                 </div>
+                <div>
+                    <label for="transaction_type" class="block text-sm font-medium text-gray-100 dark:text-gray-200 mb-1">Jenis Transaksi</label>
+                    <select name="transaction_type" id="transaction_type" x-model="transactionType" @change="document.getElementById('filter-form').submit()" class="w-full">
+                        <option value="">Semua Jenis</option>
+                        <option value="online" {{ $transactionType == 'online' ? 'selected' : '' }}>Online</option>
+                        <option value="offline" {{ $transactionType == 'offline' ? 'selected' : '' }}>Offline</option>
+                    </select>
+                </div>
             </div>
             <div class="mt-4 flex justify-end">
                 <button type="submit" class="btn-primary flex items-center">
@@ -342,7 +360,7 @@
         </form>
 
         <!-- Summary -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div class="card p-4 flex items-center fade-in">
                 <div class="bg-orange-custom rounded-full p-3 mr-3">
                     <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -456,7 +474,7 @@
                 </div>
                 <div class="p-4">
                     @forelse ($methodTransactions as $index => $transaction)
-                        <div class="transaction-card mb-3" x-data="{ showProducts: false }">
+                        <div class="transaction-card mb-3" x-data="{ showProducts: false }" x-init="console.log('Transaction:', {{ $transaction->id }}, 'Type:', '{{ $transaction->transaction_type ?? 'offline' }}')">
                             <div class="grid grid-cols-2 gap-2 transaction-details pt-2">
                                 <div>
                                     <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">No. Invoice</p>
@@ -477,6 +495,12 @@
                                 <div>
                                     <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Diskon</p>
                                     <p class="text-base font-semibold text-orange-custom">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Jenis Transaksi</p>
+                                    <p class="text-base text-gray-900 dark:text-gray-100">
+                                        <span class="badge badge-info" x-text="translateTransactionType('{{ $transaction->transaction_type ?? 'offline' }}')"></span>
+                                    </p>
                                 </div>
                                 <div class="col-span-2">
                                     <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Catatan</p>
@@ -561,7 +585,7 @@
                     </div>
                     <div class="p-4">
                         @forelse ($paymentMethods[$method] as $index => $transaction)
-                            <div class="transaction-card mb-3" x-data="{ showProducts: false }">
+                            <div class="transaction-card mb-3" x-data="{ showProducts: false }" x-init="console.log('Transaction:', {{ $transaction->id }}, 'Type:', '{{ $transaction->transaction_type ?? 'offline' }}')">
                                 <div class="grid grid-cols-2 gap-2 transaction-details pt-2">
                                     <div>
                                         <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">No. Invoice</p>
@@ -582,6 +606,12 @@
                                     <div>
                                         <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Diskon</p>
                                         <p class="text-base font-semibold text-orange-custom">Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Jenis Transaksi</p>
+                                        <p class="text-base text-gray-900 dark:text-gray-100">
+                                            <span class="badge badge-info" x-text="translateTransactionType('{{ $transaction->transaction_type ?? 'offline' }}')"></span>
+                                        </p>
                                     </div>
                                     <div class="col-span-2">
                                         <p class="text-sm font-medium text-gray-medium dark:text-gray-400 mb-1">Catatan</p>
@@ -679,6 +709,7 @@
             document.getElementById('user_id')?.addEventListener('change', () => filterForm.submit());
             document.getElementById('product_search')?.addEventListener('input', debounce(() => filterForm.submit(), 500));
             document.getElementById('date')?.addEventListener('change', () => filterForm.submit());
+            document.getElementById('transaction_type')?.addEventListener('change', () => filterForm.submit());
         });
 
         document.addEventListener('alpine:init', () => {
@@ -686,6 +717,7 @@
                 darkMode: localStorage.getItem('darkMode') === 'true',
                 showFilters: true,
                 reportType: '{{ $reportType }}',
+                transactionType: '{{ $transactionType ?? '' }}',
                 init() {
                     this.$watch('darkMode', value => {
                         localStorage.setItem('darkMode', value);
@@ -693,6 +725,7 @@
                     });
                     document.documentElement.classList.toggle('dark', this.darkMode);
                     this.toggleFilters();
+                    console.log('Initial transaction type:', this.transactionType); // Debugging
                 },
                 toggleFilters() {
                     const dateFilter = document.getElementById('date-filter');
@@ -710,6 +743,12 @@
                         document.getElementById('month').value = '{{ \Carbon\Carbon::now()->format('m') }}';
                         document.getElementById('year').value = '{{ \Carbon\Carbon::now()->year }}';
                     }
+                },
+                translateTransactionType(type) {
+                    return {
+                        online: 'Online',
+                        offline: 'Offline'
+                    }[type] || 'Offline'; // Fallback to Offline
                 },
                 getTransactionNote(transactionId) {
                     const notes = JSON.parse(localStorage.getItem('transactionNotes') || '{}');

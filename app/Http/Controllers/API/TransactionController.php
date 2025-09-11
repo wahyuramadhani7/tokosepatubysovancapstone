@@ -44,6 +44,7 @@ class TransactionController extends Controller
                     Cache::forget(str_replace(Cache::getPrefix(), '', $key));
                 }
             }
+            Log::info('Search caches cleared successfully');
         } catch (\Exception $e) {
             Log::error('Failed to clear search caches: ' . $e->getMessage());
         }
@@ -51,12 +52,11 @@ class TransactionController extends Controller
 
     /**
      * Fetch transactions with filters and pagination
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
+        Log::info('Fetching transactions', ['query' => $request->query()]);
+
         $date = $request->query('date', '');
         $paymentMethod = $request->query('payment_method', '');
         $status = $request->query('status', '');
@@ -167,13 +167,13 @@ class TransactionController extends Controller
 
     /**
      * Store a new transaction
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
-        Log::info('Menerima request transaksi', $request->all());
+        Log::info('Starting transaction creation', [
+            'payload' => $request->all(),
+            'user_id' => Auth::id(),
+        ]);
 
         $validator = Validator::make($request->all(), [
             'customer_name' => 'nullable|string|max:255',
@@ -190,55 +190,59 @@ class TransactionController extends Controller
         ]);
 
         if ($validator->fails()) {
-            Log::error('Validasi gagal: ' . json_encode($validator->errors()));
+            Log::error('Validation failed', ['errors' => $validator->errors()->toArray()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Validasi gagal: ' . implode(', ', array_merge(...array_values($validator->errors()->toArray()))),
+                'message' => 'Validation failed: ' . implode(', ', array_merge(...array_values($validator->errors()->toArray()))),
                 'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
-            return DB::transaction(function () use ($request) {
+            Log::info('Starting DB transaction');
+            $response = DB::transaction(function () use ($request) {
                 $totalAmount = 0;
                 $items = [];
 
                 foreach ($request->products as $index => $product) {
-                    // Validasi unit produk dengan case-insensitive
+                    Log::info('Processing product', [
+                        'unit_code' => $product['unit_code'],
+                        'index' => $index,
+                    ]);
+
                     $unit = ProductUnit::whereRaw('LOWER(unit_code) = ?', [strtolower($product['unit_code'])])
                         ->where('is_active', true)
                         ->first();
 
                     if (!$unit) {
-                        Log::error('Unit produk tidak ditemukan atau tidak aktif', [
+                        Log::error('Product unit not found or inactive', [
                             'unit_code' => $product['unit_code'],
                             'index' => $index,
                         ]);
                         return response()->json([
                             'success' => false,
-                            'message' => "Unit produk dengan kode {$product['unit_code']} tidak ditemukan atau tidak aktif.",
+                            'message' => "Product unit with code {$product['unit_code']} not found or inactive.",
                         ], 404);
                     }
 
-                    // Validasi produk dengan penguncian untuk mencegah race condition
                     $productModel = Product::where('id', $unit->product_id)
                         ->lockForUpdate()
                         ->first();
 
                     if (!$productModel) {
-                        Log::error('Produk tidak ditemukan', [
+                        Log::error('Product not found', [
                             'product_id' => $unit->product_id,
                             'unit_code' => $product['unit_code'],
                             'index' => $index,
                         ]);
                         return response()->json([
                             'success' => false,
-                            'message' => "Produk untuk unit kode {$product['unit_code']} tidak ditemukan.",
+                            'message' => "Product for unit code {$product['unit_code']} not found.",
                         ], 404);
                     }
 
                     if ($productModel->stock < $product['quantity']) {
-                        Log::error('Stok tidak cukup', [
+                        Log::error('Insufficient stock', [
                             'product_id' => $unit->product_id,
                             'unit_code' => $product['unit_code'],
                             'available_stock' => $productModel->stock,
@@ -247,7 +251,7 @@ class TransactionController extends Controller
                         ]);
                         return response()->json([
                             'success' => false,
-                            'message' => "Stok tidak cukup untuk unit kode {$product['unit_code']}. Stok tersedia: {$productModel->stock}.",
+                            'message' => "Insufficient stock for unit code {$product['unit_code']}. Available: {$productModel->stock}.",
                         ], 422);
                     }
 
@@ -264,23 +268,37 @@ class TransactionController extends Controller
                         'subtotal' => $subtotal,
                     ];
 
-                    // Kurangi stok dan nonaktifkan unit
+                    Log::info('Reducing stock', [
+                        'product_id' => $productModel->id,
+                        'stock_before' => $productModel->stock,
+                        'quantity' => $product['quantity'],
+                    ]);
                     $productModel->decrement('stock', $product['quantity']);
                     $unit->update(['is_active' => false]);
+                    Log::info('Stock reduced', [
+                        'product_id' => $productModel->id,
+                        'stock_after' => $productModel->stock,
+                    ]);
                 }
 
                 $discountAmount = (float) $request->discount_amount;
                 if ($discountAmount > $totalAmount) {
-                    Log::error('Diskon melebihi total jumlah', [
+                    Log::error('Discount exceeds total amount', [
                         'discount_amount' => $discountAmount,
                         'total_amount' => $totalAmount,
                     ]);
                     return response()->json([
                         'success' => false,
-                        'message' => 'Diskon tidak boleh melebihi total jumlah.',
+                        'message' => 'Discount cannot exceed total amount.',
                     ], 422);
                 }
                 $finalAmount = max(0, $totalAmount - $discountAmount);
+
+                Log::info('Creating transaction', [
+                    'total_amount' => $totalAmount,
+                    'discount_amount' => $discountAmount,
+                    'final_amount' => $finalAmount,
+                ]);
 
                 $transaction = Transaction::create([
                     'invoice_number' => 'INV-' . strtoupper(Str::random(8)),
@@ -289,8 +307,8 @@ class TransactionController extends Controller
                     'tax_amount' => 0,
                     'discount_amount' => $discountAmount,
                     'final_amount' => $finalAmount,
-                    'payment_method' => $request->payment_method === 'debit' 
-                        ? 'debit_' . strtolower($request->card_type) 
+                    'payment_method' => $request->payment_method === 'debit'
+                        ? 'debit_' . strtolower($request->card_type)
                         : $request->payment_method,
                     'card_type' => $request->card_type,
                     'payment_status' => 'paid',
@@ -304,62 +322,49 @@ class TransactionController extends Controller
                     $transaction->items()->create($item);
                 }
 
-                // Cache the transaction
-                Cache::forever($this->getTransactionCacheKey($transaction->id), [
-                    'id' => $transaction->id,
+                Log::info('Transaction created', [
+                    'transaction_id' => $transaction->id,
                     'invoice_number' => $transaction->invoice_number,
-                    'user_id' => $transaction->user_id,
-                    'user_name' => $transaction->user?->name,
-                    'total_amount' => (float) $transaction->total_amount,
-                    'tax_amount' => (float) $transaction->tax_amount,
-                    'discount_amount' => (float) $transaction->discount_amount,
-                    'final_amount' => (float) $transaction->final_amount,
-                    'payment_method' => $transaction->payment_method,
-                    'card_type' => $transaction->card_type,
-                    'payment_status' => $transaction->payment_status,
-                    'customer_name' => $transaction->customer_name,
-                    'customer_phone' => $transaction->customer_phone,
-                    'customer_email' => $transaction->customer_email,
-                    'notes' => $transaction->notes,
-                    'created_at' => $transaction->created_at->toISOString(),
                 ]);
 
-                // Clear search caches
-                $this->clearSearchCaches();
+                // Temporarily disable caching for debugging
+                // Cache::forever($this->getTransactionCacheKey($transaction->id), [...]);
 
-                Log::info('Transaksi berhasil dibuat', ['transaction_id' => $transaction->id]);
+                $this->clearSearchCaches();
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Transaksi berhasil dibuat',
+                    'message' => 'Transaction created successfully',
                     'data' => [
                         'transaction_id' => $transaction->id,
                         'invoice_number' => $transaction->invoice_number,
                     ],
                 ], 201);
             });
+
+            return $response;
         } catch (\Exception $e) {
-            Log::error('Gagal membuat transaksi: ' . $e->getMessage(), [
+            Log::error('Failed to create transaction: ' . $e->getMessage(), [
                 'stack_trace' => $e->getTraceAsString(),
             ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal membuat transaksi: ' . $e->getMessage(),
+                'message' => 'Failed to create transaction: ' . $e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Get a single transaction
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
+        Log::info('Fetching transaction', ['id' => $id]);
+
         $transaction = Transaction::with(['items.product', 'items.productUnit', 'user'])->find($id);
 
         if (!$transaction) {
+            Log::warning('Transaction not found in database', ['id' => $id]);
             $cachedTransaction = Cache::get($this->getTransactionCacheKey($id));
             if ($cachedTransaction) {
                 $transaction = (object) $cachedTransaction;
@@ -367,7 +372,7 @@ class TransactionController extends Controller
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Transaksi tidak ditemukan',
+                    'message' => 'Transaction not found',
                 ], 404);
             }
         }
@@ -412,22 +417,21 @@ class TransactionController extends Controller
 
     /**
      * Add product by unit code (for QR scanning)
-     *
-     * @param string $unitCode
-     * @return \Illuminate\Http\JsonResponse
      */
     public function addProduct($unitCode)
     {
+        Log::info('Adding product by unit code', ['unit_code' => $unitCode]);
+
         try {
             $unit = ProductUnit::whereRaw('LOWER(unit_code) = ?', [strtolower($unitCode)])
                 ->where('is_active', true)
                 ->first();
 
             if (!$unit) {
-                Log::error('Unit produk tidak ditemukan atau tidak aktif: ' . $unitCode);
+                Log::error('Product unit not found or inactive: ' . $unitCode);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unit produk tidak ditemukan atau tidak aktif.',
+                    'message' => 'Product unit not found or inactive.',
                 ], 404);
             }
 
@@ -436,10 +440,10 @@ class TransactionController extends Controller
                 ->first();
 
             if (!$product) {
-                Log::error('Produk tidak ditemukan atau stok habis: ' . $unit->product_id);
+                Log::error('Product not found or out of stock: ' . $unit->product_id);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Produk tidak ditemukan atau stok habis.',
+                    'message' => 'Product not found or out of stock.',
                 ], 404);
             }
 
@@ -456,10 +460,10 @@ class TransactionController extends Controller
                 ],
             ], 200, ['Cache-Control' => 'no-cache']);
         } catch (\Exception $e) {
-            Log::error('Gagal memuat unit produk: ' . $e->getMessage());
+            Log::error('Failed to load product unit: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal memuat unit produk: ' . $e->getMessage(),
+                'message' => 'Failed to load product unit: ' . $e->getMessage(),
             ], 500);
         }
     }

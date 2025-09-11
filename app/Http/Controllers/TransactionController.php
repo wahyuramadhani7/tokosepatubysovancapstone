@@ -26,11 +26,17 @@ class TransactionController extends Controller
                 'date' => 'nullable|date_format:Y-m-d',
                 'payment_method' => 'nullable|in:cash,qris,debit,transfer,debit_mandiri,debit_bri,debit_bca',
                 'status' => 'nullable|in:paid,pending,cancelled',
+                'transaction_type' => 'nullable|in:online,offline',
+                'online_platform' => 'nullable|string|max:255',
+                'courier' => 'nullable|string|max:255',
             ]);
 
             $date = $request->input('date', Carbon::today('Asia/Jakarta')->format('Y-m-d'));
             $paymentMethod = $request->input('payment_method');
             $status = $request->input('status');
+            $transactionType = $request->input('transaction_type');
+            $onlinePlatform = $request->input('online_platform');
+            $courier = $request->input('courier');
 
             $query = Transaction::with(['items.product', 'items.productUnit', 'user'])
                 ->whereDate('created_at', $date);
@@ -47,7 +53,31 @@ class TransactionController extends Controller
                 $query->where('payment_status', $status);
             }
 
+            if ($transactionType) {
+                $query->where('transaction_type', $transactionType);
+            }
+
+            if ($onlinePlatform) {
+                $query->where('online_platform', $onlinePlatform);
+            }
+
+            if ($courier) {
+                $query->where('courier', $courier);
+            }
+
             $transactions = $query->latest()->get();
+
+            // Log transaksi untuk debugging
+            Log::info('Fetched transactions:', [
+                'date' => $date,
+                'payment_method' => $paymentMethod,
+                'status' => $status,
+                'transaction_type' => $transactionType,
+                'online_platform' => $onlinePlatform,
+                'courier' => $courier,
+                'transaction_count' => $transactions->count(),
+                'transaction_types' => $transactions->pluck('transaction_type')->toArray(),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -70,6 +100,9 @@ class TransactionController extends Controller
                         'payment_method' => $paymentMethod,
                         'card_type' => $cardType,
                         'payment_status' => $transaction->payment_status,
+                        'transaction_type' => $transaction->transaction_type ?? 'offline',
+                        'online_platform' => $transaction->online_platform,
+                        'courier' => $transaction->courier,
                         'total_amount' => $transaction->total_amount,
                         'discount_amount' => $transaction->discount_amount,
                         'final_amount' => $transaction->final_amount,
@@ -144,6 +177,11 @@ class TransactionController extends Controller
                 'customer_name' => 'nullable|string|max:255',
                 'customer_phone' => 'nullable|string|max:20',
                 'customer_email' => 'nullable|email|max:255',
+                'transaction_type' => 'required|in:online,offline',
+                'online_platform' => 'required_if:transaction_type,online|nullable|string|max:255',
+                'custom_platform' => 'required_if:online_platform,custom|nullable|string|max:255',
+                'courier' => 'required_if:transaction_type,online|nullable|string|max:255',
+                'custom_courier' => 'required_if:courier,custom|nullable|string|max:255',
                 'payment_method' => 'required|string|in:cash,qris,debit,transfer',
                 'card_type' => 'required_if:payment_method,debit|in:Mandiri,BRI,BCA|nullable',
                 'products' => 'required|array|min:1',
@@ -165,6 +203,13 @@ class TransactionController extends Controller
             $transaction->customer_name = $request->customer_name;
             $transaction->customer_phone = $request->customer_phone;
             $transaction->customer_email = $request->customer_email;
+            $transaction->transaction_type = $request->transaction_type;
+            $transaction->online_platform = $request->transaction_type === 'online' 
+                ? ($request->online_platform === 'custom' ? $request->custom_platform : $request->online_platform)
+                : null;
+            $transaction->courier = $request->transaction_type === 'online' 
+                ? ($request->courier === 'custom' ? $request->custom_courier : $request->courier)
+                : null;
             $transaction->notes = $request->notes;
             $transaction->payment_status = 'paid';
             $transaction->created_at = Carbon::now('Asia/Jakarta');
@@ -213,6 +258,16 @@ class TransactionController extends Controller
             foreach ($transactionItems as $item) {
                 $transaction->items()->save($item);
             }
+
+            // Log transaksi untuk debugging
+            Log::info('Transaction stored:', [
+                'invoice_number' => $transaction->invoice_number,
+                'transaction_type' => $transaction->transaction_type,
+                'online_platform' => $transaction->online_platform,
+                'courier' => $transaction->courier,
+                'total_amount' => $transaction->total_amount,
+                'items_count' => count($transactionItems),
+            ]);
 
             DB::commit();
 
@@ -269,6 +324,9 @@ class TransactionController extends Controller
         $year = $request->input('year', Carbon::today('Asia/Jakarta')->format('Y'));
         $reportType = $request->input('report_type', 'daily');
         $productSearch = $request->input('product_search');
+        $transactionType = $request->input('transaction_type');
+        $onlinePlatform = $request->input('online_platform');
+        $courier = $request->input('courier');
 
         $query = Transaction::with(['user', 'items.product', 'items.productUnit']);
 
@@ -291,6 +349,18 @@ class TransactionController extends Controller
             $query->whereHas('items.product', function ($q) use ($productSearch) {
                 $q->where('name', 'like', '%' . $productSearch . '%');
             });
+        }
+
+        if ($transactionType) {
+            $query->where('transaction_type', $transactionType);
+        }
+
+        if ($onlinePlatform) {
+            $query->where('online_platform', $onlinePlatform);
+        }
+
+        if ($courier) {
+            $query->where('courier', $courier);
         }
 
         $transactions = $query->latest()->get();
@@ -320,6 +390,9 @@ class TransactionController extends Controller
             'year',
             'reportType',
             'productSearch',
+            'transactionType',
+            'onlinePlatform',
+            'courier',
             'weekRange'
         ));
     }

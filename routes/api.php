@@ -6,17 +6,6 @@ use App\Http\Controllers\API\InventoryController;
 use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\TransactionController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group.
-|
-*/
-
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -26,7 +15,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/{id}', [InventoryController::class, 'show']);
     Route::get('/products/{id}/json', [InventoryController::class, 'json']);
     Route::get('/products/{productId}/units/{unitCode}', [InventoryController::class, 'showUnit']);
-    Route::get('/units', [InventoryController::class, 'getUnits']); // New endpoint for units
+    Route::get('/units', [InventoryController::class, 'getUnits']);
     Route::put('/products/{id}', [InventoryController::class, 'update']);
     Route::delete('/products/{id}', [InventoryController::class, 'destroy']);
     
@@ -46,7 +35,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 });
 
-// Catch-all for invalid routes to return JSON
 Route::fallback(function () {
     return response()->json([
         'success' => false,
