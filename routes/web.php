@@ -75,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/inventory/delete-report/{index}', [InventoryController::class, 'deleteReport'])->name('inventory.delete_report');
         Route::delete('inventory/delete-all-reports', [InventoryController::class, 'deleteAllReports'])->name('inventory.delete_all_reports');
         Route::get('/inventory/status', [InventoryController::class, 'status'])->name('inventory.status');
+        Route::get('/inventory/history', [InventoryController::class, 'history'])->name('inventory.history');
     });
 
     // Transactions Routes
