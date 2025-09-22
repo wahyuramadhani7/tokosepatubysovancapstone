@@ -156,7 +156,7 @@ class InventoryController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'products' => $products->items()->map(function ($product) use ($brandNames) {
+                'products' => collect($products->items())->map(function ($product) use ($brandNames) {
                     $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
                     $model = trim(str_replace($brand, '', $product->name));
                     return [
@@ -170,7 +170,7 @@ class InventoryController extends Controller
                         'discount_price' => $product->discount_price,
                         'stock' => $product->product_units_count,
                     ];
-                }),
+                })->values(),
                 'pagination' => [
                     'current_page' => $products->currentPage(),
                     'last_page' => $products->lastPage(),
