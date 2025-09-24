@@ -992,7 +992,7 @@ class InventoryController extends Controller
                         foreach ($unitCodes as $unitCode) {
                             Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
                         }
-                        Cache::forget($this->getProductCacheKey($product->id));
+                        Cache::forever($this->getProductCacheKey($product->id), null);
                         $newProducts = array_diff(session('new_products', []), [$product->id]);
                         $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
                         $existingMismatches = session('stock_mismatches', []);
@@ -1094,9 +1094,10 @@ class InventoryController extends Controller
     {
         $time_filter = $request->input('time_filter', 'all');
         $action_filter = $request->input('action_filter', 'all');
+        $search = $request->input('search', '');
         $productHistory = Cache::get($this->getProductHistoryCacheKey(), []);
 
-        $filteredHistory = collect($productHistory)->filter(function ($item, $index) use ($time_filter, $action_filter) {
+        $filteredHistory = collect($productHistory)->filter(function ($item, $index) use ($time_filter, $action_filter, $search) {
             // Check if the item has a valid timestamp and type
             if (!isset($item['timestamp']) || empty($item['timestamp']) || !isset($item['type'])) {
                 Log::warning("Invalid history entry at index {$index}: missing or empty timestamp or type", ['item' => $item]);
@@ -1104,32 +1105,49 @@ class InventoryController extends Controller
             }
 
             // Apply action filter
-            if ($action_filter === 'added' && $item['type'] !== 'added') {
-                return false;
-            }
-            if ($action_filter === 'deleted' && $item['type'] !== 'deleted') {
-                return false;
-            }
-            if ($action_filter === 'edited' && $item['type'] !== 'edited') {
+            if ($action_filter !== 'all' && $item['type'] !== $action_filter) {
                 return false;
             }
 
             // Apply time filter
             try {
                 $timestamp = Carbon::parse($item['timestamp'], 'Asia/Jakarta');
-                if ($time_filter === 'weekly') {
-                    return $timestamp->greaterThanOrEqualTo(Carbon::now('Asia/Jakarta')->startOfWeek());
-                } elseif ($time_filter === 'monthly') {
-                    return $timestamp->greaterThanOrEqualTo(Carbon::now('Asia/Jakarta')->startOfMonth());
+                if ($time_filter === 'weekly' && !$timestamp->greaterThanOrEqualTo(Carbon::now('Asia/Jakarta')->startOfWeek())) {
+                    return false;
+                } elseif ($time_filter === 'monthly' && !$timestamp->greaterThanOrEqualTo(Carbon::now('Asia/Jakarta')->startOfMonth())) {
+                    return false;
                 }
-                return true;
             } catch (\Exception $e) {
                 Log::warning("Invalid timestamp in history entry at index {$index}: {$e->getMessage()}", ['item' => $item]);
                 return false;
             }
+
+            // Apply search filter
+            if (!empty($search)) {
+                $searchLower = Str::lower($search);
+                $fieldsToSearch = [
+                    $item['brand'] ?? '',
+                    $item['model'] ?? '',
+                    $item['size'] ?? '',
+                    $item['color'] ?? '',
+                    $item['user_name'] ?? ''
+                ];
+                $matchesSearch = false;
+                foreach ($fieldsToSearch as $field) {
+                    if (Str::contains(Str::lower($field), $searchLower)) {
+                        $matchesSearch = true;
+                        break;
+                    }
+                }
+                if (!$matchesSearch) {
+                    return false;
+                }
+            }
+
+            return true;
         })->sortByDesc('timestamp')->values();
 
-        return view('inventory.history', compact('filteredHistory', 'time_filter', 'action_filter'));
+        return view('inventory.history', compact('filteredHistory', 'time_filter', 'action_filter', 'search'));
     }
 }
 ?>

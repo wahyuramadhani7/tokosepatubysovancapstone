@@ -9,6 +9,10 @@
         <div class="mb-6">
             <form action="{{ route('inventory.history') }}" method="GET" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                    <label for="search" class="text-sm sm:text-base font-medium text-gray-700">Cari:</label>
+                    <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Cari brand, model..." class="bg-white text-black text-sm sm:text-base rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-orange-500 w-full sm:w-auto">
+                </div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                     <label for="time_filter" class="text-sm sm:text-base font-medium text-gray-700">Filter Waktu:</label>
                     <select name="time_filter" id="time_filter" class="bg-white text-black text-sm sm:text-base rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-orange-500 w-full sm:w-auto">
                         <option value="all" {{ $time_filter === 'all' ? 'selected' : '' }}>Semua</option>
@@ -52,29 +56,29 @@
             </div>
         @endif
 
-        <!-- Desktop Table -->
-        <div class="hidden md:block shadow rounded-lg overflow-x-auto" style="background-color: #292929;">
+        <!-- Table for All Devices -->
+        <div class="shadow rounded-lg overflow-x-auto bg-gray-800">
             <div class="min-w-[1000px]">
                 <!-- Table Headers -->
-                <div class="grid grid-cols-10 gap-0">
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">No</div>
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">Aksi</div>
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">Brand</div>
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">Model</div>
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">Ukuran</div>
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">Warna</div>
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">Stok</div>
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">Perubahan Stok</div>
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">User</div>
-                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm sm:text-base">Tanggal</div>
+                <div class="grid grid-cols-10 gap-0 sticky top-0 z-10">
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">No</div>
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">Aksi</div>
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">Brand</div>
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">Model</div>
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">Ukuran</div>
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">Warna</div>
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">Stok</div>
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">Perubahan Stok</div>
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">User</div>
+                    <div class="bg-orange-500 text-white font-medium py-2 px-3 text-center text-sm">Tanggal</div>
                 </div>
                 
                 <!-- Table Body -->
                 <div class="mt-1">
                     @forelse ($filteredHistory as $index => $item)
-                        <div class="grid grid-cols-10 gap-0 items-center {{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-100' }}">
-                            <div class="p-3 text-black text-center text-sm sm:text-base">{{ $index + 1 }}</div>
-                            <div class="p-3 text-black text-center uppercase-text text-sm sm:text-base">
+                        <div class="grid grid-cols-10 gap-0 items-center {{ $index % 2 == 0 ? 'bg-gray-700' : 'bg-gray-600' }}">
+                            <div class="p-3 text-white text-center text-sm">{{ $index + 1 }}</div>
+                            <div class="p-3 text-white text-center uppercase-text text-sm">
                                 @if($item['type'] === 'added')
                                     Ditambahkan
                                 @elseif($item['type'] === 'edited')
@@ -83,54 +87,22 @@
                                     Dihapus
                                 @endif
                             </div>
-                            <div class="p-3 text-black text-center uppercase-text text-sm sm:text-base">{{ $item['brand'] ?? '-' }}</div>
-                            <div class="p-3 text-black text-center uppercase-text text-sm sm:text-base">{{ $item['model'] ?? '-' }}</div>
-                            <div class="p-3 text-black text-center text-sm sm:text-base">{{ $item['size'] ?? '-' }}</div>
-                            <div class="p-3 text-black text-center uppercase-text text-sm sm:text-base">{{ $item['color'] ?? '-' }}</div>
-                            <div class="p-3 text-black text-center text-sm sm:text-base">{{ $item['stock'] ?? 0 }}</div>
-                            <div class="p-3 text-black text-center text-sm sm:text-base">{{ $item['stock_change'] ?? '-' }}</div>
-                            <div class="p-3 text-black text-center text-sm sm:text-base">{{ $item['user_name'] ?? 'Unknown' }}</div>
-                            <div class="p-3 text-black text-center text-sm sm:text-base">{{ \Carbon\Carbon::parse($item['timestamp'])->format('d-m-Y H:i') }}</div>
+                            <div class="p-3 text-white text-center uppercase-text text-sm">{{ $item['brand'] ?? '-' }}</div>
+                            <div class="p-3 text-white text-center uppercase-text text-sm">{{ $item['model'] ?? '-' }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ $item['size'] ?? '-' }}</div>
+                            <div class="p-3 text-white text-center uppercase-text text-sm">{{ $item['color'] ?? '-' }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ $item['stock'] ?? 0 }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ $item['stock_change'] ?? '-' }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ $item['user_name'] ?? 'Unknown' }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ \Carbon\Carbon::parse($item['timestamp'])->format('d-m-Y H:i') }}</div>
                         </div>
                     @empty
-                        <div class="bg-white p-6 text-center text-gray-500 text-sm sm:text-base">
+                        <div class="bg-gray-700 p-6 text-center text-gray-300 text-sm">
                             Tidak ada riwayat produk ditemukan.
                         </div>
                     @endforelse
                 </div>
             </div>
-        </div>
-
-        <!-- Mobile Cards -->
-        <div class="md:hidden space-y-4">
-            @forelse ($filteredHistory as $index => $item)
-                <div class="bg-white rounded-lg shadow p-4">
-                    <div class="space-y-2">
-                        <h3 class="font-medium text-gray-900 text-sm sm:text-base">No: {{ $index + 1 }}</h3>
-                        <div class="text-sm text-gray-600 uppercase-text">Aksi: 
-                            @if($item['type'] === 'added')
-                                Ditambahkan
-                            @elseif($item['type'] === 'edited')
-                                Diperbarui
-                            @else
-                                Dihapus
-                            @endif
-                        </div>
-                        <div class="text-sm text-gray-600 uppercase-text">Brand: {{ $item['brand'] ?? '-' }}</div>
-                        <div class="text-sm text-gray-600 uppercase-text">Model: {{ $item['model'] ?? '-' }}</div>
-                        <div class="text-sm text-gray-600">Ukuran: {{ $item['size'] ?? '-' }}</div>
-                        <div class="text-sm text-gray-600 uppercase-text">Warna: {{ $item['color'] ?? '-' }}</div>
-                        <div class="text-sm text-gray-600">Stok: {{ $item['stock'] ?? 0 }}</div>
-                        <div class="text-sm text-gray-600">Perubahan Stok: {{ $item['stock_change'] ?? '-' }}</div>
-                        <div class="text-sm text-gray-600">User: {{ $item['user_name'] ?? 'Unknown' }}</div>
-                        <div class="text-sm text-gray-600">Tanggal: {{ \Carbon\Carbon::parse($item['timestamp'])->format('d-m-Y H:i') }}</div>
-                    </div>
-                </div>
-            @empty
-                <div class="text-center text-gray-500 p-4 text-sm sm:text-base">
-                    Tidak ada riwayat produk ditemukan.
-                </div>
-            @endforelse
         </div>
     </div>
 </div>
@@ -149,10 +121,38 @@
     .uppercase-text {
         text-transform: uppercase;
     }
-    /* Ensure table is scrollable on smaller screens */
+    /* Ensure table is scrollable on all screens */
+    .overflow-x-auto {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        -ms-overflow-style: auto;
+        scrollbar-width: auto;
+        scrollbar-color: #f97316 #1f2937;
+    }
+    .overflow-x-auto::-webkit-scrollbar {
+        height: 12px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: #1f2937;
+    }
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: #f97316;
+        border-radius: 6px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: #ea580c;
+    }
     @media (min-width: 768px) {
         .grid-cols-10 {
             grid-template-columns: 1fr 1.5fr 2fr 2fr 1.5fr 1.5fr 1fr 1.5fr 2fr 2fr;
+        }
+        .grid-cols-10 > div {
+            font-size: 1rem;
+        }
+    }
+    @media (max-width: 767px) {
+        .grid-cols-10 {
+            grid-template-columns: repeat(10, minmax(100px, 1fr));
         }
     }
 </style>
