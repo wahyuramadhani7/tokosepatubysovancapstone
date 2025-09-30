@@ -1,3 +1,4 @@
+<!-- resources/views/inventory/create.blade.php -->
 @extends('layouts.app')
 
 @section('content')
@@ -20,7 +21,7 @@
                     <!-- Brand -->
                     <div>
                         <label for="brand" class="block text-sm font-medium text-white mb-1">Brand</label>
-                        <input type="text" name="brand" id="brand" class="block w-full p-3 border-0 rounded-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('brand') border-red-500 @enderror" value="{{ old('brand') }}">
+                        <input type="text" name="brand" id="brand" class="block w-full p-3 border-0 rounded-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('brand') border-red-500 @enderror" value="{{ old('brand') }}" placeholder="Contoh: Adidas Originals">
                         @error('brand')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror
@@ -29,7 +30,7 @@
                     <!-- Model -->
                     <div>
                         <label for="model" class="block text-sm font-medium text-white mb-1">Model</label>
-                        <input type="text" name="model" id="model" class="block w-full p-3 border-0 rounded-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('model') border-red-500 @enderror" value="{{ old('model') }}">
+                        <input type="text" name="model" id="model" class="block w-full p-3 border-0 rounded-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('model') border-red-500 @enderror" value="{{ old('model') }}" placeholder="Contoh: Superstar">
                         @error('model')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror
@@ -38,7 +39,7 @@
                     <!-- Warna -->
                     <div>
                         <label for="color" class="block text-sm font-medium text-white mb-1">Warna</label>
-                        <input type="text" name="color" id="color" class="block w-full p-3 border-0 rounded-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('color') border-red-500 @enderror" value="{{ old('color') }}">
+                        <input type="text" name="color" id="color" class="block w-full p-3 border-0 rounded-lg bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500 @error('color') border-red-500 @enderror" value="{{ old('color') }}" placeholder="Contoh: Putih">
                         @error('color')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror

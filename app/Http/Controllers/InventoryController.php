@@ -30,6 +30,12 @@ class InventoryController extends Controller
         return "product_history";
     }
 
+    private function getUserCacheKey($key)
+    {
+        $userId = Auth::id() ?? 'guest';
+        return "user_{$userId}_{$key}";
+    }
+
     public function index()
     {
         $products = Product::withCount(['productUnits' => function ($query) {
@@ -38,6 +44,7 @@ class InventoryController extends Controller
         ->whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })
+        ->orderBy('updated_at', 'desc')
         ->orderBy('name')
         ->orderBy('size')
         ->paginate(10);
@@ -52,7 +59,7 @@ class InventoryController extends Controller
             $query->where('is_active', true);
         }, '<=', 10)->count();
 
-        $brandNames = session('brand_names', []);
+        $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
         $brandCounts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })
@@ -61,11 +68,10 @@ class InventoryController extends Controller
         }])
         ->get()
         ->groupBy(function ($product) use ($brandNames) {
-            $brand = $brandNames[$product->id] ?? Str::lower(explode(' ', trim($product->name))[0]);
-            return $brand;
+            return $brandNames[$product->id] ?? Str::lower(explode(' ', trim($product->name))[0]);
         })
-        ->map(function ($group) {
-            $brandName = Str::title($group->first()->name ? ($brandNames[$group->first()->id] ?? explode(' ', trim($group->first()->name))[0]) : 'Unknown');
+        ->map(function ($group) use ($brandNames) {
+            $brandName = Str::title($brandNames[$group->first()->id] ?? explode(' ', trim($group->first()->name))[0]);
             return [
                 'name' => $brandName,
                 'count' => $group->sum('product_units_count')
@@ -74,8 +80,8 @@ class InventoryController extends Controller
         ->sortBy('name')
         ->pluck('count', 'name');
 
-        $newProducts = session('new_products', []);
-        $updatedProducts = session('updated_products', []);
+        $newProducts = Cache::get($this->getUserCacheKey('new_products'), []);
+        $updatedProducts = Cache::get($this->getUserCacheKey('updated_products'), []);
 
         return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock', 'brandCounts', 'newProducts', 'updatedProducts'));
     }
@@ -103,6 +109,7 @@ class InventoryController extends Controller
             ->when($sizeTerm, function ($query) use ($sizeTerm) {
                 $query->where('size', 'like', '%' . $sizeTerm . '%');
             })
+            ->orderBy('updated_at', 'desc')
             ->orderBy('name')
             ->orderBy('size')
             ->paginate(10)
@@ -119,7 +126,7 @@ class InventoryController extends Controller
             $query->where('is_active', true);
         }, '<=', 10)->count();
 
-        $brandNames = session('brand_names', []);
+        $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
         $brandCounts = Product::whereHas('productUnits', function ($query) {
             $query->where('is_active', true);
         })
@@ -137,11 +144,10 @@ class InventoryController extends Controller
         }])
         ->get()
         ->groupBy(function ($product) use ($brandNames) {
-            $brand = $brandNames[$product->id] ?? Str::lower(explode(' ', trim($product->name))[0]);
-            return $brand;
+            return $brandNames[$product->id] ?? Str::lower(explode(' ', trim($product->name))[0]);
         })
         ->map(function ($group) use ($brandNames) {
-            $brandName = Str::title($brandNames[$group->first()->id] ?? ($group->first()->name ? explode(' ', trim($group->first()->name))[0] : 'Unknown'));
+            $brandName = Str::title($brandNames[$group->first()->id] ?? explode(' ', trim($group->first()->name))[0]);
             return [
                 'name' => $brandName,
                 'count' => $group->sum('product_units_count')
@@ -150,8 +156,8 @@ class InventoryController extends Controller
         ->sortBy('name')
         ->pluck('count', 'name');
 
-        $newProducts = session('new_products', []);
-        $updatedProducts = session('updated_products', []);
+        $newProducts = Cache::get($this->getUserCacheKey('new_products'), []);
+        $updatedProducts = Cache::get($this->getUserCacheKey('updated_products'), []);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -217,9 +223,9 @@ class InventoryController extends Controller
         try {
             $newUnitCodes = [];
             $newProductIds = [];
-            $brandNames = session('brand_names', []);
+            $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
             $productHistory = Cache::get($this->getProductHistoryCacheKey(), []);
-            $userId = Auth::id();
+            $userId = Auth::id() ?? 'guest';
             $userName = Auth::user()->name ?? 'Unknown';
 
             foreach ($validated['sizes'] as $sizeData) {
@@ -238,7 +244,6 @@ class InventoryController extends Controller
                 $newProductIds[] = $product->id;
                 $brandNames[$product->id] = $validated['brand'];
 
-                // Add to product history with timestamp
                 $productHistory[] = [
                     'type' => 'added',
                     'product_id' => $product->id,
@@ -247,7 +252,7 @@ class InventoryController extends Controller
                     'size' => $sizeData['size'],
                     'color' => $validated['color'],
                     'stock' => $sizeData['stock'],
-                    'stock_change' => null, // No stock change for new products
+                    'stock_change' => null,
                     'selling_price' => $validated['selling_price'],
                     'discount_price' => $validated['discount_price'] ?? null,
                     'user_id' => $userId,
@@ -256,6 +261,7 @@ class InventoryController extends Controller
                 ];
 
                 $units = [];
+                $productNewUnitCodes = [];
                 for ($i = 0; $i < $sizeData['stock']; $i++) {
                     $unitCode = 'UNIT-' . strtoupper(Str::random(8));
                     $unit = ProductUnit::create([
@@ -268,6 +274,7 @@ class InventoryController extends Controller
                     $unit->update(['qr_code' => $qrCode]);
                     $units[] = $unit;
                     $newUnitCodes[] = $unit->unit_code;
+                    $productNewUnitCodes[] = $unit->unit_code;
                 }
 
                 Cache::forever($this->getProductCacheKey($product->id), [
@@ -290,12 +297,14 @@ class InventoryController extends Controller
                         'is_active' => true,
                     ]);
                 }
+
+                Cache::forever($this->getUserCacheKey('new_units_' . $product->id), $productNewUnitCodes);
+                Log::info("Stored new units for product ID {$product->id}: " . json_encode($productNewUnitCodes));
             }
 
-            // Save product history to cache
             Cache::forever($this->getProductHistoryCacheKey(), $productHistory);
-
-            session(['new_units_all' => $newUnitCodes, 'new_products' => $newProductIds, 'brand_names' => $brandNames]);
+            Cache::forever($this->getUserCacheKey('new_products'), array_merge(Cache::get($this->getUserCacheKey('new_products'), []), $newProductIds));
+            Cache::forever($this->getUserCacheKey('brand_names'), $brandNames);
 
             DB::commit();
             return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil ditambahkan');
@@ -343,7 +352,7 @@ class InventoryController extends Controller
 
         $similarProducts = [];
         if ($product && $product->name !== 'Produk Tidak Ditemukan') {
-            $brandNames = session('brand_names', []);
+            $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
             $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
             $similarProducts = Product::withCount(['productUnits' => function ($query) {
                 $query->where('is_active', true);
@@ -417,7 +426,7 @@ class InventoryController extends Controller
             }
         }
 
-        $brandNames = session('brand_names', []);
+        $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
         $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
         $model = trim(str_replace($brand, '', $product->name));
 
@@ -482,19 +491,17 @@ class InventoryController extends Controller
                     Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
                 }
                 Cache::forget($this->getProductCacheKey($product->id));
-                session()->forget('new_units_' . $product->id);
-                $newProducts = array_diff(session('new_products', []), [$product->id]);
-                $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
-                $existingMismatches = session('stock_mismatches', []);
+                Cache::forget($this->getUserCacheKey('new_units_' . $product->id));
+                $newProducts = array_diff(Cache::get($this->getUserCacheKey('new_products'), []), [$product->id]);
+                $updatedProducts = array_diff(Cache::get($this->getUserCacheKey('updated_products'), []), [$product->id]);
+                $existingMismatches = Cache::get($this->getUserCacheKey('stock_mismatches'), []);
                 unset($existingMismatches[$product->id]);
-                $brandNames = session('brand_names', []);
+                $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
                 unset($brandNames[$product->id]);
-                session([
-                    'new_products' => $newProducts,
-                    'updated_products' => $updatedProducts,
-                    'stock_mismatches' => $existingMismatches,
-                    'brand_names' => $brandNames,
-                ]);
+                Cache::forever($this->getUserCacheKey('new_products'), $newProducts);
+                Cache::forever($this->getUserCacheKey('updated_products'), $updatedProducts);
+                Cache::forever($this->getUserCacheKey('stock_mismatches'), $existingMismatches);
+                Cache::forever($this->getUserCacheKey('brand_names'), $brandNames);
                 $product->delete();
                 DB::commit();
                 return redirect()->route('inventory.index')->with('success', 'Produk dihapus karena stok 0.');
@@ -508,18 +515,16 @@ class InventoryController extends Controller
         DB::beginTransaction();
 
         try {
-            $brandNames = session('brand_names', []);
+            $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
             $productHistory = Cache::get($this->getProductHistoryCacheKey(), []);
-            $userId = Auth::id();
+            $userId = Auth::id() ?? 'guest';
             $userName = Auth::user()->name ?? 'Unknown';
 
-            // Calculate stock change for the existing product
             $currentStock = $product->productUnits()->where('is_active', true)->count();
             $desiredStock = $validated['sizes'][0]['stock'];
             $stockChange = $desiredStock - $currentStock;
             $stockChangeDescription = $stockChange > 0 ? "+{$stockChange} unit" : ($stockChange < 0 ? "-" . abs($stockChange) . " unit" : "tidak berubah");
 
-            // Log the edit action for the existing product
             $productHistory[] = [
                 'type' => 'edited',
                 'product_id' => $product->id,
@@ -545,7 +550,7 @@ class InventoryController extends Controller
             ]);
 
             $brandNames[$product->id] = $validated['brand'];
-            $newUnitCodes = session('new_units_' . $product->id, []);
+            $newUnitCodes = Cache::get($this->getUserCacheKey('new_units_' . $product->id), []);
             $newProductIds = [];
             $updatedProductIds = [$product->id];
 
@@ -598,16 +603,15 @@ class InventoryController extends Controller
                 $newProductIds[] = $newProduct->id;
                 $brandNames[$newProduct->id] = $validated['brand'];
 
-                // Log the edit action for new products created during update
                 $productHistory[] = [
-                    'type' => 'edited',
+                    'type' => 'added',
                     'product_id' => $newProduct->id,
                     'brand' => $validated['brand'],
                     'model' => $validated['model'],
                     'size' => $sizeData['size'],
                     'color' => $validated['color'],
                     'stock' => $sizeData['stock'],
-                    'stock_change' => "+{$sizeData['stock']} unit", // New size, so all stock is added
+                    'stock_change' => "+{$sizeData['stock']} unit",
                     'selling_price' => $validated['selling_price'],
                     'discount_price' => $validated['discount_price'] ?? null,
                     'user_id' => $userId,
@@ -616,6 +620,7 @@ class InventoryController extends Controller
                 ];
 
                 $units = [];
+                $productNewUnitCodes = [];
                 for ($j = 0; $j < $sizeData['stock']; $j++) {
                     $unitCode = 'UNIT-' . strtoupper(Str::random(8));
                     $unit = ProductUnit::create([
@@ -627,7 +632,7 @@ class InventoryController extends Controller
                     $qrCode = route('inventory.show_unit', ['product' => $newProduct->id, 'unitCode' => $unit->unit_code]);
                     $unit->update(['qr_code' => $qrCode]);
                     $units[] = $unit;
-                    $newUnitCodes[] = $unit->unit_code;
+                    $productNewUnitCodes[] = $unit->unit_code;
                 }
 
                 Cache::forever($this->getProductCacheKey($newProduct->id), [
@@ -650,17 +655,16 @@ class InventoryController extends Controller
                         'is_active' => true,
                     ]);
                 }
+
+                Cache::forever($this->getUserCacheKey('new_units_' . $newProduct->id), $productNewUnitCodes);
+                Log::info("Stored new units for new product ID {$newProduct->id}: " . json_encode($productNewUnitCodes));
             }
 
-            // Save product history to cache
             Cache::forever($this->getProductHistoryCacheKey(), $productHistory);
-
-            session([
-                'new_units_' . $product->id => $newUnitCodes,
-                'new_products' => array_merge(session('new_products', []), $newProductIds),
-                'updated_products' => array_merge(session('updated_products', []), $updatedProductIds),
-                'brand_names' => $brandNames,
-            ]);
+            Cache::forever($this->getUserCacheKey('new_units_' . $product->id), $newUnitCodes);
+            Cache::forever($this->getUserCacheKey('new_products'), array_merge(Cache::get($this->getUserCacheKey('new_products'), []), $newProductIds));
+            Cache::forever($this->getUserCacheKey('updated_products'), array_merge(Cache::get($this->getUserCacheKey('updated_products'), []), $updatedProductIds));
+            Cache::forever($this->getUserCacheKey('brand_names'), $brandNames);
 
             Cache::forever($this->getProductCacheKey($product->id), [
                 'id' => $product->id,
@@ -694,11 +698,11 @@ class InventoryController extends Controller
         DB::beginTransaction();
 
         try {
-            $brandNames = session('brand_names', []);
+            $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
             $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
             $model = trim(str_replace($brand, '', $product->name));
             $stock = $product->productUnits()->where('is_active', true)->count();
-            $userId = Auth::id();
+            $userId = Auth::id() ?? 'guest';
             $userName = Auth::user()->name ?? 'Unknown';
             $productHistory = Cache::get($this->getProductHistoryCacheKey(), []);
             $productHistory[] = [
@@ -709,7 +713,7 @@ class InventoryController extends Controller
                 'size' => $product->size,
                 'color' => $product->color,
                 'stock' => $stock,
-                'stock_change' => null, // No stock change for deletion
+                'stock_change' => null,
                 'selling_price' => $product->selling_price,
                 'discount_price' => $product->discount_price ?? null,
                 'user_id' => $userId,
@@ -724,19 +728,17 @@ class InventoryController extends Controller
                 Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
             }
             Cache::forget($this->getProductCacheKey($product->id));
-            $newProducts = array_diff(session('new_products', []), [$id]);
-            $updatedProducts = array_diff(session('updated_products', []), [$id]);
-            $existingMismatches = session('stock_mismatches', []);
+            Cache::forget($this->getUserCacheKey('new_units_' . $product->id));
+            $newProducts = array_diff(Cache::get($this->getUserCacheKey('new_products'), []), [$id]);
+            $updatedProducts = array_diff(Cache::get($this->getUserCacheKey('updated_products'), []), [$id]);
+            $existingMismatches = Cache::get($this->getUserCacheKey('stock_mismatches'), []);
             unset($existingMismatches[$id]);
-            $brandNames = session('brand_names', []);
+            $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
             unset($brandNames[$id]);
-            session([
-                'new_products' => $newProducts,
-                'updated_products' => $updatedProducts,
-                'new_units_' . $id => null,
-                'stock_mismatches' => $existingMismatches,
-                'brand_names' => $brandNames,
-            ]);
+            Cache::forever($this->getUserCacheKey('new_products'), $newProducts);
+            Cache::forever($this->getUserCacheKey('updated_products'), $updatedProducts);
+            Cache::forever($this->getUserCacheKey('stock_mismatches'), $existingMismatches);
+            Cache::forever($this->getUserCacheKey('brand_names'), $brandNames);
             $product->delete();
             DB::commit();
             return redirect()->route('inventory.index')->with('success', 'Produk dan unit berhasil dihapus');
@@ -759,21 +761,27 @@ class InventoryController extends Controller
                 $product = (object) $cachedProduct;
                 $product->productUnits = collect([]);
             } else {
+                Log::warning("Product not found for QR printing: ID {$id}");
                 return redirect()->route('inventory.index')->with('error', 'Produk tidak ditemukan.');
             }
         }
 
-        $newUnitCodes = session('new_units_' . $id, []);
+        $newUnitCodes = Cache::get($this->getUserCacheKey('new_units_' . $id), []);
+        Log::info("Printing QR for product ID {$id}, new unit codes: " . json_encode($newUnitCodes));
 
+        // Filter unit baru jika ada, jika tidak gunakan semua unit aktif
         if (!empty($newUnitCodes)) {
-            $product->load(['productUnits' => function ($query) use ($newUnitCodes) {
-                $query->where('is_active', true)->whereIn('unit_code', $newUnitCodes);
-            }]);
+            $product->productUnits = $product->productUnits->whereIn('unit_code', $newUnitCodes);
+            Log::info("Filtered to new units for product ID {$id}: " . json_encode($product->productUnits->pluck('unit_code')->toArray()));
+        } else {
+            Log::info("No new units found for product ID {$id}, using all active units: " . json_encode($product->productUnits->pluck('unit_code')->toArray()));
         }
 
-        session()->forget('new_units_' . $id);
+        // Hapus cache new_units setelah pencetakan
+        Cache::forget($this->getUserCacheKey('new_units_' . $id));
+        Log::info("Cleared new_units cache for product ID {$id}");
 
-        return view('inventory.print_qr', compact('product'));
+        return view('inventory.print_qr', compact('product', 'newUnitCodes'));
     }
 
     public function stockOpname()
@@ -781,9 +789,12 @@ class InventoryController extends Controller
         $totalStock = ProductUnit::where('is_active', true)->count();
         $reports = Cache::get('stock_opname_reports', []);
 
-        session()->forget(['stock_mismatches', 'new_products', 'updated_products', 'brand_names']);
+        Cache::forget($this->getUserCacheKey('stock_mismatches'));
+        Cache::forget($this->getUserCacheKey('new_products'));
+        Cache::forget($this->getUserCacheKey('updated_products'));
+        Cache::forget($this->getUserCacheKey('brand_names'));
         foreach ($reports as $report) {
-            session()->forget('new_units_' . $report['product_id']);
+            Cache::forget($this->getUserCacheKey('new_units_' . $report['product_id']));
         }
 
         $previousPhysicalStocks = [];
@@ -813,7 +824,7 @@ class InventoryController extends Controller
             $physicalStock = $validated['physical_stock'];
             $difference = $physicalStock - $currentStock;
             $stockMessage = '';
-            $brandNames = session('brand_names', []);
+            $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
             $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
             $model = trim(str_replace($brand, '', $product->name));
             $stockMismatch = [
@@ -825,7 +836,7 @@ class InventoryController extends Controller
                 'system_stock' => $currentStock,
                 'difference' => $difference,
             ];
-            $newUnitCodes = session('new_units_' . $product->id, []);
+            $newUnitCodes = Cache::get($this->getUserCacheKey('new_units_' . $product->id), []);
 
             if ($physicalStock == 0) {
                 $unitsToDeactivate = $product->productUnits()->where('is_active', true)->get();
@@ -844,19 +855,17 @@ class InventoryController extends Controller
                     Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
                 }
                 Cache::forget($this->getProductCacheKey($product->id));
-                $newProducts = array_diff(session('new_products', []), [$product->id]);
-                $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
-                $existingMismatches = session('stock_mismatches', []);
+                $newProducts = array_diff(Cache::get($this->getUserCacheKey('new_products'), []), [$product->id]);
+                $updatedProducts = array_diff(Cache::get($this->getUserCacheKey('updated_products'), []), [$product->id]);
+                $existingMismatches = Cache::get($this->getUserCacheKey('stock_mismatches'), []);
                 unset($existingMismatches[$product->id]);
-                $brandNames = session('brand_names', []);
+                $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
                 unset($brandNames[$product->id]);
-                session([
-                    'new_products' => $newProducts,
-                    'updated_products' => $updatedProducts,
-                    'new_units_' . $product->id => null,
-                    'stock_mismatches' => $existingMismatches,
-                    'brand_names' => $brandNames,
-                ]);
+                Cache::forever($this->getUserCacheKey('new_products'), $newProducts);
+                Cache::forever($this->getUserCacheKey('updated_products'), $updatedProducts);
+                Cache::forever($this->getUserCacheKey('new_units_' . $product->id), null);
+                Cache::forever($this->getUserCacheKey('stock_mismatches'), $existingMismatches);
+                Cache::forever($this->getUserCacheKey('brand_names'), $brandNames);
                 $product->productUnits()->delete();
                 $product->delete();
                 $stockMessage = 'Produk dihapus karena stok fisik 0.';
@@ -904,9 +913,10 @@ class InventoryController extends Controller
                 $stockMismatch['message'] = "Stok sesuai dengan sistem";
             }
 
-            $existingMismatches = session('stock_mismatches', []);
+            $existingMismatches = Cache::get($this->getUserCacheKey('stock_mismatches'), []);
             $existingMismatches[$product->id] = $stockMismatch;
-            session(['stock_mismatches' => $existingMismatches, 'new_units_' . $product->id => $newUnitCodes]);
+            Cache::forever($this->getUserCacheKey('stock_mismatches'), $existingMismatches);
+            Cache::forever($this->getUserCacheKey('new_units_' . $product->id), $newUnitCodes);
 
             Cache::forever($this->getProductCacheKey($product->id), [
                 'id' => $product->id,
@@ -961,7 +971,7 @@ class InventoryController extends Controller
 
         try {
             $reports = Cache::get('stock_opname_reports', []);
-            $brandNames = session('brand_names', []);
+            $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
 
             $existingReports = [];
             foreach ($reports as $report) {
@@ -993,19 +1003,17 @@ class InventoryController extends Controller
                             Cache::forget($this->getUnitCacheKey($product->id, $unitCode));
                         }
                         Cache::forever($this->getProductCacheKey($product->id), null);
-                        $newProducts = array_diff(session('new_products', []), [$product->id]);
-                        $updatedProducts = array_diff(session('updated_products', []), [$product->id]);
-                        $existingMismatches = session('stock_mismatches', []);
+                        $newProducts = array_diff(Cache::get($this->getUserCacheKey('new_products'), []), [$product->id]);
+                        $updatedProducts = array_diff(Cache::get($this->getUserCacheKey('updated_products'), []), [$product->id]);
+                        $existingMismatches = Cache::get($this->getUserCacheKey('stock_mismatches'), []);
                         unset($existingMismatches[$product->id]);
-                        $brandNames = session('brand_names', []);
+                        $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
                         unset($brandNames[$product->id]);
-                        session([
-                            'new_products' => $newProducts,
-                            'updated_products' => $updatedProducts,
-                            'new_units_' . $product->id => null,
-                            'stock_mismatches' => $existingMismatches,
-                            'brand_names' => $brandNames,
-                        ]);
+                        Cache::forever($this->getUserCacheKey('new_products'), $newProducts);
+                        Cache::forever($this->getUserCacheKey('updated_products'), $updatedProducts);
+                        Cache::forever($this->getUserCacheKey('new_units_' . $product->id), null);
+                        Cache::forever($this->getUserCacheKey('stock_mismatches'), $existingMismatches);
+                        Cache::forever($this->getUserCacheKey('brand_names'), $brandNames);
                         $product->delete();
                         DB::commit();
                         unset($existingReports[$report['product_id']]);
@@ -1054,8 +1062,8 @@ class InventoryController extends Controller
 
     public function status()
     {
-        $newProducts = session('new_products', []);
-        $brandNames = session('brand_names', []);
+        $newProducts = Cache::get($this->getUserCacheKey('new_products'), []);
+        $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
 
         return view('inventory.product-status', compact('newProducts', 'brandNames'));
     }
@@ -1081,8 +1089,11 @@ class InventoryController extends Controller
     {
         try {
             Cache::forget('stock_opname_reports');
-            session()->forget(['stock_mismatches', 'new_products', 'updated_products', 'brand_names']);
-            
+            Cache::forget($this->getUserCacheKey('stock_mismatches'));
+            Cache::forget($this->getUserCacheKey('new_products'));
+            Cache::forget($this->getUserCacheKey('updated_products'));
+            Cache::forget($this->getUserCacheKey('brand_names'));
+
             return redirect()->route('inventory.stock_opname')->with('success', 'Semua laporan berhasil dihapus');
         } catch (\Exception $e) {
             Log::error('Failed to delete all stock opname reports: ' . $e->getMessage());
@@ -1098,18 +1109,15 @@ class InventoryController extends Controller
         $productHistory = Cache::get($this->getProductHistoryCacheKey(), []);
 
         $filteredHistory = collect($productHistory)->filter(function ($item, $index) use ($time_filter, $action_filter, $search) {
-            // Check if the item has a valid timestamp and type
             if (!isset($item['timestamp']) || empty($item['timestamp']) || !isset($item['type'])) {
                 Log::warning("Invalid history entry at index {$index}: missing or empty timestamp or type", ['item' => $item]);
                 return false;
             }
 
-            // Apply action filter
             if ($action_filter !== 'all' && $item['type'] !== $action_filter) {
                 return false;
             }
 
-            // Apply time filter
             try {
                 $timestamp = Carbon::parse($item['timestamp'], 'Asia/Jakarta');
                 if ($time_filter === 'weekly' && !$timestamp->greaterThanOrEqualTo(Carbon::now('Asia/Jakarta')->startOfWeek())) {
@@ -1122,7 +1130,6 @@ class InventoryController extends Controller
                 return false;
             }
 
-            // Apply search filter
             if (!empty($search)) {
                 $searchLower = Str::lower($search);
                 $fieldsToSearch = [
@@ -1150,4 +1157,3 @@ class InventoryController extends Controller
         return view('inventory.history', compact('filteredHistory', 'time_filter', 'action_filter', 'search'));
     }
 }
-?>

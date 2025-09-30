@@ -148,6 +148,33 @@
 
     /* Smooth transitions for all interactive elements */
     * { transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; }
+
+    /* DataTables Custom Styling */
+    .dataTables_wrapper .dataTables_length {
+        color: #D1D5DB;
+        margin-bottom: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: #D1D5DB !important;
+        background-color: #374151 !important;
+        border: 1px solid #4B5563 !important;
+        margin: 0 0.25rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background-color: #FF4500 !important;
+        color: #FFFFFF !important;
+        border-color: #FF4500 !important;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        color: #D1D5DB;
+        margin-top: 1rem;
+    }
 </style>
 
 <div class="w-full">
@@ -282,7 +309,7 @@
             <div class="rounded-lg overflow-hidden border border-blue-100 mb-8 animate-fade-in-up animate-delay-800">
                 <h3 class="text-xl font-semibold p-4 bg-white">Detail Transaksi</h3>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full">
+                    <table id="transactionsTable" class="min-w-full">
                         <thead>
                             <tr class="animate-fade-in-up animate-delay-900">
                                 <th class="px-6 py-3 bg-gray-800 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border border-gray-700">ID</th>
@@ -315,7 +342,12 @@
                                 </tr>
                             @empty
                                 <tr class="table-row">
-                                    <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600 text-center">Tidak ada transaksi hari ini</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">-</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">-</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">-</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600 text-center">Tidak ada transaksi hari ini</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">-</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">-</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -328,8 +360,36 @@
 
 <!-- Inline Script untuk memastikan dimuat -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTables tanpa fitur pencarian
+        $('#transactionsTable').DataTable({
+            paging: true,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            searching: false, // Menonaktifkan fitur pencarian
+            ordering: true,
+            order: [[1, 'desc']], // Sort by Tanggal column (descending)
+            language: {
+                lengthMenu: 'Tampilkan _MENU_ entri per halaman',
+                zeroRecords: 'Tidak ada transaksi yang ditemukan',
+                info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ entri',
+                infoEmpty: 'Tidak ada entri yang tersedia',
+                infoFiltered: '(disaring dari _MAX_ total entri)',
+                paginate: {
+                    first: 'Pertama',
+                    last: 'Terakhir',
+                    next: 'Selanjutnya',
+                    previous: 'Sebelumnya'
+                }
+            },
+            responsive: true
+        });
+
         // Debug: Cek apakah Chart.js berhasil dimuat
         console.log('Chart.js loaded:', typeof Chart !== 'undefined');
         
@@ -559,5 +619,4 @@
         setTimeout(animateCounters, 1000);
     });
 </script>
-
 @endsection
