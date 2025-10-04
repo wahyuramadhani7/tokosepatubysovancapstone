@@ -113,7 +113,7 @@
         .dark input:focus, .dark select:focus, .dark textarea:focus {
             border-color: #F97316;
         }
-        .modal-overlay {
+        .modal-overlay, .popup-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -182,6 +182,28 @@
     </style>
 </head>
 <body class="min-h-screen custom-scrollbar" x-data="transactionApp()" x-init="initialize()">
+    <!-- Popup Notification -->
+    <div x-show="showFeaturePopup" class="popup-overlay" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-1" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-1" x-transition:leave-end="opacity-0">
+        <div class="card p-4 max-w-md">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pembaruan Fitur</h2>
+                <button @click="closeFeaturePopup" class="text-gray-medium dark:text-gray-400 hover:text-orange-custom p-1.5 rounded-full" aria-label="Tutup pemberitahuan">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <p class="text-base text-gray-700 dark:text-gray-300">
+                Kini, Anda dapat memasukkan harga baru keseluruhan untuk transaksi di Ringkasan Pembayaran.
+            </p>
+            <div class="mt-3 flex justify-end">
+                <button @click="closeFeaturePopup" class="btn-primary px-4 py-2 text-base flex items-center">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-6 max-w-7xl">
         <!-- Error Messages -->
@@ -300,7 +322,7 @@
                         <div class="bg-orange-custom text-white p-4 rounded-t-lg">
                             <h3 class="text-lg font-semibold">Pilih Unit Produk</h3>
                             <div class="mt-2">
-                                <input type="text" x-model.debounce.500="searchQuery" @input="searchUnits" placeholder="Cari nama, warna, ukuran, atau kode unit..." class="w-full bg-gray-600 text-white px-3 py-1 rounded text-sm">
+                                <input type="text" x-model.debounce.500="searchQuery" @input="searchUnits" placeholder="Cari nama, warna, ukuran, atau kode unit..." class="w-full bg-gray-600 text-white px-3 py-2 rounded text-sm">
                             </div>
                         </div>
                         <div class="p-4">
@@ -398,12 +420,23 @@
                                             <span class="inline-block h-2 w-2 rounded-full" :style="`background-color: ${getColorCode(item.color)}`"></span>
                                             <span x-text="`${item.color}, Ukuran: ${item.size}, Kode: ${item.unit_code}`"></span>
                                         </div>
-                                        <div class="flex justify-between items-center mt-4">
-                                            <p class="font-semibold text-gray-900 dark:text-gray-100 text-base" x-text="item.discount_price ? formatRupiah(item.discount_price) : formatRupiah(item.selling_price)"></p>
+                                        <div class="mt-4 space-y-2">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-medium dark:text-gray-400">Harga Asli:</span>
+                                                <p class="font-semibold text-gray-900 dark:text-gray-100 text-base" x-text="item.discount_price ? formatRupiah(item.discount_price) : formatRupiah(item.selling_price)"></p>
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-medium dark:text-gray-400">Harga Baru:</span>
+                                                <input type="number" :name="'products['+index+'][new_price]'" x-model.number="item.new_price" min="0" :max="item.discount_price || item.selling_price" @input="validateNewPrice(index)" placeholder="Harga baru" class="w-28 text-right px-3 py-2 text-base rounded-lg">
+                                            </div>
+                                            <div class="flex justify-between items-center" x-show="item.new_price !== null && item.new_price !== '' && item.new_price >= 0">
+                                                <span class="text-gray-medium dark:text-gray-400">Diskon:</span>
+                                                <p class="font-semibold text-green-custom" x-text="formatRupiah(calculateItemDiscount(item))"></p>
+                                            </div>
                                         </div>
                                         <input type="hidden" :name="'products['+index+'][product_id]'" x-model="item.product_id">
                                         <input type="hidden" :name="'products['+index+'][unit_code]'" x-model="item.unit_code">
-                                        <input type="hidden" :name="'products['+index+'][discount_price]'" x-model="item.discount_price">
+                                        <input type="hidden" :name="'products['+index+'][discount_price]'" x-model="item.discount_price || item.selling_price">
                                         <input type="hidden" :name="'products['+index+'][quantity]'" value="1">
                                     </li>
                                 </template>
@@ -412,33 +445,37 @@
                     </div>
 
                     <!-- Summary -->
-                    <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
+                    <div class="card rounded-lg p-6 border">
                         <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Ringkasan Pembayaran</h3>
-                        <div class="space-y-3">
+                        <div x-show="cart.length === 0" class="text-center py-8">
+                            <svg class="h-16 w-16 mx-auto text-gray-medium dark:text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            <p class="text-gray-500 dark:text-gray-400 font-medium">Ringkasan Kosong</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-500">Tambahkan unit produk terlebih dahulu</p>
+                        </div>
+                        <div x-show="cart.length > 0" class="space-y-3">
                             <div class="flex justify-between text-base">
                                 <span class="text-gray-medium dark:text-gray-400">Subtotal</span>
                                 <span class="font-semibold text-gray-900 dark:text-gray-100" x-text="formatRupiah(calculateSubtotal())"></span>
                             </div>
                             <div class="flex justify-between text-base">
-                                <span class="text-gray-medium dark:text-gray-400">Diskon</span>
-                                <span class="font-semibold text-gray-900 dark:text-gray-100" x-text="formatRupiah(calculateDiscount())"></span>
+                                <span class="text-gray-medium dark:text-gray-400">Harga Baru Keseluruhan</span>
+                                <input type="number" name="overall_new_price" x-model.number="overallNewPrice" min="0" :max="calculateSubtotal()" @input="validateOverallNewPrice" placeholder="Harga baru keseluruhan" class="w-32 text-right px-3 py-2 text-base rounded-lg">
                             </div>
                             <div class="flex justify-between text-base">
-                                <span class="text-gray-medium dark:text-gray-400">Harga Baru</span>
-                                <div class="flex items-center">
-                                    <span class="text-gray-medium dark:text-gray-400 mr-3">Rp</span>
-                                    <input type="number" name="discount_amount" x-model.number="new_total" min="0" :max="calculateSubtotal()" placeholder="Masukkan harga baru" class="w-28 text-right px-3 py-2 text-base rounded-lg" @input="updateNewTotal">
-                                </div>
+                                <span class="text-gray-medium dark:text-gray-400">Diskon</span>
+                                <span class="font-semibold text-gray-900 dark:text-gray-100" x-text="formatRupiah(calculateDiscount())"></span>
                             </div>
                             <hr class="my-2 border-gray-200 dark:border-gray-600">
                             <div class="flex justify-between items-center text-lg font-bold">
                                 <span class="text-gray-900 dark:text-gray-100">Total Bayar</span>
                                 <span class="text-gray-900 dark:text-gray-100" x-text="formatRupiah(calculateTotal())"></span>
                             </div>
+                            <button type="submit" class="w-full mt-6 bg-green-custom text-white py-3 px-4 rounded-lg font-medium hover:bg-green-600 hover-scale" :disabled="cart.length === 0" :class="{'opacity-50 cursor-not-allowed': cart.length === 0}">
+                                Proses Transaksi
+                            </button>
                         </div>
-                        <button type="submit" class="w-full mt-6 bg-green-custom text-white py-3 px-4 rounded-lg font-medium hover:bg-green-600 hover-scale" :disabled="cart.length === 0" :class="{'opacity-50 cursor-not-allowed': cart.length === 0}">
-                            Proses Transaksi
-                        </button>
                     </div>
                 </div>
             </div>
@@ -455,7 +492,6 @@
                 searchQuery: '',
                 searchResults: [],
                 cart: [],
-                new_total: '',
                 paymentMethod: '',
                 cardType: '',
                 isScannerOpen: false,
@@ -467,12 +503,25 @@
                 popupType: 'success',
                 scannedUnitCodes: [],
                 showManualSelection: false,
+                showFeaturePopup: false,
+                overallNewPrice: null,
 
                 init() {
                     this.darkMode = localStorage.getItem('darkMode') === 'true';
                     this.$watch('darkMode', value => {
                         localStorage.setItem('darkMode', value);
                     });
+
+                    // Show feature update popup only once per session
+                    const hasSeenPopup = sessionStorage.getItem('hasSeenFeaturePopup');
+                    if (!hasSeenPopup) {
+                        this.showFeaturePopup = true;
+                        sessionStorage.setItem('hasSeenFeaturePopup', 'true');
+                        setTimeout(() => {
+                            this.closeFeaturePopup();
+                        }, 30000); // Close after 30 seconds
+                    }
+
                     this.initialize();
                 },
 
@@ -482,13 +531,18 @@
                         this.cart = @json(old('products')).map(item => ({
                             ...item,
                             selling_price: parseFloat(item.selling_price) || 0,
-                            discount_price: item.discount_price ? parseFloat(item.discount_price) : null
+                            discount_price: item.discount_price ? parseFloat(item.discount_price) : null,
+                            new_price: item.new_price ? parseFloat(item.new_price) : null
                         }));
                         this.scannedUnitCodes = this.cart.map(item => item.unit_code);
                     @endif
-                    this.new_total = '{{ old('discount_amount') }}';
                     this.paymentMethod = '{{ old('payment_method') }}';
                     this.cardType = '{{ old('card_type') }}';
+                    this.overallNewPrice = '{{ old('overall_new_price') }}' ? parseFloat('{{ old('overall_new_price') }}') : null;
+                },
+
+                closeFeaturePopup() {
+                    this.showFeaturePopup = false;
                 },
 
                 loadPaginatedUnits() {
@@ -561,7 +615,8 @@
                         size: unit.size,
                         selling_price: parseFloat(unit.selling_price) || 0,
                         discount_price: unit.discount_price ? parseFloat(unit.discount_price) : null,
-                        unit_code: unit.unit_code
+                        unit_code: unit.unit_code,
+                        new_price: null
                     });
                     this.scannedUnitCodes.push(unit.unit_code);
                     this.popupTitle = 'Unit Ditambahkan';
@@ -570,14 +625,60 @@
                     this.showPopup = true;
                     this.searchQuery = '';
                     this.searchResults = [];
-                    this.updateNewTotal();
                 },
 
                 removeItem(index) {
                     const unitCode = this.cart[index].unit_code;
                     this.scannedUnitCodes = this.scannedUnitCodes.filter(code => code !== unitCode);
                     this.cart.splice(index, 1);
-                    this.updateNewTotal();
+                    this.overallNewPrice = null; // Reset overall new price when cart changes
+                },
+
+                calculateItemDiscount(item) {
+                    if (item.new_price === null || item.new_price === '' || item.new_price < 0) return 0;
+                    const originalPrice = item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
+                    const newPrice = parseFloat(item.new_price) || originalPrice;
+                    return originalPrice - newPrice;
+                },
+
+                validateNewPrice(index) {
+                    const item = this.cart[index];
+                    const maxPrice = item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
+                    const newPrice = parseFloat(item.new_price) || 0;
+
+                    if (newPrice > maxPrice && item.new_price !== null && item.new_price !== '') {
+                        this.cart[index].new_price = maxPrice;
+                        this.popupTitle = 'Harga Baru Tidak Valid';
+                        this.popupMessage = `Harga baru untuk "${item.name}" tidak boleh melebihi ${this.formatRupiah(maxPrice)}.`;
+                        this.popupType = 'error';
+                        this.showPopup = true;
+                    } else if (newPrice < 0) {
+                        this.cart[index].new_price = null;
+                        this.popupTitle = 'Harga Baru Tidak Valid';
+                        this.popupMessage = `Harga baru untuk "${item.name}" tidak boleh kurang dari 0.`;
+                        this.popupType = 'error';
+                        this.showPopup = true;
+                    }
+                    this.overallNewPrice = null; // Reset overall new price if per-item price changes
+                },
+
+                validateOverallNewPrice() {
+                    const subtotal = this.calculateSubtotal();
+                    const newPrice = parseFloat(this.overallNewPrice) || 0;
+
+                    if (newPrice > subtotal && this.overallNewPrice !== null && this.overallNewPrice !== '') {
+                        this.overallNewPrice = subtotal;
+                        this.popupTitle = 'Harga Baru Keseluruhan Tidak Valid';
+                        this.popupMessage = `Harga baru keseluruhan tidak boleh melebihi subtotal ${this.formatRupiah(subtotal)}.`;
+                        this.popupType = 'error';
+                        this.showPopup = true;
+                    } else if (newPrice < 0) {
+                        this.overallNewPrice = null;
+                        this.popupTitle = 'Harga Baru Keseluruhan Tidak Valid';
+                        this.popupMessage = `Harga baru keseluruhan tidak boleh kurang dari 0.`;
+                        this.popupType = 'error';
+                        this.showPopup = true;
+                    }
                 },
 
                 calculateSubtotal() {
@@ -588,31 +689,25 @@
                 },
 
                 calculateDiscount() {
-                    const subtotal = this.calculateSubtotal();
-                    const newTotal = parseFloat(this.new_total) || 0;
-                    return Math.max(0, subtotal - newTotal);
+                    if (this.overallNewPrice !== null && this.overallNewPrice !== '' && this.overallNewPrice >= 0) {
+                        return this.calculateSubtotal() - parseFloat(this.overallNewPrice);
+                    }
+                    return this.cart.reduce((total, item) => {
+                        if (item.new_price === null || item.new_price === '' || item.new_price < 0) return total;
+                        const originalPrice = item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
+                        const newPrice = parseFloat(item.new_price) || originalPrice;
+                        return total + (originalPrice - newPrice);
+                    }, 0);
                 },
 
                 calculateTotal() {
-                    return Math.max(0, parseFloat(this.new_total) || 0);
-                },
-
-                updateNewTotal() {
-                    const subtotal = this.calculateSubtotal();
-                    const newTotal = parseFloat(this.new_total) || 0;
-                    if (newTotal > subtotal && this.new_total !== '') {
-                        this.new_total = subtotal;
-                        this.popupTitle = 'Harga Baru Tidak Valid';
-                        this.popupMessage = 'Harga baru tidak boleh melebihi subtotal.';
-                        this.popupType = 'error';
-                        this.showPopup = true;
-                    } else if (newTotal < 0) {
-                        this.new_total = '';
-                        this.popupTitle = 'Harga Baru Tidak Valid';
-                        this.popupMessage = 'Harga baru tidak boleh kurang dari 0.';
-                        this.popupType = 'error';
-                        this.showPopup = true;
+                    if (this.overallNewPrice !== null && this.overallNewPrice !== '' && this.overallNewPrice >= 0) {
+                        return parseFloat(this.overallNewPrice) || 0;
                     }
+                    return this.cart.reduce((total, item) => {
+                        const price = parseFloat(item.new_price) || (item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price));
+                        return total + (price || 0);
+                    }, 0);
                 },
 
                 updateCardTypeVisibility() {
@@ -649,23 +744,48 @@
                         return false;
                     }
 
-                    const newTotal = parseFloat(this.new_total);
-                    if (this.new_total === '' || isNaN(newTotal) || newTotal < 0) {
+                    const subtotal = this.calculateSubtotal();
+                    const overallNewPrice = parseFloat(this.overallNewPrice) || 0;
+                    if (overallNewPrice > subtotal && this.overallNewPrice !== null && this.overallNewPrice !== '') {
                         event.preventDefault();
-                        this.popupTitle = 'Harga Baru Tidak Valid';
-                        this.popupMessage = 'Harga baru harus diisi dan tidak boleh kurang dari 0.';
+                        this.popupTitle = 'Harga Baru Keseluruhan Tidak Valid';
+                        this.popupMessage = `Harga baru keseluruhan tidak boleh melebihi subtotal ${this.formatRupiah(subtotal)}.`;
                         this.popupType = 'error';
                         this.showPopup = true;
                         return false;
                     }
 
-                    if (newTotal > this.calculateSubtotal()) {
+                    if (overallNewPrice < 0) {
                         event.preventDefault();
-                        this.popupTitle = 'Harga Baru Tidak Valid';
-                        this.popupMessage = 'Harga baru tidak boleh melebihi subtotal.';
+                        this.popupTitle = 'Harga Baru Keseluruhan Tidak Valid';
+                        this.popupMessage = 'Harga baru keseluruhan tidak boleh kurang dari 0.';
                         this.popupType = 'error';
                         this.showPopup = true;
                         return false;
+                    }
+
+                    for (let i = 0; i < this.cart.length; i++) {
+                        const item = this.cart[i];
+                        const maxPrice = item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
+                        const newPrice = parseFloat(item.new_price) || 0;
+
+                        if (item.new_price !== null && item.new_price !== '' && newPrice > maxPrice) {
+                            event.preventDefault();
+                            this.popupTitle = 'Harga Baru Tidak Valid';
+                            this.popupMessage = `Harga baru untuk "${item.name}" tidak boleh melebihi ${this.formatRupiah(maxPrice)}.`;
+                            this.popupType = 'error';
+                            this.showPopup = true;
+                            return false;
+                        }
+
+                        if (item.new_price !== null && item.new_price !== '' && newPrice < 0) {
+                            event.preventDefault();
+                            this.popupTitle = 'Harga Baru Tidak Valid';
+                            this.popupMessage = `Harga baru untuk "${item.name}" tidak boleh kurang dari 0.`;
+                            this.popupType = 'error';
+                            this.showPopup = true;
+                            return false;
+                        }
                     }
 
                     return true;

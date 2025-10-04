@@ -85,6 +85,7 @@ class TransactionController extends Controller
                                 'unit_code' => $item->productUnit ? $item->productUnit->unit_code : null,
                                 'quantity' => $item->quantity,
                                 'price' => $item->price,
+                                'new_price' => $item->new_price,
                                 'subtotal' => $item->subtotal,
                             ];
                         })->toArray(),
@@ -149,8 +150,8 @@ class TransactionController extends Controller
                 'products' => 'required|array|min:1',
                 'products.*.product_id' => 'required|exists:products,id',
                 'products.*.unit_code' => 'required|exists:product_units,unit_code,is_active,1',
-                'products.*.discount_price' => 'nullable|numeric|min:0',
-                'discount_amount' => 'required|numeric|min:0',
+                'products.*.new_price' => 'nullable|numeric|min:0',
+                'overall_new_price' => 'nullable|numeric|min:0',
                 'notes' => 'nullable|string',
             ]);
 
@@ -171,6 +172,7 @@ class TransactionController extends Controller
             $transaction->updated_at = Carbon::now('Asia/Jakarta');
 
             $totalAmount = 0;
+            $totalDiscount = 0;
             $transactionItems = [];
 
             foreach ($request->products as $item) {
@@ -180,11 +182,23 @@ class TransactionController extends Controller
                     ->where('is_active', true)
                     ->firstOrFail();
 
-                $price = isset($item['discount_price']) && $item['discount_price'] !== null 
-                    ? $item['discount_price'] 
-                    : $product->selling_price;
+                // Determine original price (selling_price or discount_price if available)
+                $originalPrice = $product->discount_price ?? $product->selling_price;
+                // Use new_price if provided, otherwise use original price
+                $price = isset($item['new_price']) && $item['new_price'] !== null 
+                    ? $item['new_price'] 
+                    : $originalPrice;
+                
+                // Validate new_price does not exceed original price
+                if ($price > $originalPrice) {
+                    throw new \Exception("Harga baru untuk {$product->name} tidak boleh melebihi Rp " . number_format($originalPrice, 0, ',', '.'));
+                }
+
+                // Calculate discount for this item
+                $itemDiscount = ($originalPrice - $price);
                 $subtotal = $price;
-                $totalAmount += $subtotal;
+                $totalAmount += $originalPrice; // Total before discount
+                $totalDiscount += $itemDiscount;
 
                 $unit->update(['is_active' => false]);
 
@@ -192,18 +206,25 @@ class TransactionController extends Controller
                     'product_id' => $product->id,
                     'product_unit_id' => $unit->id,
                     'quantity' => 1,
-                    'price' => $price,
-                    'discount' => 0,
-                    'subtotal' => $subtotal,
+                    'price' => $originalPrice, // Store original price
+                    'new_price' => $price,    // Store new price (after discount)
+                    'subtotal' => $subtotal,  // Subtotal after discount
                 ]);
             }
 
-            $newTotal = (float)$request->discount_amount;
-            if ($newTotal > $totalAmount) {
-                throw new \Exception('Harga akhir tidak boleh melebihi subtotal.');
+            // Handle overall_new_price if provided
+            if ($request->filled('overall_new_price')) {
+                $overallNewPrice = (float) $request->overall_new_price;
+                // Validate overall_new_price
+                if ($overallNewPrice > $totalAmount) {
+                    throw new \Exception('Harga baru keseluruhan tidak boleh melebihi subtotal Rp ' . number_format($totalAmount, 0, ',', '.'));
+                }
+                $discountAmount = $totalAmount - $overallNewPrice;
+                $finalAmount = $overallNewPrice;
+            } else {
+                $discountAmount = $totalDiscount;
+                $finalAmount = $totalAmount - $discountAmount;
             }
-            $discountAmount = $totalAmount - $newTotal;
-            $finalAmount = $newTotal;
 
             $transaction->total_amount = $totalAmount;
             $transaction->discount_amount = $discountAmount;

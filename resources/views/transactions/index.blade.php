@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" x-data="{ darkMode: false }" :class="{ 'dark': darkMode }">
+<html lang="id" x-data="{ darkMode: false }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -17,9 +17,9 @@
                         'orange-custom': '#FF4500',
                         'green-custom': '#4ADE80',
                         'gray-dark': '#374151',
-                        'gray-medium': '#6B7280',
+                        'gray-medium': '#9CA3AF',
                         'blue-custom': '#2C3E50',
-                        'gold-custom': '#D4AF37'
+                        'gold-custom': '#E8C565'
                     },
                     fontFamily: {
                         'libre-baskerville': ['Libre Baskerville', 'serif']
@@ -33,14 +33,14 @@
         [x-cloak] { display: none !important; }
         body {
             font-family: 'Libre Baskerville', serif;
-            background: url('images/bgapp.jpg') no-repeat center center fixed;
+            background: url('images/bgapp.jpg') no-repeat center center fixed, #F3F4F6;
             background-size: cover;
             color: #1F2937;
             min-height: 100vh;
             padding: 0;
             font-size: 18px;
             font-weight: 400;
-            line-height: 1.6;
+            line-height: 1.75;
             position: relative;
             margin: 0;
         }
@@ -51,11 +51,11 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(243, 244, 246, 0.95);
+            background: rgba(243, 244, 246, 0.9);
             z-index: -1;
         }
         .dark body::before {
-            background: rgba(31, 41, 55, 0.95);
+            background: rgba(31, 41, 55, 0.9);
         }
         .dark body {
             color: #F3F4F6;
@@ -73,7 +73,7 @@
             margin: 0;
             left: 0;
             right: 0;
-            height: 90px;
+            min-height: 90px;
         }
         .custom-header .close-icon {
             width: 36px;
@@ -95,32 +95,35 @@
             background-color: #FF4500;
             color: #FFFFFF;
             padding: 0.75rem 1.25rem;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             font-size: 1rem;
             font-weight: 500;
             text-decoration: none;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease;
             margin-right: 1.25rem;
         }
         .custom-header .dashboard-button:hover {
             background-color: #FF5722;
+            transform: scale(1.05);
         }
         .dark-mode-toggle {
             background-color: #FF4500;
             color: #FFFFFF;
             padding: 0.75rem;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
         .dark-mode-toggle:hover {
             background-color: #FF5722;
+            transform: scale(1.05);
         }
         .card {
             background: rgba(255, 255, 255, 0.95);
             border: 1px solid #D1D5DB;
             border-radius: 0.75rem;
-            padding: 1.25rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         .dark .card {
             background: rgba(31, 41, 55, 0.95);
@@ -128,13 +131,13 @@
         }
         .header-section {
             background: #292929;
-            padding: 1.25rem;
+            padding: 1.5rem;
             border-radius: 0.75rem;
             margin-bottom: 1.25rem;
         }
         .header-section h1 {
-            color: #D4AF37;
-            font-size: 1.75rem;
+            color: #E8C565;
+            font-size: 2rem;
             font-weight: bold;
         }
         .header-section p {
@@ -145,16 +148,18 @@
             background: #FF4500;
             color: #FFFFFF;
             padding: 0.75rem 1.25rem;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             text-decoration: none;
             font-size: 1rem;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
         .header-buttons a:hover {
             background: #FF5722;
+            transform: scale(1.05);
         }
         .filter-section {
             background: #292929;
-            padding: 1.25rem;
+            padding: 1.5rem;
             border-radius: 0.75rem;
             margin-bottom: 1.25rem;
         }
@@ -166,26 +171,32 @@
             background: #374151;
             border: 1px solid #6B7280;
             color: #F3F4F6;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             padding: 0.75rem;
             font-size: 1rem;
+        }
+        .filter-section input:focus, .filter-section select:focus {
+            outline: 2px solid #FF4500;
         }
         .filter-section button {
             background: #FF4500;
             color: #FFFFFF;
             padding: 0.75rem 1.25rem;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             font-size: 1rem;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
         .filter-section button:hover {
             background: #FF5722;
+            transform: scale(1.05);
         }
         .transaction-card {
             background: rgba(255, 255, 255, 0.95);
             border: 1px solid #D1D5DB;
             border-radius: 0.75rem;
-            padding: 1.25rem;
+            padding: 1.5rem;
             margin-bottom: 1.25rem;
+            animation: fadeIn 0.3s ease-in;
         }
         .dark .transaction-card {
             background: rgba(31, 41, 55, 0.95);
@@ -193,8 +204,9 @@
         }
         .transaction-card .badge {
             padding: 0.375rem 0.875rem;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             font-size: 0.875rem;
+            font-weight: 600;
         }
         .transaction-card .badge-success {
             background: rgba(74, 222, 128, 0.1);
@@ -230,12 +242,42 @@
             align-items: center;
             z-index: 1000;
         }
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .animate-slide-out {
+            animation: slideOut 0.3s ease forwards;
+        }
+        .floating-button {
+            animation: pulse 2s infinite;
+        }
         @media (max-width: 640px) {
             body {
                 font-size: 16px;
             }
             .header-section h1 {
-                font-size: 1.5rem;
+                font-size: 1.75rem;
             }
             .header-section p {
                 font-size: 0.875rem;
@@ -253,13 +295,13 @@
                 padding: 0.5rem 1rem;
             }
             .transaction-card {
-                padding: 0.75rem;
+                padding: 1rem;
             }
             .transaction-card .badge {
                 font-size: 0.75rem;
             }
             .custom-header {
-                height: 80px;
+                min-height: 80px;
                 padding: 1rem 0;
             }
             .custom-header .close-icon {
@@ -272,13 +314,35 @@
     </style>
 </head>
 <body class="min-h-screen custom-scrollbar" x-data="transactionListApp()" x-init="init()">
+    <!-- Popup Notification -->
+    <div x-show="showPopup" class="popup-overlay" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-1" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-1" x-transition:leave-end="opacity-0">
+        <div class="card p-4 max-w-md">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pembaruan Fitur</h2>
+                <button @click="closePopup" class="text-gray-medium dark:text-gray-400 hover:text-orange-custom p-1.5 rounded-full" aria-label="Tutup pemberitahuan">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <p class="text-base text-gray-700 dark:text-gray-300">
+                Kini, saat membuat transaksi baru, Anda dapat menetapkan harga baru keseluruhan untuk transaksi, selain harga terbaru per item.
+            </p>
+            <div class="mt-3 flex justify-end">
+                <button @click="closePopup" class="btn-primary px-4 py-2 text-base flex items-center">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Header -->
     <header class="custom-header">
         <div class="logo" style="margin-left: 20px;">
-            <img src="{{ asset('images/logo2.jpg') }}" alt="Sepatu by Sovan Logo" class="h-12 w-auto sm:h-14 md:h-18">
+            <img src="{{ asset('images/logo2.jpg') }}" alt="Sepatu by Sovan Logo" class="h-16 w-auto sm:h-14 md:h-18" loading="lazy">
         </div>
         <div class="flex items-center space-x-4">
-            <button @click="toggleDarkMode" class="dark-mode-toggle" :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+            <button @click="toggleDarkMode" class="dark-mode-toggle" :title="darkMode ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'" aria-label="Ganti mode tema">
                 <svg x-show="!darkMode" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
@@ -286,7 +350,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 01 8.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
             </button>
-            <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="dashboard-button card-hover" title="Kembali ke Dashboard">
+            <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="dashboard-button card-hover" title="Kembali ke Dashboard" aria-label="Kembali ke Dashboard">
                 <i class="fas fa-home"></i>
             </a>
         </div>
@@ -312,7 +376,7 @@
                 Cetak Struk
             </a>
             @endif
-            <button @click="dismissAlert" class="text-gray-medium dark:text-gray-400 hover:text-orange-custom p-1.5 rounded-full card-hover">
+            <button @click="dismissAlert" class="text-gray-medium dark:text-gray-400 hover:text-orange-custom p-1.5 rounded-full card-hover" aria-label="Tutup peringatan sukses">
                 <svg class="h-5 w-5 animate-rotate-in" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
@@ -330,7 +394,7 @@
                 </div>
                 <p class="font-medium text-base" x-text="errorMessage"></p>
             </div>
-            <button @click="dismissAlert" class="text-gray-medium dark:text-gray-400 hover:text-orange-custom p-1.5 rounded-full card-hover">
+            <button @click="dismissAlert" class="text-gray-medium dark:text-gray-400 hover:text-orange-custom p-1.5 rounded-full card-hover" aria-label="Tutup peringatan error">
                 <svg class="h-5 w-5 animate-rotate-in" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
@@ -369,7 +433,7 @@
                     </svg>
                     Filter Transaksi
                 </h2>
-                <button @click="showFilters = !showFilters" class="text-gray-300 hover:text-white p-1.5 rounded-full">
+                <button @click="showFilters = !showFilters" class="text-gray-300 hover:text-white p-1.5 rounded-full" aria-label="Toggle filter">
                     <svg x-show="showFilters" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                     </svg>
@@ -378,7 +442,7 @@
                     </svg>
                 </button>
             </div>
-            <div x-show="showFilters" class="p-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0">
+            <div x-show="showFilters" class="p-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0" style="transition: max-height 0.3s ease;">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-base font-medium mb-1">Tanggal</label>
@@ -420,171 +484,170 @@
             <div class="card p-4 max-w-md">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Catatan Transaksi</h2>
-                    <button @click="closeNotesModal" class="text-gray-medium dark:text-gray-400 hover:text-orange-custom p-1.5 rounded-full">
+                    <button @click="closeNotesModal" class="text-gray-medium dark:text-gray-400 hover:text-orange-custom p-1.5 rounded-full" aria-label="Tutup modal">
                         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-                <div>
-                    <label class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan (misal: salah metode pembayaran, mesin error)</label>
-                    <textarea x-model="currentNote" rows="4" class="w-full text-base" placeholder="Masukkan catatan untuk transaksi ini..."></textarea>
-                </div>
-                <div class="mt-3 flex justify-end gap-3">
-                    <button @click="closeNotesModal" class="btn-primary px-4 py-2 text-base flex items-center">
-                        Batal
-                    </button>
-                    <button @click="saveNote" class="btn-primary px-4 py-2 text-base flex items-center">
-                        <svg class="h-5 w-5 mr-1 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Simpan
-                    </button>
-                </div>
+                    </svg>
+                </button>
+            </div>
+            <div>
+                <label class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan (misal: salah metode pembayaran, mesin error)</label>
+                <textarea x-model="currentNote" rows="4" class="w-full text-base" placeholder="Masukkan catatan untuk transaksi ini..." x-ref="notesTextarea"></textarea>
+            </div>
+            <div class="mt-3 flex justify-end gap-3">
+                <button @click="closeNotesModal" class="btn-primary px-4 py-2 text-base flex items-center">
+                    Batal
+                </button>
+                <button @click="saveNote" class="btn-primary px-4 py-2 text-base flex items-center">
+                    <svg class="h-5 w-5 mr-1 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Card Grid -->
+    <div class="card">
+        <!-- Loading State -->
+        <div x-show="loading" class="text-center py-8">
+            <div class="flex justify-center items-center">
+                <svg class="animate-spin h-7 w-7 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V1l4 4-4 4z"></path>
+                </svg>
+                <span class="ml-2 text-gray-medium dark:text-gray-400 text-base">Memuat transaksi...</span>
             </div>
         </div>
 
-        <!-- Transactions Card Grid -->
-        <div class="card">
-            <!-- Loading State -->
-            <div x-show="loading" class="text-center py-8">
-                <div class="flex justify-center items-center">
-                    <svg class="animate-spin h-7 w-7 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V1l4 4-4 4z"></path>
-                    </svg>
-                    <span class="ml-2 text-gray-medium dark:text-gray-400 text-base">Memuat transaksi...</span>
-                </div>
-            </div>
-
-            <!-- Transactions Grid -->
-            <div x-show="!loading && filteredTransactions.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <template x-for="transaction in paginatedTransactions" :key="transaction.id">
-                    <div :class="{'bg-orange-custom/10 dark:bg-orange-custom/20': isNewTransaction(transaction.id), 'alternate-row': true}" class="transaction-card">
-                        <div class="flex flex-col gap-3">
-                            <!-- Transaction Header -->
-                            <div class="flex justify-between items-start border-b border-gray-200 dark:border-gray-600 pb-2">
+        <!-- Transactions Grid -->
+        <div x-show="!loading && filteredTransactions.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <template x-for="transaction in paginatedTransactions" :key="transaction.id">
+                <div :class="{'bg-orange-custom/10 dark:bg-orange-custom/20': isNewTransaction(transaction.id), 'alternate-row': true}" class="transaction-card">
+                    <div class="flex flex-col gap-3">
+                        <!-- Transaction Header -->
+                        <div class="flex justify-between items-start border-b border-gray-200 dark:border-gray-600 pb-2">
+                            <div>
+                                <span class="text-xl font-semibold text-gray-900 dark:text-gray-100" x-text="transaction.invoice_number"></span>
+                                <div class="text-base text-gray-medium dark:text-gray-400" x-text="formatTime(transaction.created_at)"></div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button @click="openNotesModal(transaction.id, transaction.note)" class="inline-flex items-center p-2.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Tambah/Edit Catatan" aria-label="Tambah atau edit catatan">
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id)" class="inline-flex items-center p-2.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Cetak Struk" aria-label="Cetak struk transaksi">
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                        <!-- Transaction Details -->
+                        <div class="transaction-details grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                            <div>
+                                <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Pelanggan</span>
+                                <div class="text-gray-900 dark:text-gray-100" x-text="transaction.customer_name || 'Tanpa Nama'"></div>
+                                <div class="text-base text-gray-medium dark:text-gray-400" x-text="transaction.customer_phone || '-'"></div>
+                            </div>
+                            <div>
+                                <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Produk</span>
+                                <div class="product-list" x-html="getProductNames(transaction.items)"></div>
+                            </div>
+                            <div>
+                                <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Metode</span>
                                 <div>
-                                    <span class="text-xl font-semibold text-gray-900 dark:text-gray-100" x-text="transaction.invoice_number"></span>
-                                    <div class="text-base text-gray-medium dark:text-gray-400" x-text="formatTime(transaction.created_at)"></div>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button @click="openNotesModal(transaction.id, transaction.note)" class="inline-flex items-center p-2.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Tambah/Edit Catatan">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </button>
-                                    <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id)" class="inline-flex items-center p-2.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Cetak Struk">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                        </svg>
-                                    </a>
+                                    <span class="badge" :class="{
+                                        'badge-success': transaction.payment_method === 'cash',
+                                        'badge-neutral': transaction.payment_method === 'credit_card',
+                                        'badge-info': transaction.payment_method === 'transfer' || transaction.payment_method === 'debit'
+                                    }" x-text="translatePaymentMethod(transaction.payment_method, transaction.card_type)"></span>
                                 </div>
                             </div>
-                            <!-- Transaction Details -->
-                            <div class="transaction-details grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                            <div>
+                                <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Diskon</span>
+                                <div class="text-orange-custom" x-text="formatRupiah(transaction.discount_amount || 0)"></div>
+                            </div>
+                            <div>
+                                <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Total</span>
+                                <div class="text-orange-custom" x-text="formatRupiah(transaction.final_amount)"></div>
+                            </div>
+                            <div>
+                                <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Status</span>
                                 <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Pelanggan</span>
-                                    <div class="text-gray-900 dark:text-gray-100" x-text="transaction.customer_name || 'Tanpa Nama'"></div>
-                                    <div class="text-base text-gray-medium dark:text-gray-400" x-text="transaction.customer_phone || '-'"></div>
+                                    <span class="badge" :class="{
+                                        'badge-success': transaction.payment_status === 'paid',
+                                        'badge-warning': transaction.payment_status === 'pending',
+                                        'badge-danger': transaction.payment_status === 'cancelled'
+                                    }" x-text="translateStatus(transaction.payment_status)"></span>
                                 </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Produk</span>
-                                    <div class="product-list" x-html="getProductNames(transaction.items)"></div>
-                                </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Metode</span>
-                                    <div>
-                                        <span class="badge" :class="{
-                                            'badge-success': transaction.payment_method === 'cash',
-                                            'badge-neutral': transaction.payment_method === 'credit_card',
-                                            'badge-info': transaction.payment_method === 'transfer' || transaction.payment_method === 'debit'
-                                        }" x-text="translatePaymentMethod(transaction.payment_method, transaction.card_type)"></span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Diskon</span>
-                                    <div class="text-orange-custom" x-text="formatRupiah(calculateDiscount(transaction))"></div>
-                                </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Total</span>
-                                    <div class="text-orange-custom" x-text="formatRupiah(transaction.final_amount)"></div>
-                                </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Status</span>
-                                    <div>
-                                        <span class="badge" :class="{
-                                            'badge-success': transaction.payment_status === 'paid',
-                                            'badge-warning': transaction.payment_status === 'pending',
-                                            'badge-danger': transaction.payment_status === 'cancelled'
-                                        }" x-text="translateStatus(transaction.payment_status)"></span>
-                                    </div>
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Catatan</span>
-                                    <div class="text-gray-900 dark:text-gray-100" x-text="transaction.note || '-'"></div>
-                                </div>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Catatan</span>
+                                <div class="text-gray-900 dark:text-gray-100" x-text="transaction.note || '-'"></div>
                             </div>
                         </div>
                     </div>
-                </template>
-            </div>
+                </div>
+            </template>
+        </div>
 
-            <!-- Empty State -->
-            <div x-show="!loading && filteredTransactions.length === 0" class="text-center py-8">
-                <div class="bg-gray-100 dark:bg-gray-700 rounded-lg inline-block p-6">
-                    <svg class="h-10 w-10 text-orange-custom/50 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <!-- Empty State -->
+        <div x-show="!loading && filteredTransactions.length === 0" class="text-center py-8">
+            <div class="bg-gray-100 dark:bg-gray-700 rounded-lg inline-block p-6">
+                <svg class="h-10 w-10 text-orange-custom/50 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-3">Tidak Ada Transaksi</h3>
+            <p class="text-base text-gray-medium dark:text-gray-400 max-w-xs mx-auto mt-1">Belum ada transaksi untuk filter yang dipilih.</p>
+            <div class="mt-4">
+                <a href="{{ route('transactions.create') }}" class="btn-primary px-4 py-2 text-base flex items-center mx-auto">
+                    <svg class="h-5 w-5 mr-1 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-3">Tidak Ada Transaksi</h3>
-                <p class="text-base text-gray-medium dark:text-gray-400 max-w-xs mx-auto mt-1">Belum ada transaksi untuk filter yang dipilih.</p>
-                <div class="mt-4">
-                    <a href="{{ route('transactions.create') }}" class="btn-primary px-4 py-2 text-base flex items-center mx-auto">
-                        <svg class="h-5 w-5 mr-1 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Buat Transaksi Baru
-                    </a>
-                </div>
+                    Buat Transaksi Baru
+                </a>
             </div>
+        </div>
 
-            <!-- Pagination -->
-            <div x-show="!loading && filteredTransactions.length > 0" class="flex flex-col sm:flex-row items-center justify-between p-4 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 mt-6">
-                <div class="text-base text-gray-medium dark:text-gray-400 mb-2 sm:mb-0">
-                    Menampilkan <span class="font-medium text-gray-900 dark:text-gray-100" x-text="paginationFrom()"></span> - <span x-text="paginationTo()"></span> dari <span class="font-medium text-gray-900 dark:text-gray-100" x-text="filteredTransactions.length"></span> transaksi
-                </div>
-                <div class="flex flex-col sm:flex-row items-center gap-x-3 gap-y-2 w-full sm:w-auto">
-                    <select x-model.number="perPage" @change="fetchTransactions" class="px-4 py-2 text-base rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 w-full sm:w-auto">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                    </select>
-                    <div class="flex space-x-2">
-                        <button @click="prevPage" :disabled="currentPage === 1" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-custom hover:text-white" :class="{'opacity-50 cursor-not-allowed': currentPage === 1}">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                            </svg>
+        <!-- Pagination -->
+        <div x-show="!loading && filteredTransactions.length > 0" class="flex flex-col sm:flex-row items-center justify-between p-4 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 mt-6">
+            <div class="text-base text-gray-medium dark:text-gray-400 mb-2 sm:mb-0">
+                Menampilkan <span class="font-medium text-gray-900 dark:text-gray-100" x-text="paginationFrom()"></span> - <span x-text="paginationTo()"></span> dari <span class="font-medium text-gray-900 dark:text-gray-100" x-text="filteredTransactions.length"></span> transaksi
+            </div>
+            <div class="flex flex-col sm:flex-row items-center gap-x-3 gap-y-2 w-full sm:w-auto">
+                <select x-model.number="perPage" @change="fetchTransactions" class="px-4 py-2 text-base rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 w-full sm:w-auto">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+                <div class="flex space-x-2">
+                    <button @click="prevPage" :disabled="currentPage === 1" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-custom hover:text-white" :class="{'opacity-50 cursor-not-allowed': currentPage === 1}">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <template x-for="page in displayedPages()" :key="page">
+                        <button x-show="page !== '…'" @click="goToPage(page)" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-custom hover:text-white" :class="{'bg-orange-custom text-white': page === currentPage}">
+                            <span x-text="page"></span>
                         </button>
-                        <template x-for="page in displayedPages()" :key="page">
-                            <button x-show="page !== '…'" @click="goToPage(page)" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-custom hover:text-white" :class="{'bg-orange-custom text-white': page === currentPage}">
-                                <span x-text="page"></span>
-                            </button>
-                            <span x-show="page === '…'" class="px-4 py-2 text-gray-medium dark:text-gray-400">…</span>
-                        </template>
-                        <button @click="nextPage" :disabled="currentPage >= totalPages" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-custom hover:text-white" :class="{'opacity-50 cursor-not-allowed': currentPage >= totalPages}">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </div>
+                        <span x-show="page === '…'" class="px-4 py-2 text-gray-medium dark:text-gray-400">…</span>
+                    </template>
+                    <button @click="nextPage" :disabled="currentPage >= totalPages" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-custom hover:text-white" :class="{'opacity-50 cursor-not-allowed': currentPage >= totalPages}">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Floating Print Button -->
-        <div x-show="newTransactionId" class="fixed bottom-6 right-6" x-cloak>
-            <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', newTransactionId)" class="flex items-center justify-center h-14 w-14 bg-orange-custom text-white rounded-full hover:bg-orange-600">
+        <div x-show="newTransactionId" class="fixed bottom-6 right-6 floating-button" x-cloak>
+            <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', newTransactionId)" class="flex items-center justify-center h-14 w-14 bg-orange-custom text-white rounded-full hover:bg-orange-600" aria-label="Cetak struk transaksi baru">
                 <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
@@ -611,6 +674,7 @@
                     currentNote: '',
                     currentTransactionId: null,
                     darkMode: false,
+                    showPopup: false,
 
                     init() {
                         const savedDarkMode = localStorage.getItem('darkMode');
@@ -633,6 +697,16 @@
                             }
                         });
 
+                        // Check if popup has been shown in this session
+                        const hasSeenPopup = sessionStorage.getItem('hasSeenPopup');
+                        if (!hasSeenPopup) {
+                            this.showPopup = true;
+                            sessionStorage.setItem('hasSeenPopup', 'true');
+                            setTimeout(() => {
+                                this.closePopup();
+                            }, 30000); // Close popup after 30 seconds
+                        }
+
                         const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
                         this.dateFilter = today;
                         this.fetchTransactions();
@@ -641,6 +715,10 @@
                                 this.highlightNewTransaction();
                             });
                         }
+                    },
+
+                    closePopup() {
+                        this.showPopup = false;
                     },
 
                     toggleDarkMode() {
@@ -680,6 +758,7 @@
                                 ...transaction,
                                 total_amount: parseFloat(transaction.total_amount) || 0,
                                 final_amount: parseFloat(transaction.final_amount) || 0,
+                                discount_amount: parseFloat(transaction.discount_amount) || 0,
                                 note: storedNotes[transaction.id] || ''
                             }));
                             this.sortResults(this.transactions);
@@ -697,9 +776,13 @@
                     dismissAlert() {
                         const successAlert = this.$refs.successAlert;
                         const errorAlert = this.$refs.errorAlert;
-                        if (successAlert) successAlert.remove();
-                        if (errorAlert) errorAlert.remove();
-                        this.errorMessage = '';
+                        if (successAlert) successAlert.classList.add('animate-slide-out');
+                        if (errorAlert) errorAlert.classList.add('animate-slide-out');
+                        setTimeout(() => {
+                            if (successAlert) successAlert.remove();
+                            if (errorAlert) errorAlert.remove();
+                            this.errorMessage = '';
+                        }, 300);
                     },
 
                     isNewTransaction(id) {
@@ -724,7 +807,7 @@
                     },
 
                     calculateDiscount(transaction) {
-                        return (transaction.total_amount || 0) - (transaction.final_amount || 0);
+                        return transaction.discount_amount || 0;
                     },
 
                     formatTime(dateString) {
@@ -802,6 +885,9 @@
                         this.currentTransactionId = transactionId;
                         this.currentNote = note || '';
                         this.showNotesModal = true;
+                        this.$nextTick(() => {
+                            this.$refs.notesTextarea.focus();
+                        });
                     },
 
                     closeNotesModal() {

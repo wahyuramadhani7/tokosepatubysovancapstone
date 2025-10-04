@@ -103,7 +103,7 @@
     <div class="receipt">
         <div class="header">
             <div class="store-name">Sepatu by Sovan</div>
-            <div class="store-address">Jl. Puri Anjasmoro B10/9 Smg</div>
+            <div class="store-address">Jln Niti Semito No 43 Purwosari Kudus</div>
             <div class="store-contact">08818671005</div>
         </div>
 
@@ -157,6 +157,16 @@
                 </div>
                 <div class="item-details">
                     <span>{{ $item->quantity }} x {{ number_format($item->price, 0, ',', '.') }}</span>
+                    <span>Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}</span>
+                </div>
+                @if($transaction->overall_new_price === null && $item->new_price !== null && $item->new_price < $item->price)
+                <div class="item-details">
+                    <span>Diskon per Item:</span>
+                    <span>Rp {{ number_format(($item->price - $item->new_price) * $item->quantity, 0, ',', '.') }}</span>
+                </div>
+                @endif
+                <div class="item-details">
+                    <span>Subtotal:</span>
                     <span>Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
                 </div>
                 @if($item->product && ($item->product->color || $item->product->size))
@@ -182,9 +192,15 @@
                 <span>Subtotal:</span>
                 <span>Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</span>
             </div>
+            @if($transaction->overall_new_price !== null)
+            <div class="invoice-row">
+                <span>Harga Baru Keseluruhan:</span>
+                <span>Rp {{ number_format($transaction->overall_new_price, 0, ',', '.') }}</span>
+            </div>
+            @endif
             @if($transaction->discount_amount > 0)
             <div class="invoice-row">
-                <span>Discount:</span>
+                <span>Total Diskon:</span>
                 <span>Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</span>
             </div>
             @endif
@@ -197,9 +213,9 @@
                 <span>
                     @switch($transaction->payment_method)
                         @case('cash') Tunai @break
-                        @case('credit_card') QRIS @break
+                        @case('qris') QRIS @break
                         @case('transfer') Transfer Bank @break
-                        @default {{ $transaction->payment_method }}
+                        @default {{ ucfirst(str_replace('debit_', '', $transaction->payment_method)) }}
                     @endswitch
                 </span>
             </div>
@@ -215,7 +231,7 @@
 
         <div class="footer">
             <p>Thank you for your purchase!</p>
-            <p>Barang Tidak Sesuai Dapat Dtukarkan, Asalkan Belum Dipakai.</p>
+            <p>Barang Tidak Sesuai Dapat Ditukarkan, Asalkan Belum Dipakai.</p>
             <p>Gabung grup WhatsApp kami untuk info</p>
             <p>diskon dan penawaran menarik!</p>
             <p>https://chat.whatsapp.com/CSXlDpfDfq92STaQKJ2a58?mode=ac_t</p>
@@ -269,7 +285,7 @@
             content += `Dapatkan info diskon dan penawaran menarik dengan bergabung di grup WhatsApp kami:\n`;
             content += `https://chat.whatsapp.com/CSXlDpfDfq92STaQKJ2a58?mode=ac_t\n\n`;
             content += `*Struk Pembelian*\n`;
-            content += `Jl. Puri Anjasmoro B10/9 Smg\n`;
+            content += `Jln Niti Semito No 43 Purwosari Kudus\n`;
             content += `08818671005\n`;
             content += `----------------------------------------\n`;
             content += `Invoice: ${truncateText('{{ $transaction->invoice_number }}', 33)}\n`;
@@ -292,7 +308,11 @@
             @else
             content += ` (Unit N/A)\n`;
             @endif
-            content += `${padRight('{{ $item->quantity }} x {{ number_format($item->price, 0, ',', '.') }}', 24)}Rp {{ number_format($item->subtotal, 0, ',', '.') }}\n`;
+            content += `${padRight('{{ $item->quantity }} x {{ number_format($item->price, 0, ',', '.') }}', 24)}Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}\n`;
+            @if($transaction->overall_new_price === null && $item->new_price !== null && $item->new_price < $item->price)
+            content += `${padRight('Diskon per Item:', 24)}Rp {{ number_format(($item->price - $item->new_price) * $item->quantity, 0, ',', '.') }}\n`;
+            @endif
+            content += `${padRight('Subtotal:', 24)}Rp {{ number_format($item->subtotal, 0, ',', '.') }}\n`;
             @if($item->product && ($item->product->color || $item->product->size))
             content += `  ${truncateText(`@if($item->product->color) {{ $item->product->color }} @endif @if($item->product->size) {{ $item->product->size }} @endif`, 44)}\n`;
             @endif
@@ -302,11 +322,14 @@
             // Summary
             content += `Jumlah Item: {{ $transaction->items->sum('quantity') }}\n`;
             content += `Subtotal: Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}\n`;
+            @if($transaction->overall_new_price !== null)
+            content += `Harga Baru Keseluruhan: Rp {{ number_format($transaction->overall_new_price, 0, ',', '.') }}\n`;
+            @endif
             @if($transaction->discount_amount > 0)
-            content += `Diskon: Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}\n`;
+            content += `Total Diskon: Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}\n`;
             @endif
             content += `*TOTAL: Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}*\n`;
-            content += `Pembayaran: ${truncateText(`@switch($transaction->payment_method) @case('cash') Tunai @break @case('credit_card') QRIS @break @case('transfer') Transfer Bank @break @default {{ $transaction->payment_method }} @endswitch`, 33)}\n`;
+            content += `Pembayaran: ${truncateText(`@switch($transaction->payment_method) @case('cash') Tunai @break @case('qris') QRIS @break @case('transfer') Transfer Bank @break @default {{ ucfirst(str_replace('debit_', '', $transaction->payment_method)) }} @endswitch`, 33)}\n`;
             @if($transaction->notes)
             content += `Catatan: ${truncateText('{{ $transaction->notes }}', 33)}\n`;
             @endif
@@ -315,18 +338,6 @@
             content += `Barang yang tidak sesuai dapat ditukarkan.\n`;
 
             return content;
-        }
-
-        // Fungsi untuk mengirim ke WhatsApp
-        function sendToWhatsApp() {
-            @if($transaction->customer_phone)
-            const phone = formatPhoneNumber('{{ $transaction->customer_phone }}');
-            const message = encodeURIComponent(getWhatsAppContent());
-            const url = `https://wa.me/${phone}?text=${message}`;
-            window.open(url, '_blank');
-            @else
-            document.getElementById('status').textContent = 'Error: Nomor telepon pelanggan tidak tersedia.';
-            @endif
         }
 
         // Fungsi untuk mengambil konten receipt untuk printer
@@ -339,7 +350,7 @@
 
             // Header
             content += centerText('Sepatu by Sovan') + '\n';
-            content += centerText('Jl. Puri Anjasmoro B10/9 Smg') + '\n';
+            content += centerText('Jln Niti Semito No 43 Purwosari Kudus') + '\n';
             content += centerText('08818671005') + '\n';
             content += '-'.repeat(48) + '\n';
 
@@ -364,7 +375,11 @@
             @else
             content += ` (Unit N/A)\n`;
             @endif
-            content += `${padRight('{{ $item->quantity }} x {{ number_format($item->price, 0, ',', '.') }}', 24)}Rp {{ number_format($item->subtotal, 0, ',', '.') }}\n`;
+            content += `${padRight('{{ $item->quantity }} x {{ number_format($item->price, 0, ',', '.') }}', 24)}Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}\n`;
+            @if($transaction->overall_new_price === null && $item->new_price !== null && $item->new_price < $item->price)
+            content += `${padRight('Diskon per Item:', 24)}Rp {{ number_format(($item->price - $item->new_price) * $item->quantity, 0, ',', '.') }}\n`;
+            @endif
+            content += `${padRight('Subtotal:', 24)}Rp {{ number_format($item->subtotal, 0, ',', '.') }}\n`;
             @if($item->product && ($item->product->color || $item->product->size))
             content += `  ${truncateText(`@if($item->product->color) {{ $item->product->color }} @endif @if($item->product->size) {{ $item->product->size }} @endif`, 44)}\n`;
             @endif
@@ -374,11 +389,14 @@
             // Summary
             content += `${padRight('Total Quantity:', 15)}{{ $transaction->items->sum('quantity') }}\n`;
             content += `${padRight('Subtotal:', 15)}Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}\n`;
+            @if($transaction->overall_new_price !== null)
+            content += `${padRight('Harga Baru Keseluruhan:', 15)}Rp {{ number_format($transaction->overall_new_price, 0, ',', '.') }}\n`;
+            @endif
             @if($transaction->discount_amount > 0)
-            content += `${padRight('Discount:', 15)}Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}\n`;
+            content += `${padRight('Total Diskon:', 15)}Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}\n`;
             @endif
             content += `${padRight('TOTAL:', 15)}Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}\n`;
-            content += `${padRight('Payment:', 15)}${truncateText(`@switch($transaction->payment_method) @case('cash') Tunai @break @case('credit_card') QRIS @break @case('transfer') Transfer Bank @break @default {{ $transaction->payment_method }} @endswitch`, 33)}\n`;
+            content += `${padRight('Payment:', 15)}${truncateText(`@switch($transaction->payment_method) @case('cash') Tunai @break @case('qris') QRIS @break @case('transfer') Transfer Bank @break @default {{ ucfirst(str_replace('debit_', '', $transaction->payment_method)) }} @endswitch`, 33)}\n`;
             @if($transaction->notes)
             content += `${padRight('Notes:', 15)}${truncateText('{{ $transaction->notes }}', 33)}\n`;
             @endif
@@ -409,6 +427,15 @@
         // Fungsi untuk menunda eksekusi
         function delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Fungsi untuk mengirim ke WhatsApp
+        async function sendToWhatsApp() {
+            const content = getWhatsAppContent();
+            const phone = formatPhoneNumber('{{ $transaction->customer_phone }}');
+            const encodedContent = encodeURIComponent(content);
+            const whatsappUrl = `https://wa.me/${phone}?text=${encodedContent}`;
+            window.open(whatsappUrl, '_blank');
         }
 
         // Fungsi untuk koneksi dan cetak ke printer Bluetooth

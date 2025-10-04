@@ -55,9 +55,15 @@ class InventoryController extends Controller
 
         $totalStock = ProductUnit::where('is_active', true)->count();
 
-        $lowStockProducts = Product::whereHas('productUnits', function ($query) {
-            $query->where('is_active', true);
-        }, '<=', 10)->count();
+        // Ubah query untuk menghitung total unit aktif dari produk dengan stok <= 10
+        $lowStockProducts = ProductUnit::where('is_active', true)
+            ->whereIn('product_id', function ($query) {
+                $query->select('product_id')
+                    ->from('product_units')
+                    ->where('is_active', true)
+                    ->groupBy('product_id')
+                    ->havingRaw('COUNT(*) <= 10');
+            })->count();
 
         $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
         $brandCounts = Product::whereHas('productUnits', function ($query) {
@@ -122,9 +128,15 @@ class InventoryController extends Controller
 
         $totalStock = ProductUnit::where('is_active', true)->count();
 
-        $lowStockProducts = Product::whereHas('productUnits', function ($query) {
-            $query->where('is_active', true);
-        }, '<=', 10)->count();
+        // Ubah query untuk menghitung total unit aktif dari produk dengan stok <= 10
+        $lowStockProducts = ProductUnit::where('is_active', true)
+            ->whereIn('product_id', function ($query) {
+                $query->select('product_id')
+                    ->from('product_units')
+                    ->where('is_active', true)
+                    ->groupBy('product_id')
+                    ->havingRaw('COUNT(*) <= 10');
+            })->count();
 
         $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
         $brandCounts = Product::whereHas('productUnits', function ($query) {
