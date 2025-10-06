@@ -6,14 +6,33 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\Product;
 use App\Models\ProductUnit;
+use App\Models\ProductHistory; // Tambahkan model ProductHistory
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
+    // Helper method untuk cache key, sesuai dengan InventoryController
+    private function getUserCacheKey($key)
+    {
+        $userId = Auth::id() ?? 'guest';
+        return "user_{$userId}_{$key}";
+    }
+
+    private function getProductCacheKey($id)
+    {
+        return "product_{$id}";
+    }
+
+    private function getUnitCacheKey($productId, $unitCode)
+    {
+        return "unit_{$productId}_{$unitCode}";
+    }
+
     public function index()
     {
         return view('transactions.index');
@@ -174,6 +193,7 @@ class TransactionController extends Controller
             $totalAmount = 0;
             $totalDiscount = 0;
             $transactionItems = [];
+            $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
 
             foreach ($request->products as $item) {
                 $product = Product::findOrFail($item['product_id']);
@@ -200,7 +220,49 @@ class TransactionController extends Controller
                 $totalAmount += $originalPrice; // Total before discount
                 $totalDiscount += $itemDiscount;
 
+                // Nonaktifkan unit
                 $unit->update(['is_active' => false]);
+
+                // Update cache untuk unit
+                Cache::forever($this->getUnitCacheKey($product->id, $unit->unit_code), [
+                    'product_id' => $product->id,
+                    'unit_code' => $unit->unit_code,
+                    'qr_code' => $unit->qr_code,
+                    'is_active' => false,
+                ]);
+
+                // Update cache untuk produk
+                $currentStock = $product->productUnits()->where('is_active', true)->count();
+                Cache::forever($this->getProductCacheKey($product->id), [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'brand' => $brandNames[$product->id] ?? explode(' ', trim($product->name))[0],
+                    'model' => trim(str_replace($brandNames[$product->id] ?? explode(' ', trim($product->name))[0], '', $product->name)),
+                    'size' => $product->size,
+                    'color' => $product->color,
+                    'selling_price' => $product->selling_price,
+                    'discount_price' => $product->discount_price,
+                    'stock' => $currentStock,
+                ]);
+
+                // Catat ke product_histories
+                $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
+                $model = trim(str_replace($brand, '', $product->name));
+                ProductHistory::create([
+                    'type' => 'keluar',
+                    'product_id' => $product->id,
+                    'brand' => $brand,
+                    'model' => $model,
+                    'size' => $product->size,
+                    'color' => $product->color,
+                    'stock' => $currentStock,
+                    'stock_change' => '-1 unit',
+                    'selling_price' => $product->selling_price,
+                    'discount_price' => $product->discount_price ?? null,
+                    'user_id' => Auth::id() ?? 'guest',
+                    'user_name' => Auth::user()->name ?? 'Unknown',
+                    'timestamp' => Carbon::now('Asia/Jakarta'),
+                ]);
 
                 $transactionItems[] = new TransactionItem([
                     'product_id' => $product->id,
@@ -255,11 +317,58 @@ class TransactionController extends Controller
     {
         try {
             DB::beginTransaction();
+            $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
+
             foreach ($transaction->items as $item) {
                 if ($item->productUnit) {
                     $item->productUnit->update(['is_active' => true]);
+
+                    // Update cache untuk unit
+                    Cache::forever($this->getUnitCacheKey($item->product_id, $item->productUnit->unit_code), [
+                        'product_id' => $item->product_id,
+                        'unit_code' => $item->productUnit->unit_code,
+                        'qr_code' => $item->productUnit->qr_code,
+                        'is_active' => true,
+                    ]);
+
+                    // Update cache untuk produk
+                    $product = Product::find($item->product_id);
+                    if ($product) {
+                        $currentStock = $product->productUnits()->where('is_active', true)->count();
+                        Cache::forever($this->getProductCacheKey($product->id), [
+                            'id' => $product->id,
+                            'name' => $product->name,
+                            'brand' => $brandNames[$product->id] ?? explode(' ', trim($product->name))[0],
+                            'model' => trim(str_replace($brandNames[$product->id] ?? explode(' ', trim($product->name))[0], '', $product->name)),
+                            'size' => $product->size,
+                            'color' => $product->color,
+                            'selling_price' => $product->selling_price,
+                            'discount_price' => $product->discount_price,
+                            'stock' => $currentStock,
+                        ]);
+
+                        // Catat ke product_histories untuk pengembalian stok
+                        $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
+                        $model = trim(str_replace($brand, '', $product->name));
+                        ProductHistory::create([
+                            'type' => 'masuk',
+                            'product_id' => $product->id,
+                            'brand' => $brand,
+                            'model' => $model,
+                            'size' => $product->size,
+                            'color' => $product->color,
+                            'stock' => $currentStock,
+                            'stock_change' => '+1 unit',
+                            'selling_price' => $product->selling_price,
+                            'discount_price' => $product->discount_price ?? null,
+                            'user_id' => Auth::id() ?? 'guest',
+                            'user_name' => Auth::user()->name ?? 'Unknown',
+                            'timestamp' => Carbon::now('Asia/Jakarta'),
+                        ]);
+                    }
                 }
             }
+
             $transaction->items()->delete();
             $transaction->delete();
             DB::commit();

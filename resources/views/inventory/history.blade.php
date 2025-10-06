@@ -24,9 +24,9 @@
                     <label for="action_filter" class="text-sm sm:text-base font-medium text-gray-700">Filter Aksi:</label>
                     <select name="action_filter" id="action_filter" class="bg-white text-black text-sm sm:text-base rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-orange-500 w-full sm:w-auto">
                         <option value="all" {{ $action_filter === 'all' ? 'selected' : '' }}>Semua</option>
-                        <option value="added" {{ $action_filter === 'added' ? 'selected' : '' }}>Ditambahkan</option>
-                        <option value="edited" {{ $action_filter === 'edited' ? 'selected' : '' }}>Diperbarui</option>
-                        <option value="deleted" {{ $action_filter === 'deleted' ? 'selected' : '' }}>Dihapus</option>
+                        <option value="masuk" {{ $action_filter === 'masuk' ? 'selected' : '' }}>Barang Masuk</option>
+                        <option value="perbarui" {{ $action_filter === 'perbarui' ? 'selected' : '' }}>Barang Diperbarui</option>
+                        <option value="keluar" {{ $action_filter === 'keluar' ? 'selected' : '' }}>Barang Keluar</option>
                     </select>
                 </div>
                 <button type="submit" class="bg-orange-500 text-white font-medium text-sm sm:text-base rounded-lg px-4 py-2 hover:bg-orange-600 transition-colors w-full sm:w-auto">Filter</button>
@@ -79,22 +79,22 @@
                         <div class="grid grid-cols-10 gap-0 items-center {{ $index % 2 == 0 ? 'bg-gray-700' : 'bg-gray-600' }}">
                             <div class="p-3 text-white text-center text-sm">{{ $index + 1 }}</div>
                             <div class="p-3 text-white text-center uppercase-text text-sm">
-                                @if($item['type'] === 'added')
-                                    Ditambahkan
-                                @elseif($item['type'] === 'edited')
-                                    Diperbarui
+                                @if($item->type === 'masuk')
+                                    Barang Masuk
+                                @elseif($item->type === 'perbarui')
+                                    Barang Diperbarui
                                 @else
-                                    Dihapus
+                                    Barang Keluar
                                 @endif
                             </div>
-                            <div class="p-3 text-white text-center uppercase-text text-sm">{{ $item['brand'] ?? '-' }}</div>
-                            <div class="p-3 text-white text-center uppercase-text text-sm">{{ $item['model'] ?? '-' }}</div>
-                            <div class="p-3 text-white text-center text-sm">{{ $item['size'] ?? '-' }}</div>
-                            <div class="p-3 text-white text-center uppercase-text text-sm">{{ $item['color'] ?? '-' }}</div>
-                            <div class="p-3 text-white text-center text-sm">{{ $item['stock'] ?? 0 }}</div>
-                            <div class="p-3 text-white text-center text-sm">{{ $item['stock_change'] ?? '-' }}</div>
-                            <div class="p-3 text-white text-center text-sm">{{ $item['user_name'] ?? 'Unknown' }}</div>
-                            <div class="p-3 text-white text-center text-sm">{{ \Carbon\Carbon::parse($item['timestamp'])->format('d-m-Y H:i') }}</div>
+                            <div class="p-3 text-white text-center uppercase-text text-sm">{{ $item->brand ?? '-' }}</div>
+                            <div class="p-3 text-white text-center uppercase-text text-sm">{{ $item->model ?? '-' }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ $item->size ?? '-' }}</div>
+                            <div class="p-3 text-white text-center uppercase-text text-sm">{{ $item->color ?? '-' }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ $item->stock ?? 0 }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ $item->stock_change ?? '-' }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ $item->user_name ?? 'Unknown' }}</div>
+                            <div class="p-3 text-white text-center text-sm">{{ \Carbon\Carbon::parse($item->timestamp)->setTimezone('Asia/Jakarta')->format('d-m-Y H:i') }}</div>
                         </div>
                     @empty
                         <div class="bg-gray-700 p-6 text-center text-gray-300 text-sm">
