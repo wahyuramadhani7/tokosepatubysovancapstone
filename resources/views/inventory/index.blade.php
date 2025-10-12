@@ -15,7 +15,7 @@
                     </svg>
                     <div>
                         <h3 class="text-sm md:text-base font-semibold uppercase">Stok Menipis</h3>
-                        <p class="text-gray-600 text-base md:text-lg font-medium">{{ $lowStockProducts ?? 0 }}</p>
+                        <p id="low-stock-count" class="text-gray-600 text-base md:text-lg font-medium">{{ $lowStockProducts ?? 0 }}</p>
                     </div>
                 </div>
                 <div class="bg-gray-100 p-4 md:p-6 rounded-lg shadow flex items-center transition-all hover:shadow-md">
@@ -24,7 +24,7 @@
                     </svg>
                     <div>
                         <h3 class="text-sm md:text-base font-semibold uppercase">Total Unit</h3>
-                        <p class="text-gray-600 text-base md:text-lg font-medium">{{ $totalStock ?? 0 }}</p>
+                        <p id="total-stock" class="text-gray-600 text-base md:text-lg font-medium">{{ $totalStock ?? 0 }}</p>
                     </div>
                 </div>
                 <div class="bg-gray-100 p-4 md:p-6 rounded-lg shadow flex items-center transition-all hover:shadow-md">
@@ -60,6 +60,10 @@
                         <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="low-stock-filter" name="low_stock" class="mr-2 h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded" {{ isset($lowStockFilter) && $lowStockFilter ? 'checked' : '' }}>
+                        <label for="low-stock-filter" class="text-sm md:text-base text-white">Stok Menipis</label>
                     </div>
                     <button type="submit" class="bg-orange-500 text-black font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-orange-600 transition-colors">Cari</button>
                 </form>
@@ -336,35 +340,61 @@
     .uppercase-text {
         text-transform: uppercase;
     }
+    .pagination {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .pagination a {
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        color: #2d3748;
+        text-decoration: none;
+    }
+    .pagination a:hover {
+        background-color: #edf2f7;
+    }
+    .pagination .active {
+        background-color: #f6ad55;
+        color: #fff;
+        border-color: #f6ad55;
+    }
+    .pagination .disabled {
+        color: #a0aec0;
+        pointer-events: none;
+    }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
     const sizeInput = document.getElementById('size-input');
+    const lowStockFilter = document.getElementById('low-stock-filter');
     let debounceTimer;
 
-    if (searchInput && sizeInput) {
-        const inputs = [searchInput, sizeInput];
+    if (searchInput && sizeInput && lowStockFilter) {
+        const inputs = [searchInput, sizeInput, lowStockFilter];
         inputs.forEach(input => {
             input.addEventListener('input', function() {
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
-                    performSearch(searchInput.value.trim(), sizeInput.value.trim(), 1);
+                    performSearch(searchInput.value.trim(), sizeInput.value.trim(), lowStockFilter.checked, 1);
                 }, 500);
             });
         });
     }
 
-    function performSearch(searchKeyword, sizeKeyword, page) {
-        if (searchKeyword.length < 2 && sizeKeyword.length < 1) {
-            showError('Kata kunci brand atau model minimal 2 karakter atau masukkan ukuran.');
+    function performSearch(searchKeyword, sizeKeyword, lowStock, page) {
+        if (searchKeyword.length < 2 && sizeKeyword.length < 1 && !lowStock) {
+            showError('Kata kunci brand atau model minimal 2 karakter, masukkan ukuran, atau centang filter stok menipis.');
             return;
         }
 
         const url = new URL('{{ route('inventory.search') }}');
         if (searchKeyword) url.searchParams.set('search', searchKeyword);
         if (sizeKeyword) url.searchParams.set('size', sizeKeyword);
+        if (lowStock) url.searchParams.set('low_stock', 1);
         url.searchParams.set('page', page);
 
         fetch(url, {
@@ -388,6 +418,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Update inventory info
+            document.getElementById('low-stock-count').textContent = data.lowStockProducts ?? 0;
+            document.getElementById('total-stock').textContent = data.totalStock ?? 0;
+
             // Update brand counts dropdown
             if (data.brandCounts && Object.keys(data.brandCounts).length > 0) {
                 let brandHtml = '';
@@ -402,15 +436,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!data.products.length) {
                 desktopTableBody.innerHTML = '<div class="bg-white p-6 text-center text-gray-500">Tidak ada produk ditemukan dengan stok lebih dari 0.</div>';
                 mobileCards.innerHTML = '<div class="text-center text-gray-500 p-4">Tidak ada produk ditemukan dengan stok lebih dari 0.</div>';
-                updatePagination(data.pagination, searchKeyword, sizeKeyword);
+                updatePagination(data.pagination, searchKeyword, sizeKeyword, lowStock);
                 return;
             }
 
             let currentGroup = '';
-            let mobileGroupHtml = '';
+            let desktopRow = '';
+            let mobileHtml = '';
 
             data.products.forEach((product, index) => {
-                const stockValue = product.stock || 0;
+                const stockValue = product.stock || product.product_units_count || 0;
                 if (stockValue <= 0) return; // Skip products with stock <= 0
                 const mismatch = @json(session('stock_mismatches', []))[product.id] || {};
                 const physicalStock = mismatch.physical_stock || stockValue;
@@ -419,15 +454,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const isNew = @json($newProducts ?? []).includes(product.id);
                 const isUpdated = @json($updatedProducts ?? []).includes(product.id);
                 const rowNumber = (data.pagination.current_page - 1) * data.pagination.per_page + (index + 1);
+                const brand = product.brand || '';
+                const model = product.model || '';
 
                 // Desktop table row
-                let desktopRow = '';
-                if (currentGroup !== product.brand) {
+                if (currentGroup !== brand) {
                     if (currentGroup !== '') {
                         desktopRow += '<div class="border-t border-gray-300 my-2"></div>';
                     }
-                    desktopRow += `<div class="bg-orange-500 text-black font-semibold py-2 px-3 uppercase-text">${product.brand}</div>`;
-                    currentGroup = product.brand;
+                    desktopRow += `<div class="bg-orange-500 text-black font-semibold py-2 px-3 uppercase-text">${brand}</div>`;
+                    currentGroup = brand;
                 }
 
                 desktopRow += `
@@ -435,12 +471,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="p-3 text-black text-center">${rowNumber}</div>
                         <div class="p-3 text-black">
                             <div class="flex items-center">
-                                <span class="uppercase-text">${product.brand || '-'}</span>
+                                <span class="uppercase-text">${brand || '-'}</span>
                                 ${isNew ? '<span class="ml-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">Baru</span>' : isUpdated ? '<span class="ml-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">Diperbarui</span>' : ''}
                             </div>
                             ${mismatchMessage ? `<p class="text-sm text-red-600 mt-1">${mismatchMessage}</p>` : ''}
                         </div>
-                        <div class="p-3 text-black text-center uppercase-text">${product.model || '-'}</div>
+                        <div class="p-3 text-black text-center uppercase-text">${model || '-'}</div>
                         <div class="p-3 text-black text-center">${product.size || '-'}</div>
                         <div class="p-3 text-black text-center uppercase-text">${product.color || '-'}</div>
                         <div class="p-3 font-medium text-center ${stockValue < 5 ? 'text-red-600' : 'text-black'}">${stockValue}</div>
@@ -448,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="p-3 text-black text-right">Rp ${new Intl.NumberFormat('id-ID').format(product.selling_price || 0)}</div>
                         <div class="p-3 text-black text-right">${product.discount_price ? 'Rp ' + new Intl.NumberFormat('id-ID').format(product.discount_price) : '-'}</div>
                         <div class="p-3 text-center">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${encodeURIComponent('{{ route('inventory.show', ':id') }}'.replace(':id', product.id))}" alt="QR Code for ${product.brand || '-'} ${product.model || ''}" class="h-12 w-12 mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${encodeURIComponent('{{ route('inventory.show', ':id') }}'.replace(':id', product.id))}" alt="QR Code for ${brand || '-'} ${model || ''}" class="h-12 w-12 mx-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
                         </div>
                         <div class="p-3">
                             <div class="flex justify-center space-x-3">
@@ -475,15 +511,83 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>`;
 
-                desktopTableBody.insertAdjacentHTML('beforeend', desktopRow);
+                // Mobile card
+                if (currentGroup !== brand) {
+                    if (currentGroup !== '') {
+                        mobileHtml += '</div>';
+                    }
+                    mobileHtml += `<div class="bg-orange-500 text-black font-semibold py-2 px-3 rounded-t-lg uppercase-text">${brand}</div>`;
+                    mobileHtml += '<div class="space-y-4">';
+                    currentGroup = brand;
+                }
+
+                mobileHtml += `
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="mb-2 flex items-center">
+                            <div>
+                                <h3 class="font-medium text-gray-900 flex items-center">
+                                    No: ${rowNumber} - <span class="uppercase-text">${brand}</span>
+                                    ${isNew ? '<span class="ml-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded">Baru</span>' : isUpdated ? '<span class="ml-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">Diperbarui</span>' : ''}
+                                </h3>
+                                <div class="text-sm text-gray-500 uppercase-text">Model: ${model || '-'}</div>
+                                <div class="text-sm text-gray-500">${product.size || '-'} | <span class="uppercase-text">${product.color || '-'}</span></div>
+                                ${mismatchMessage ? `<p class="text-sm text-red-600 mt-1">${mismatchMessage}</p>` : ''}
+                            </div>
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${encodeURIComponent('{{ route('inventory.show', ':id') }}'.replace(':id', product.id))}" alt="QR Code for ${brand || '-'} ${model || ''}" class="h-12 w-12 ml-auto" onerror="this.src='{{ asset('images/qr-placeholder.png') }}';">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <div>
+                                <div class="text-xs text-gray-500">Stok Sistem</div>
+                                <div class="font-medium ${stockValue < 5 ? 'text-red-600' : 'text-gray-900'}">${stockValue}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500">Stok Fisik</div>
+                                <div class="font-medium ${stockDifference < 0 ? 'text-red-600' : stockDifference > 0 ? 'text-yellow-600' : 'text-gray-900'}">${physicalStock}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500">Harga Jual</div>
+                                <div class="font-medium text-gray-900">Rp ${new Intl.NumberFormat('id-ID').format(product.selling_price || 0)}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500">Harga Diskon</div>
+                                <div class="font-medium text-gray-900">${product.discount_price ? 'Rp ' + new Intl.NumberFormat('id-ID').format(product.discount_price) : '-'}</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 pt-2 border-t border-gray-100">
+                            <a href="{{ route('inventory.edit', ':id') }}".replace(':id', product.id) class="text-blue-500 hover:text-blue-700 transition-colors flex items-center">
+                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit
+                            </a>
+                            <a href="{{ route('inventory.print_qr', ':id') }}".replace(':id', product.id) class="text-green-500 hover:text-green-800 transition-colors flex items-center">
+                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Print QR
+                            </a>
+                            <form action="{{ route('inventory.destroy', ':id') }}".replace(':id', product.id) method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-500 hover:text-red-700 transition-colors flex items-center">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>`;
             });
 
-            if (mobileGroupHtml !== '') {
-                mobileGroupHtml += '</div>';
-                mobileCards.insertAdjacentHTML('beforeend', mobileGroupHtml);
-            }
+            desktopTableBody.insertAdjacentHTML('beforeend', desktopRow);
 
-            updatePagination(data.pagination, searchKeyword, sizeKeyword);
+            if (currentGroup !== '') {
+                mobileHtml += '</div>';
+            }
+            mobileCards.insertAdjacentHTML('beforeend', mobileHtml);
+
+            updatePagination(data.pagination, searchKeyword, sizeKeyword, lowStock);
         })
         .catch(error => {
             showError('Terjadi kesalahan saat mencari produk.');
@@ -496,37 +600,58 @@ document.addEventListener('DOMContentLoaded', function() {
         const brandCountsSelect = document.getElementById('brand-counts');
         const errorHtml = `<div class="bg-white p-6 text-center text-red-500">${message}</div>`;
         desktopTableBody.innerHTML = errorHtml;
-        mobileCards.innerHTML = errorHtml;
+        mobileCards.innerHTML = `<div class="text-center text-red-500 p-4">${message}</div>`;
         brandCountsSelect.innerHTML = '<option value="">Tidak ada brand</option>';
         document.getElementById('desktop-pagination').innerHTML = '';
         document.getElementById('mobile-pagination').innerHTML = '';
     }
 
-    function updatePagination(pagination, searchKeyword, sizeKeyword) {
+    function updatePagination(pagination, searchKeyword, sizeKeyword, lowStock) {
         const desktopPagination = document.getElementById('desktop-pagination');
         const mobilePagination = document.getElementById('mobile-pagination');
-        let html = '';
-
-        if (pagination && pagination.last_page > 1) {
-            html = '<nav class="pagination flex space-x-2">';
-            for (let i = 1; i <= pagination.last_page; i++) {
-                html += `<a href="#" class="pagination-link px-3 py-1 rounded ${i === pagination.current_page ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700'}" data-page="${i}">${i}</a>`;
-            }
-            html += '</nav>';
-
-            desktopPagination.innerHTML = html;
-            mobilePagination.innerHTML = html;
-
-            document.querySelectorAll('.pagination-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    performSearch(searchKeyword, sizeKeyword, this.getAttribute('data-page'));
-                });
-            });
-        } else {
+        if (!pagination || pagination.last_page <= 1) {
             desktopPagination.innerHTML = '';
             mobilePagination.innerHTML = '';
+            return;
         }
+
+        const currentPage = pagination.current_page;
+        const totalPages = pagination.last_page;
+        const delta = 2; // Number of pages to show on each side of current page
+        let html = '<nav class="pagination flex space-x-2">';
+
+        // Previous button
+        html += `<a href="#" class="pagination-link ${currentPage === 1 ? 'disabled' : ''}" data-page="${currentPage - 1}"><span>&laquo; Previous</span></a>`;
+
+        // Page numbers
+        let startPage = Math.max(1, currentPage - delta);
+        let endPage = Math.min(totalPages, currentPage + delta);
+
+        if (endPage - startPage < 2 * delta) {
+            if (startPage === 1) endPage = Math.min(1 + 2 * delta, totalPages);
+            else if (endPage === totalPages) startPage = Math.max(totalPages - 2 * delta, 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `<a href="#" class="pagination-link ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</a>`;
+        }
+
+        // Next button
+        html += `<a href="#" class="pagination-link ${currentPage === totalPages ? 'disabled' : ''}" data-page="${currentPage + 1}"><span>Next &raquo;</span></a>`;
+
+        html += '</nav>';
+
+        desktopPagination.innerHTML = html;
+        mobilePagination.innerHTML = html;
+
+        document.querySelectorAll('.pagination-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!this.classList.contains('disabled')) {
+                    performSearch(searchKeyword, sizeKeyword, lowStock, parseInt(this.getAttribute('data-page')));
+                }
+            });
+        });
     }
 
     // Auto-dismiss alerts

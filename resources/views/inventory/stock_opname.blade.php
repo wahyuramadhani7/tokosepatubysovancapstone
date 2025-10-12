@@ -44,10 +44,7 @@
                         <form action="{{ route('inventory.delete_all_reports') }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus semua laporan?')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors font-semibold shadow-md"
-                                    style="background-image: url('/images/laa-logo.png'); background-size: contain; background-position: center; background-repeat: no-repeat; background-blend-mode: overlay;">
-                                Hapus Semua Laporan
-                            </button>
+                            <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors font-semibold shadow-md">Hapus Semua Laporan</button>
                         </form>
                     @endif
                 </div>
@@ -57,7 +54,7 @@
                             $groupedReports = [];
                             $brandQuantities = [];
                             foreach ($reports as $index => $report) {
-                                $brand = explode(' ', $report['name'])[0];
+                                $brand = $report['brand'] ?? explode(' ', $report['name'])[0];
                                 $groupedReports[$brand][] = ['index' => $index, 'report' => $report];
                                 $brandQuantities[$brand] = ($brandQuantities[$brand] ?? 0) + $report['physical_stock'];
                             }
