@@ -5,9 +5,15 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\InventoryController;
 use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\TransactionController;
+use App\Http\Controllers\VisitorMonitoringController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
+// Route untuk ESP (tanpa auth:sanctum, validasi via API key di controller)
+Route::post('/visitor-entry', [VisitorMonitoringController::class, 'storeVisitorEntry']);
+Route::post('/visitor-exit/{id}', [VisitorMonitoringController::class, 'storeVisitorExit']);
+
+// Route yang memerlukan autentikasi Sanctum
 Route::middleware('auth:sanctum')->group(function () {
     // Product endpoints
     Route::get('/products', [InventoryController::class, 'index']);

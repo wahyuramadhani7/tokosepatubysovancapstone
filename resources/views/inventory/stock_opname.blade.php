@@ -6,20 +6,26 @@
         <h1 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 bg-orange-500 text-white py-3 px-6 rounded-lg shadow inline-block">STOCK OPNAME</h1>
 
         <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+            <!-- Search and Scanner Controls -->
             <div class="flex flex-col md:flex-row gap-4 mb-6">
                 <div class="flex-1">
-                    <button id="start-scanner" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center w-full md:w-auto justify-center font-semibold">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        Mulai Scan QR
-                    </button>
+                    <div class="relative">
+                        <input type="text" id="product-search" class="w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Cari produk...">
+                        <div id="search-results" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-64 overflow-y-auto hidden"></div>
+                    </div>
                 </div>
+                <button id="start-scanner" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center w-full md:w-auto justify-center font-semibold">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Mulai Scan QR
+                </button>
                 <a href="{{ route('inventory.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center font-semibold">
                     Kembali ke Inventory
                 </a>
             </div>
 
+            <!-- Scanner Section -->
             <div id="scanner-container" class="hidden mt-6">
                 <div id="qr-scanner" class="w-full max-w-md mx-auto rounded-lg overflow-hidden shadow-md"></div>
                 <input type="text" id="barcode-input" class="barcode-input" />
@@ -28,6 +34,7 @@
                 </button>
             </div>
 
+            <!-- Scanned Products Section -->
             <div id="products-list" class="mt-6">
                 <h2 class="text-lg font-semibold text-gray-800 mb-3">Daftar Produk yang Dipindai</h2>
                 <div id="products-table" class="bg-gray-50 p-4 rounded-lg shadow text-gray-800"></div>
@@ -306,6 +313,14 @@
     .toggle-qr-codes {
         cursor: pointer;
     }
+    #search-results .search-result-item {
+        padding: 8px;
+        cursor: pointer;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    #search-results .search-result-item:hover {
+        background-color: #f3f4f6;
+    }
     @media (max-width: 640px) {
         #products-table table, #reports-table table {
             font-size: 12px;
@@ -326,6 +341,9 @@
         .qr-codes-details {
             font-size: 12px;
         }
+        #product-search {
+            font-size: 14px;
+        }
     }
 </style>
 
@@ -340,6 +358,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const productsTable = document.getElementById('products-table');
     const saveReportBtn = document.getElementById('save-report');
     const reportsTable = document.getElementById('reports-table');
+    const productSearch = document.getElementById('product-search');
+    const searchResults = document.getElementById('search-results');
     const scannedList = document.createElement('div');
     scannerContainer.parentNode.insertBefore(scannedList, scannerContainer.nextSibling);
     scannedList.className = 'mt-4';
@@ -349,6 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let scannedQRCodes = new Set();
     let scanTimeout = null;
     let lastScanTime = 0;
+    let searchTimeout = null;
 
     // Reset state saat halaman dimuat
     scannedProducts = {};
@@ -368,6 +389,58 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 console.warn('QR codes details not found for index:', index);
             }
+        }
+    });
+
+    // Real-time product search
+    productSearch.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const query = this.value.trim();
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                searchResults.innerHTML = '';
+                return;
+            }
+            fetch(`/inventory/search?search=${encodeURIComponent(query)}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                searchResults.innerHTML = '';
+                if (data.products.length === 0) {
+                    searchResults.innerHTML = '<div class="p-4 text-gray-500">Tidak ada produk ditemukan</div>';
+                    searchResults.classList.remove('hidden');
+                    return;
+                }
+                data.products.forEach(product => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result-item';
+                    div.innerHTML = `${product.name} (${product.size}, ${product.color})`;
+                    div.dataset.productId = product.id;
+                    div.addEventListener('click', () => {
+                        addManualProduct(product.id);
+                        searchResults.classList.add('hidden');
+                        productSearch.value = '';
+                    });
+                    searchResults.appendChild(div);
+                });
+                searchResults.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error searching products:', error);
+                showAlert('error', 'Gagal mencari produk: ' + error.message);
+            });
+        }, 300);
+    });
+
+    // Klik di luar search results untuk menutup
+    document.addEventListener('click', function(event) {
+        if (!searchResults.contains(event.target) && event.target !== productSearch) {
+            searchResults.classList.add('hidden');
         }
     });
 
@@ -442,55 +515,91 @@ document.addEventListener('DOMContentLoaded', function() {
         lastScanTime = currentTime;
 
         console.log('Scanned QR:', decodedText, 'ScannedQRCodes:', [...scannedQRCodes]);
-        if (!decodedText.includes('inventory')) {
-            showAlert('error', 'QR code tidak valid untuk inventory.');
-            return;
-        }
 
-        const urlParts = decodedText.split('/');
-        const productIndex = urlParts.indexOf('inventory');
-        if (productIndex === -1 || productIndex + 1 >= urlParts.length) {
-            showAlert('error', 'Format QR code tidak valid.');
-            return;
-        }
-
-        const productId = urlParts[productIndex + 1];
-        if (!/^\d+$/.test(productId)) {
-            showAlert('error', 'ID produk tidak valid.');
-            return;
-        }
-
-        const isNewScan = !scannedQRCodes.has(decodedText);
-        if (isNewScan) {
-            scannedQRCodes.add(decodedText);
-            addScannedItem(decodedText, true);
-
-            if (!scannedProducts[productId]) {
-                scannedProducts[productId] = {
-                    count: previousPhysicalStocks[productId] || 0,
-                    systemStock: 0,
-                    name: 'Memuat...',
-                    size: '-',
-                    color: '-',
-                    qrCodes: new Set()
-                };
-                fetchProductData(productId);
+        validateQrCode(decodedText).then(response => {
+            if (!response.valid) {
+                showAlert('error', response.message);
+                return;
             }
-            scannedProducts[productId].count++;
-            scannedProducts[productId].qrCodes.add(decodedText);
-            updateProductsTable();
-            showAlert('success', `QR code dipindai untuk produk ID ${productId}.`);
-        } else {
-            console.log('Duplicate scan detected:', decodedText);
-            if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
-                addScannedItem(decodedText, false);
-                showAlert('warning', 'QR code ini sudah dipindai.');
+
+            const productId = response.product_id;
+            const unitCode = response.unit_code;
+
+            const isNewScan = !scannedQRCodes.has(decodedText);
+            if (isNewScan) {
+                scannedQRCodes.add(decodedText);
+                addScannedItem(decodedText, true);
+
+                if (!scannedProducts[productId]) {
+                    scannedProducts[productId] = {
+                        count: previousPhysicalStocks[productId] || 0,
+                        systemStock: 0,
+                        name: 'Memuat...',
+                        size: '-',
+                        color: '-',
+                        qrCodes: new Set(),
+                        brand: '',
+                        model: ''
+                    };
+                    fetchProductData(productId);
+                }
+                scannedProducts[productId].count++;
+                scannedProducts[productId].qrCodes.add(decodedText);
+                updateProductsTable();
+                showAlert('success', `QR code dipindai untuk produk ID ${productId} (Unit: ${unitCode}).`);
+            } else {
+                console.log('Duplicate scan detected:', decodedText);
+                if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
+                    addScannedItem(decodedText, false);
+                    showAlert('warning', 'QR code ini sudah dipindai dalam sesi ini.');
+                }
             }
-        }
+        }).catch(error => {
+            console.error('Error validating QR code:', error);
+            showAlert('error', 'Gagal memvalidasi QR code: ' + error.message);
+        });
+    }
+
+    function validateQrCode(qrCode) {
+        return fetch('{{ route('inventory.validate_qr_code') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ qr_code: qrCode })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Validasi gagal');
+                });
+            }
+            return response.json();
+        });
     }
 
     function onScanError(errorMessage) {
         console.warn('QR scan error:', errorMessage);
+    }
+
+    function addManualProduct(productId) {
+        if (!scannedProducts[productId]) {
+            scannedProducts[productId] = {
+                count: previousPhysicalStocks[productId] || 0,
+                systemStock: 0,
+                name: 'Memuat...',
+                size: '-',
+                color: '-',
+                qrCodes: new Set(),
+                brand: '',
+                model: ''
+            };
+            fetchProductData(productId);
+        }
+        scannedProducts[productId].count++;
+        updateProductsTable();
+        showAlert('success', `Produk ID ${productId} ditambahkan secara manual.`);
     }
 
     function fetchProductData(productId) {
@@ -517,13 +626,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 scannedProducts[productId].size = 'N/A';
                 scannedProducts[productId].color = 'N/A';
                 scannedProducts[productId].systemStock = 0;
+                scannedProducts[productId].brand = 'Unknown';
+                scannedProducts[productId].model = 'Unknown';
             } else {
                 scannedProducts[productId] = {
                     ...scannedProducts[productId],
                     name: data.name || 'Tidak Diketahui',
                     size: data.size || '-',
                     color: data.color || '-',
-                    systemStock: data.stock || 0
+                    systemStock: data.stock || 0,
+                    brand: data.brand || 'Unknown',
+                    model: data.model || 'Unknown'
                 };
             }
             updateProductsTable();
@@ -535,6 +648,8 @@ document.addEventListener('DOMContentLoaded', function() {
             scannedProducts[productId].size = 'N/A';
             scannedProducts[productId].color = 'N/A';
             scannedProducts[productId].systemStock = 0;
+            scannedProducts[productId].brand = 'Unknown';
+            scannedProducts[productId].model = 'Unknown';
             updateProductsTable();
         });
     }
@@ -583,6 +698,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td class="${statusClass}">${statusMessage}</td>
                     <td>
                         <button class="update-stock-btn bg-orange-500 text-white px-2 py-1 rounded hover:bg-orange-600 transition-colors font-semibold" data-product-id="${productId}">Update</button>
+                        <button class="remove-product-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors font-semibold ml-2" data-product-id="${productId}">Hapus</button>
                     </td>
                 </tr>
             `;
@@ -604,7 +720,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.physical-stock-input').forEach(input => {
             input.addEventListener('change', function() {
                 const productId = this.dataset.productId;
-                scannedProducts[productId].count = parseInt(this.value) || 0;
+                const newValue = parseInt(this.value) || 0;
+                if (newValue < 0) {
+                    showAlert('error', 'Stok fisik tidak boleh negatif.');
+                    this.value = scannedProducts[productId].count;
+                    return;
+                }
+                scannedProducts[productId].count = newValue;
                 updateProductsTable();
             });
         });
@@ -613,6 +735,18 @@ document.addEventListener('DOMContentLoaded', function() {
             button.addEventListener('click', function() {
                 const productId = this.dataset.productId;
                 updateStock(productId);
+            });
+        });
+
+        document.querySelectorAll('.remove-product-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                scannedQRCodes = new Set([...scannedQRCodes].filter(qr => !qr.includes(`/inventory/${productId}`)));
+                delete scannedProducts[productId];
+                updateProductsTable();
+                scannedList.innerHTML = '';
+                [...scannedQRCodes].forEach(qr => addScannedItem(qr, false));
+                showAlert('success', `Produk ID ${productId} dihapus dari daftar.`);
             });
         });
     }
@@ -640,8 +774,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Update stock response:', data);
             if (data.success) {
                 showAlert('success', data.message);
-                delete scannedProducts[productId];
                 scannedQRCodes = new Set([...scannedQRCodes].filter(qr => !qr.includes(`/inventory/${productId}`)));
+                delete scannedProducts[productId];
                 updateProductsTable();
                 scannedList.innerHTML = '';
                 [...scannedQRCodes].forEach(qr => addScannedItem(qr, false));
@@ -665,8 +799,15 @@ document.addEventListener('DOMContentLoaded', function() {
             system_stock: product.systemStock,
             physical_stock: product.count,
             difference: product.count - product.systemStock,
-            scanned_qr_codes: Array.from(product.qrCodes)
+            scanned_qr_codes: Array.from(product.qrCodes),
+            brand: product.brand,
+            model: product.model
         }));
+
+        if (report.length === 0) {
+            showAlert('error', 'Tidak ada produk untuk disimpan dalam laporan.');
+            return;
+        }
 
         const totalPhysicalStock = report.reduce((sum, item) => sum + item.physical_stock, 0);
         const totalSystemStock = report.reduce((sum, item) => sum + item.system_stock, 0);
@@ -712,6 +853,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveReportBtn.classList.add('hidden');
                 saveReportBtn.style.display = 'none';
                 barcodeInput.blur();
+                searchResults.classList.add('hidden');
                 console.log('Scanner reset complete');
             }).catch(err => {
                 console.error('Error stopping scanner:', err);
@@ -726,6 +868,7 @@ document.addEventListener('DOMContentLoaded', function() {
             saveReportBtn.classList.add('hidden');
             saveReportBtn.style.display = 'none';
             barcodeInput.blur();
+            searchResults.classList.add('hidden');
             console.log('Scanner reset complete (no html5QrCode)');
         }
     }
