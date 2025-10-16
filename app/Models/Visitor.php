@@ -9,12 +9,7 @@ class Visitor extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'entry_time',
-        'image_path',
-        'status',
-        'exit_time'
-    ];
+    protected $fillable = ['entry_time', 'exit_time', 'status', 'image_path'];
 
     protected $casts = [
         'entry_time' => 'datetime',

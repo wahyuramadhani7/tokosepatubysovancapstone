@@ -45,29 +45,31 @@
             </div>
         </div>
 
-        <!-- Search Bar, Add Product Button, Stock Opname Button, Product Status Button, and History Button -->
-        <div style="background-color: #292929;" class="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 mb-6 rounded-lg gap-4 shadow-sm">
-            <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                <form action="{{ route('inventory.search') }}" method="GET" class="flex flex-col md:flex-row items-center gap-3 w-full max-w-lg">
-                    <div class="relative flex-grow">
+        <!-- Search Bar, Add Product Button, Stock Opname Button, Product Status Button, History Button, and Purchase Notes Button -->
+        <div style="background-color: #292929;" class="flex flex-col md:flex-row justify-between items-start p-4 md:p-6 mb-6 rounded-lg gap-4 shadow-sm">
+            <div class="flex flex-col w-full gap-4">
+                <!-- Search Form -->
+                <form action="{{ route('inventory.search') }}" method="GET" class="flex flex-col sm:flex-row items-center gap-3 w-full">
+                    <div class="relative flex-grow w-full sm:w-auto">
                         <input type="text" name="search" id="search-input" class="w-full bg-white text-black text-sm md:text-base rounded-lg py-2.5 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-500" placeholder="Cari produk..." value="{{ $searchTerm ?? '' }}">
                         <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    <div class="relative flex-grow">
+                    <div class="relative flex-grow w-full sm:w-auto">
                         <input type="text" name="size" id="size-input" class="w-full bg-white text-black text-sm md:text-base rounded-lg py-2.5 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-500" placeholder="Cari ukuran..." value="{{ $sizeTerm ?? '' }}">
                         <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    <div class="flex items-center">
+                    <div class="flex items-center w-full sm:w-auto">
                         <input type="checkbox" id="low-stock-filter" name="low_stock" class="mr-2 h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded" {{ isset($lowStockFilter) && $lowStockFilter ? 'checked' : '' }}>
                         <label for="low-stock-filter" class="text-sm md:text-base text-white">Stok Menipis</label>
                     </div>
-                    <button type="submit" class="bg-orange-500 text-black font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-orange-600 transition-colors">Cari</button>
+                    <button type="submit" class="bg-orange-500 text-black font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-orange-600 transition-colors w-full sm:w-auto">Cari</button>
                 </form>
-                <div class="flex gap-3">
+                <!-- Buttons -->
+                <div class="flex flex-wrap gap-3">
                     <a href="{{ route('inventory.create') }}" class="bg-white text-black font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-gray-100 transition-colors flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -85,6 +87,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         Riwayat Produk
+                    </a>
+                    <a href="{{ route('purchase_notes.index') }}" class="bg-purple-500 text-white font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-purple-600 transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-3 7h3m-3 4h3m-6-4h.01m-.01 4h.01" />
+                        </svg>
+                        Catatan Barang Masuk
                     </a>
                 </div>
             </div>
@@ -339,6 +347,8 @@
         display: flex;
         align-items: center;
         gap: 5px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
     .pagination a {
         padding: 8px 12px;
@@ -358,6 +368,17 @@
     .pagination .disabled {
         color: #a0aec0;
         pointer-events: none;
+    }
+    @media (max-width: 640px) {
+        .flex-wrap {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .flex-wrap a, .flex-wrap button {
+            width: 100%;
+            justify-content: center;
+            text-align: center;
+        }
     }
 </style>
 

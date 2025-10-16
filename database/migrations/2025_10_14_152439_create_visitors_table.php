@@ -6,24 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('visitors', function (Blueprint $table) {
             $table->id();
-            $table->dateTime('entry_time');
-            $table->string('image_path')->nullable();
-            $table->string('status')->default('entered'); // entered, exited
-            $table->dateTime('exit_time')->nullable();
+            $table->timestamp('entry_time')->nullable();
+            $table->timestamp('exit_time')->nullable();
+            $table->string('status')->default('entered'); // entered or exited
+            $table->string('image_path')->nullable(); // Opsional untuk gambar
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('visitors');

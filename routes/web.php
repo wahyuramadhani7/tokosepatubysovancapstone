@@ -7,6 +7,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VisitorMonitoringController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PurchaseNoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +78,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/inventory/status', [InventoryController::class, 'status'])->name('inventory.status');
         Route::get('/inventory/history', [InventoryController::class, 'history'])->name('inventory.history');
         Route::post('/inventory/{productId}/unit/{unitCode}/sell', [InventoryController::class, 'sellUnit'])->name('inventory.sell_unit');
+        Route::get('/inventory/purchase-notes', [InventoryController::class, 'purchaseNotes'])->name('inventory.purchase_notes');
     });
 
     // Transactions Routes
@@ -100,6 +102,9 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+Route::resource('purchase_notes', PurchaseNoteController::class);
+Route::get('/purchase-notes/export/pdf', [PurchaseNoteController::class, 'exportPdf'])->name('purchase_notes.export.pdf');
+Route::get('/purchase-notes/export/excel', [PurchaseNoteController::class, 'exportExcel'])->name('purchase_notes.export.excel');
 
 // API routes for ESP32-CAM integration
 Route::prefix('api')->group(function () {
