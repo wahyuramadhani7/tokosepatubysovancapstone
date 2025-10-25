@@ -5,6 +5,28 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 bg-orange-500 text-black py-2 px-4 rounded inline-block">CATATAN BARANG MASUK</h1>
 
+        <!-- Monthly Filter Form -->
+        <div class="mb-6 bg-white p-4 rounded-lg shadow">
+            <form action="{{ route('purchase_notes.index') }}" method="GET" class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label for="month" class="block text-sm font-medium text-gray-700">Bulan (Tahun: {{ date('Y') }})</label>
+                    <select name="month" id="month" class="mt-1 block w-full bg-white text-black text-sm rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="">Pilih Bulan</option>
+                        @for ($i = 1; $i <= 12; $i++)
+                            <option value="{{ $i }}" {{ old('month', request('month')) == $i ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}</option>
+                        @endfor
+                    </select>
+                    @error('month')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div class="flex space-x-3">
+                    <button type="submit" class="bg-orange-500 text-black font-medium text-sm rounded-lg px-4 py-2 hover:bg-orange-600 transition-colors">Filter</button>
+                    <a href="{{ route('purchase_notes.index') }}" class="bg-gray-500 text-white font-medium text-sm rounded-lg px-4 py-2 hover:bg-gray-600 transition-colors">Reset</a>
+                </div>
+            </form>
+        </div>
+
         <!-- Purchase Notes Information -->
         <div class="rounded-lg p-4 md:p-6 mb-6" style="background-color: #292929;">
             <h2 class="text-lg md:text-xl font-semibold mb-4 md:mb-6 text-white text-center">INFORMASI CATATAN BARANG MASUK</h2>
@@ -62,13 +84,13 @@
                 </svg>
                 Tambah Catatan Pembelian
             </a>
-            <a href="{{ route('purchase_notes.export.pdf') }}" class="bg-orange-500 text-black font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-orange-600 transition-colors flex items-center">
+            <a href="{{ route('purchase_notes.export.pdf') . (request()->query() ? '?' . request()->getQueryString() : '') }}" class="bg-orange-500 text-black font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-orange-600 transition-colors flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H3a2 2 0 01-2-2V3a2 2 0 012-2h18a2 2 0 012 2v16a2 2 0 01-2 2z" />
                 </svg>
                 Export ke PDF
             </a>
-            <a href="{{ route('purchase_notes.export.excel') }}" class="bg-green-500 text-white font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-green-600 transition-colors flex items-center">
+            <a href="{{ route('purchase_notes.export.excel') . (request()->query() ? '?' . request()->getQueryString() : '') }}" class="bg-green-500 text-white font-medium text-sm md:text-base rounded-lg px-4 py-2.5 hover:bg-green-600 transition-colors flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H3a2 2 0 01-2-2V3a2 2 0 012-2h18a2 2 0 012 2v16a2 2 0 01-2 2z" />
                 </svg>

@@ -255,8 +255,8 @@
                 </div>
             </div>
 
-            <!-- Data Section (Diagram Batang untuk Transaksi Harian, Produk Terlaris, dan Distribusi Unit per Brand) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Data Section (Diagram Batang untuk Transaksi Harian dan Produk Terlaris) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <!-- Diagram Batang untuk Transaksi Harian -->
                 <div class="bg-gray-800 rounded-lg p-5 text-white card-hover animate-slide-in-left animate-delay-600">
                     <h3 class="text-lg font-semibold mb-1">Transaksi Harian</h3>
@@ -283,23 +283,6 @@
                     @else
                         <div class="chart-container chart-fade-in">
                             <canvas id="topProductsChart"></canvas>
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Diagram untuk Distribusi Unit per Brand -->
-                <div class="bg-gray-800 rounded-lg p-5 text-white card-hover animate-bounce-in animate-delay-800">
-                    <h3 class="text-lg font-semibold mb-1">Distribusi Unit per Brand</h3>
-                    <p class="text-xs text-gray-400 mb-4">Jumlah Unit per Brand ({{ now()->format('F Y') }})</p>
-                    @php
-                        $brandCounts = app(App\Http\Controllers\InventoryController::class)->index()->getData()['brandCounts'];
-                        $hasBrandData = !empty($brandCounts) && $brandCounts->sum() > 0;
-                    @endphp
-                    @if(!$hasBrandData)
-                        <div class="no-data-message">Tidak ada data unit per brand</div>
-                    @else
-                        <div class="chart-container chart-fade-in">
-                            <canvas id="brandUnitsChart"></canvas>
                         </div>
                     @endif
                 </div>
@@ -371,9 +354,9 @@
             paging: true,
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50],
-            searching: false, // Menonaktifkan fitur pencarian
+            searching: false,
             ordering: true,
-            order: [[1, 'desc']], // Sort by Tanggal column (descending)
+            order: [[1, 'desc']],
             language: {
                 lengthMenu: 'Tampilkan _MENU_ entri per halaman',
                 zeroRecords: 'Tidak ada transaksi yang ditemukan',
@@ -390,9 +373,6 @@
             responsive: true
         });
 
-        // Debug: Cek apakah Chart.js berhasil dimuat
-        console.log('Chart.js loaded:', typeof Chart !== 'undefined');
-        
         // Konfigurasi untuk Chart.js dengan tema gelap
         if (typeof Chart !== 'undefined') {
             Chart.defaults.color = '#D1D5DB';
@@ -479,9 +459,6 @@
                         }
                     });
                     animateChart(hourlyChart);
-                    console.log('Hourly chart created successfully');
-                } else {
-                    console.error('Hourly canvas element not found');
                 }
             } catch (error) {
                 console.error('Error creating hourly chart:', error);
@@ -528,69 +505,9 @@
                         }
                     });
                     animateChart(productsChart);
-                    console.log('Products chart created successfully');
-                } else {
-                    console.error('Products canvas element not found');
                 }
             } catch (error) {
                 console.error('Error creating products chart:', error);
-            }
-        @endif
-
-        // Chart untuk Distribusi Unit per Brand
-        @if($hasBrandData)
-            try {
-                const brandCtx = document.getElementById('brandUnitsChart');
-                if (brandCtx) {
-                    const brandLabels = @json($brandCounts->keys()->toArray());
-                    const brandData = @json($brandCounts->values()->toArray());
-
-                    const brandColors = generateColors(brandData.length);
-
-                    const brandChart = new Chart(brandCtx.getContext('2d'), {
-                        type: 'pie',
-                        data: {
-                            labels: brandLabels,
-                            datasets: [{
-                                label: 'Jumlah Unit',
-                                data: brandData,
-                                backgroundColor: brandColors,
-                                borderColor: brandColors.map(color => color + 'CC'),
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                duration: 2000,
-                                easing: 'easeInOutQuart',
-                                delay: function(context) { return context.dataIndex * 100; }
-                            },
-                            plugins: {
-                                legend: { display: true, labels: { color: '#D1D5DB' } },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            let label = context.label || '';
-                                            if (label) {
-                                                label += ': ';
-                                            }
-                                            label += context.raw + ' unit';
-                                            return label;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    animateChart(brandChart);
-                    console.log('Brand units chart created successfully');
-                } else {
-                    console.error('Brand units canvas element not found');
-                }
-            } catch (error) {
-                console.error('Error creating brand units chart:', error);
             }
         @endif
 
@@ -598,7 +515,8 @@
         function animateCounters() {
             const counters = document.querySelectorAll('.counter-number');
             counters.forEach(counter => {
-                const target = parseInt(counter.textContent.replace(/[^\d]/g, '')) || 0;
+                const targetStr = counter.textContent.replace(/[^\d]/g, '');
+                const target = parseInt(targetStr) || 0;
                 let current = 0;
                 const increment = target / 50;
                 const timer = setInterval(() => {

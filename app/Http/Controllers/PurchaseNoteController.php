@@ -11,14 +11,26 @@ use App\Exports\PurchaseNotesExport;
 
 class PurchaseNoteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $purchaseNotes = PurchaseNote::with('user')->latest()->get();
-        $typeCounts = PurchaseNote::groupBy('type')
+        $request->validate([
+            'month' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $query = PurchaseNote::with('user')->latest();
+
+        if ($request->filled('month')) {
+            $month = $request->input('month');
+            $year = date('Y'); // Gunakan tahun saat ini
+            $query->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        }
+
+        $purchaseNotes = $query->get();
+        $typeCounts = $query->clone()->groupBy('type')
             ->selectRaw('type, count(*) as count')
             ->pluck('count', 'type')
             ->toArray();
-        $productCounts = PurchaseNote::groupBy('product_name')
+        $productCounts = $query->clone()->groupBy('product_name')
             ->selectRaw('product_name, count(*) as count')
             ->pluck('count', 'product_name')
             ->toArray();
@@ -90,15 +102,23 @@ class PurchaseNoteController extends Controller
         return redirect()->route('purchase_notes.index')->with('success', 'Catatan pembelian berhasil dihapus.');
     }
 
-    public function exportPdf()
+    public function exportPdf(Request $request)
     {
-        $purchaseNotes = PurchaseNote::with('user')->latest()->get();
+        $query = PurchaseNote::with('user')->latest();
+
+        if ($request->filled('month')) {
+            $month = $request->input('month');
+            $year = date('Y'); // Gunakan tahun saat ini
+            $query->whereYear('created_at', $year)->whereMonth('created_at', $month);
+        }
+
+        $purchaseNotes = $query->get();
         $pdf = Pdf::loadView('purchase_notes.pdf', compact('purchaseNotes'));
         return $pdf->download('catatan-pembelian-' . now()->format('Y-m-d') . '.pdf');
     }
 
-    public function exportExcel()
+    public function exportExcel(Request $request)
     {
-        return Excel::download(new PurchaseNotesExport, 'catatan-pembelian-' . now()->format('Y-m-d') . '.xlsx');
+        return Excel::download(new PurchaseNotesExport($request->only(['month'])), 'catatan-pembelian-' . now()->format('Y-m-d') . '.xlsx');
     }
 }
