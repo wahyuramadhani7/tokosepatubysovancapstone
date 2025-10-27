@@ -149,6 +149,24 @@
     /* Smooth transitions for all interactive elements */
     * { transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; }
 
+    /* Button Styling */
+    .btn-cabang-kudus {
+        background-color: #FF4500;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-cabang-kudus:hover {
+        background-color: #E03C00;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
     /* DataTables Custom Styling */
     .dataTables_wrapper .dataTables_length {
         color: #D1D5DB;
@@ -175,6 +193,36 @@
         color: #D1D5DB;
         margin-top: 1rem;
     }
+
+    /* Scrollable Product Column */
+    .product-cell {
+        max-width: 200px; /* Adjust width as needed */
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 0;
+    }
+
+    .product-cell::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .product-cell::-webkit-scrollbar-track {
+        background: #374151;
+    }
+
+    .product-cell::-webkit-scrollbar-thumb {
+        background: #FF4500;
+        border-radius: 4px;
+    }
+
+    .product-cell::-webkit-scrollbar-thumb:hover {
+        background: #E03C00;
+    }
+
+    .product-cell-content {
+        padding: 1rem 1.5rem;
+        display: inline-block;
+    }
 </style>
 
 <div class="w-full">
@@ -193,6 +241,11 @@
     <!-- Main Dashboard Content -->
     <div class="bg-cover bg-center" style="background-image: url('/images/bgapp.jpg');">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white bg-opacity-95">
+            <!-- Cabang Kudus Button -->
+            <div class="mb-6 text-center">
+                <a href="https://cabangkudus.tokosepatusovan.com" class="btn-cabang-kudus animate-fade-in-up animate-delay-100">Masuk ke Cabang Kudus</a>
+            </div>
+
             <!-- Daily Report Section -->
             <div class="mb-8">
                 <h2 class="text-2xl font-bold text-center mb-6 animate-fade-in-up animate-delay-200">LAPORAN HARIAN</h2>
@@ -309,12 +362,14 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">{{ $transaction->id }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">{{ $transaction->created_at->format('d-m-Y H:i') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">{{ $transaction->user->name ?? 'Unknown' }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-300 bg-gray-700 border border-gray-600">
-                                        @if($transaction->items->isEmpty())
-                                            -
-                                        @else
-                                            {{ $transaction->items->map(fn($item) => $item->product->name ?? '-')->implode(', ') }}
-                                        @endif
+                                    <td class="text-sm text-gray-300 bg-gray-700 border border-gray-600 product-cell">
+                                        <div class="product-cell-content">
+                                            @if($transaction->items->isEmpty())
+                                                -
+                                            @else
+                                                {{ $transaction->items->map(fn($item) => $item->product->name ?? '-')->implode(', ') }}
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">Rp {{ number_format($transaction->final_amount, 0, ',', '.') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 bg-gray-700 border border-gray-600">
@@ -354,15 +409,15 @@
             paging: true,
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50],
-            searching: false,
+            searching: false, // Menonaktifkan fitur pencarian
             ordering: true,
-            order: [[1, 'desc']],
+            order: [[1, 'desc']], // Sort by Tanggal column (descending)
             language: {
-                lengthMenu: 'Tampilkan _MENU_ entri per halaman',
+                lengthMenu: 'Tampilkan MENU entri per halaman',
                 zeroRecords: 'Tidak ada transaksi yang ditemukan',
-                info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ entri',
+                info: 'Menampilkan START sampai END dari TOTAL entri',
                 infoEmpty: 'Tidak ada entri yang tersedia',
-                infoFiltered: '(disaring dari _MAX_ total entri)',
+                infoFiltered: '(disaring dari MAX total entri)',
                 paginate: {
                     first: 'Pertama',
                     last: 'Terakhir',
@@ -373,6 +428,9 @@
             responsive: true
         });
 
+        // Debug: Cek apakah Chart.js berhasil dimuat
+        console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+        
         // Konfigurasi untuk Chart.js dengan tema gelap
         if (typeof Chart !== 'undefined') {
             Chart.defaults.color = '#D1D5DB';
@@ -459,6 +517,9 @@
                         }
                     });
                     animateChart(hourlyChart);
+                    console.log('Hourly chart created successfully');
+                } else {
+                    console.error('Hourly canvas element not found');
                 }
             } catch (error) {
                 console.error('Error creating hourly chart:', error);
@@ -505,6 +566,9 @@
                         }
                     });
                     animateChart(productsChart);
+                    console.log('Products chart created successfully');
+                } else {
+                    console.error('Products canvas element not found');
                 }
             } catch (error) {
                 console.error('Error creating products chart:', error);
@@ -515,8 +579,7 @@
         function animateCounters() {
             const counters = document.querySelectorAll('.counter-number');
             counters.forEach(counter => {
-                const targetStr = counter.textContent.replace(/[^\d]/g, '');
-                const target = parseInt(targetStr) || 0;
+                const target = parseInt(counter.textContent.replace(/[^\d]/g, '')) || 0;
                 let current = 0;
                 const increment = target / 50;
                 const timer = setInterval(() => {

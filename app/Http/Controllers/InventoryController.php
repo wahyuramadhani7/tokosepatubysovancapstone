@@ -13,7 +13,6 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Collection;
 
 class InventoryController extends Controller
 {
@@ -32,32 +31,6 @@ class InventoryController extends Controller
     {
         $userId = Auth::id() ?? 'guest';
         return "user_{$userId}_{$key}";
-    }
-
-    /**
-     * Hitung jumlah unit per (brand + model)
-     */
-    private function getBrandModelCounts(Collection $products, array $brandNames): array
-    {
-        return $products
-            ->groupBy(function ($product) use ($brandNames) {
-                $brand = $brandNames[$product->id] ?? Str::before($product->name, ' ');
-                $model = trim(str_replace($brand, '', $product->name));
-                return $brand . '|' . $model;
-            })
-            ->map(function ($group) use ($brandNames) {
-                $first = $group->first();
-                $brand = $brandNames[$first->id] ?? Str::before($first->name, ' ');
-                $model = trim(str_replace($brand, '', $first->name));
-                $label = Str::title("{$brand} {$model}");
-                return [
-                    'label' => $label,
-                    'count' => $group->sum('product_units_count')
-                ];
-            })
-            ->sortBy('label')
-            ->pluck('count', 'label')
-            ->toArray();
     }
 
     public function index()
@@ -85,45 +58,58 @@ class InventoryController extends Controller
                     ->from('product_units')
                     ->where('is_active', true)
                     ->groupBy('product_id')
-                    ->havingRaw('COUNT(*) <= 10');
+                    ->havingRaw('COUNT(*) < 5');
             })->count();
 
         $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
-
-        $brandModelCounts = $this->getBrandModelCounts(
-            Product::whereHas('productUnits', fn($q) => $q->where('is_active', true))
-                ->withCount(['productUnits' => fn($q) => $q->where('is_active', true)])
-                ->get(),
-            $brandNames
-        );
+        $brandCounts = Product::whereHas('productUnits', function ($query) {
+            $query->where('is_active', true);
+        })
+        ->withCount(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])
+        ->get()
+        ->groupBy(function ($product) use ($brandNames) {
+            $brand = $brandNames[$product->id] ?? Str::lower(explode(' ', trim($product->name))[0]);
+            $model = trim(str_replace($brand, '', $product->name));
+            return $brand . ' ' . $model; // Mengelompokkan berdasarkan brand + model
+        })
+        ->map(function ($group) use ($brandNames) {
+            $firstProduct = $group->first();
+            $brand = $brandNames[$firstProduct->id] ?? explode(' ', trim($firstProduct->name))[0];
+            $model = trim(str_replace($brand, '', $firstProduct->name));
+            return [
+                'name' => Str::title($brand . ' ' . $model),
+                'count' => $group->sum('product_units_count')
+            ];
+        })
+        ->sortBy('name')
+        ->pluck('count', 'name');
 
         $newProducts = Cache::get($this->getUserCacheKey('new_products'), []);
         $updatedProducts = Cache::get($this->getUserCacheKey('updated_products'), []);
 
-        return view('inventory.index', compact(
-            'products',
-            'totalProducts',
-            'lowStockProducts',
-            'totalStock',
-            'brandModelCounts',
-            'newProducts',
-            'updatedProducts'
-        ));
+        return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock', 'brandCounts', 'newProducts', 'updatedProducts'));
     }
 
     public function search(Request $request)
     {
         $searchTerm = $request->input('search', '');
         $sizeTerm = $request->input('size', '');
+        $lowStockFilter = $request->boolean('low_stock', false);
         $page = $request->input('page', 1);
-        $cacheKey = 'product_search_' . md5($searchTerm . '_' . $sizeTerm . '_' . $page);
+        $cacheKey = 'product_search_' . md5($searchTerm . '' . $sizeTerm . '' . $lowStockFilter . '' . $page);
 
-        $products = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($searchTerm, $sizeTerm) {
+        $products = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($searchTerm, $sizeTerm, $lowStockFilter) {
             return Product::withCount(['productUnits' => function ($query) {
                 $query->where('is_active', true);
             }])
-            ->whereHas('productUnits', function ($query) {
+            ->whereHas('productUnits', function ($query) use ($lowStockFilter) {
                 $query->where('is_active', true);
+                if ($lowStockFilter) {
+                    $query->groupBy('product_id')
+                          ->havingRaw('COUNT(*) < 5');
+                }
             })
             ->when($searchTerm, function ($query) use ($searchTerm) {
                 $query->where(function ($q) use ($searchTerm) {
@@ -138,7 +124,7 @@ class InventoryController extends Controller
             ->orderBy('name')
             ->orderBy('size')
             ->paginate(10)
-            ->appends(['search' => $searchTerm, 'size' => $sizeTerm]);
+            ->appends(['search' => $searchTerm, 'size' => $sizeTerm, 'low_stock' => $lowStockFilter ? 1 : null]);
         });
 
         $totalProducts = Product::whereHas('productUnits', function ($query) {
@@ -153,21 +139,46 @@ class InventoryController extends Controller
                     ->from('product_units')
                     ->where('is_active', true)
                     ->groupBy('product_id')
-                    ->havingRaw('COUNT(*) <= 10');
+                    ->havingRaw('COUNT(*) < 5');
             })->count();
 
         $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
-
-        $brandModelCounts = $this->getBrandModelCounts(
-            Product::whereHas('productUnits', fn($q) => $q->where('is_active', true))
-                ->when($searchTerm, fn($q) => $q->where(fn($sq) => $sq
-                    ->where('name', 'like', "%{$searchTerm}%")
-                    ->orWhere('color', 'like', "%{$searchTerm}%")))
-                ->when($sizeTerm, fn($q) => $q->where('size', 'like', "%{$sizeTerm}%"))
-                ->withCount(['productUnits' => fn($q) => $q->where('is_active', true)])
-                ->get(),
-            $brandNames
-        );
+        $brandCounts = Product::whereHas('productUnits', function ($query) use ($lowStockFilter) {
+            $query->where('is_active', true);
+            if ($lowStockFilter) {
+                $query->groupBy('product_id')
+                     ->havingRaw('COUNT(*) < 5');
+            }
+        })
+        ->when($searchTerm, function ($query) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('color', 'like', '%' . $searchTerm . '%');
+            });
+        })
+        ->when($sizeTerm, function ($query) use ($sizeTerm) {
+            $query->where('size', 'like', '%' . $sizeTerm . '%');
+        })
+        ->withCount(['productUnits' => function ($query) {
+            $query->where('is_active', true);
+        }])
+        ->get()
+        ->groupBy(function ($product) use ($brandNames) {
+            $brand = $brandNames[$product->id] ?? Str::lower(explode(' ', trim($product->name))[0]);
+            $model = trim(str_replace($brand, '', $product->name));
+            return $brand . ' ' . $model; // Mengelompokkan berdasarkan brand + model
+        })
+        ->map(function ($group) use ($brandNames) {
+            $firstProduct = $group->first();
+            $brand = $brandNames[$firstProduct->id] ?? explode(' ', trim($firstProduct->name))[0];
+            $model = trim(str_replace($brand, '', $firstProduct->name));
+            return [
+                'name' => Str::title($brand . ' ' . $model),
+                'count' => $group->sum('product_units_count')
+            ];
+        })
+        ->sortBy('name')
+        ->pluck('count', 'name');
 
         $newProducts = Cache::get($this->getUserCacheKey('new_products'), []);
         $updatedProducts = Cache::get($this->getUserCacheKey('updated_products'), []);
@@ -199,23 +210,13 @@ class InventoryController extends Controller
                 'totalProducts' => $totalProducts,
                 'totalStock' => $totalStock,
                 'lowStockProducts' => $lowStockProducts,
-                'brandModelCounts' => $brandModelCounts,
+                'brandCounts' => $brandCounts,
                 'newProducts' => $newProducts,
                 'updatedProducts' => $updatedProducts,
             ], 200);
         }
 
-        return view('inventory.index', compact(
-            'products',
-            'totalProducts',
-            'lowStockProducts',
-            'totalStock',
-            'searchTerm',
-            'sizeTerm',
-            'brandModelCounts',
-            'newProducts',
-            'updatedProducts'
-        ));
+        return view('inventory.index', compact('products', 'totalProducts', 'lowStockProducts', 'totalStock', 'searchTerm', 'sizeTerm', 'lowStockFilter', 'brandCounts', 'newProducts', 'updatedProducts'));
     }
 
     public function create()
@@ -251,7 +252,9 @@ class InventoryController extends Controller
             $userName = Auth::user()->name ?? 'Unknown';
 
             foreach ($validated['sizes'] as $sizeData) {
-                if ($sizeData['stock'] == 0) continue;
+                if ($sizeData['stock'] == 0) {
+                    continue;
+                }
 
                 $product = Product::create([
                     'name' => trim($validated['brand'] . ' ' . $validated['model']),
@@ -623,8 +626,9 @@ class InventoryController extends Controller
 
             for ($i = 1; $i < count($validated['sizes']); $i++) {
                 $sizeData = $validated['sizes'][$i];
-                if ($sizeData['stock'] == 0) continue;
-
+                if ($sizeData['stock'] == 0) {
+                    continue;
+                }
                 $newProduct = Product::create([
                     'name' => trim($validated['brand'] . ' ' . $validated['model']),
                     'size' => $sizeData['size'],
@@ -859,6 +863,7 @@ class InventoryController extends Controller
 
             $qrCode = $request->input('qr_code');
 
+            // Periksa apakah QR code sudah ada di laporan sebelumnya
             $exists = StockOpnameReport::whereJsonContains('scanned_qr_codes', $qrCode)->exists();
 
             if ($exists) {
@@ -868,6 +873,7 @@ class InventoryController extends Controller
                 ], 422);
             }
 
+            // Validasi format QR code
             if (!str_contains($qrCode, 'inventory')) {
                 return response()->json([
                     'valid' => false,
@@ -901,6 +907,7 @@ class InventoryController extends Controller
                 ], 404);
             }
 
+            // Validasi apakah unit_code dari QR code ada di ProductUnit
             $unitCode = basename(parse_url($qrCode, PHP_URL_PATH));
             $unitExists = ProductUnit::where('product_id', $productId)
                 ->where('unit_code', $unitCode)
@@ -1152,6 +1159,7 @@ class InventoryController extends Controller
                 $productId = $reportData['product_id'];
                 $scannedQRCodes = $reportData['scanned_qr_codes'] ?? [];
 
+                // Cari laporan terakhir untuk product_id ini
                 $latestReport = StockOpnameReport::where('product_id', $productId)
                     ->orderBy('timestamp', 'desc')
                     ->first();
@@ -1161,6 +1169,7 @@ class InventoryController extends Controller
 
                 $product = Product::find($productId);
 
+                // Filter QR code yang sudah ada di semua laporan untuk produk ini
                 $existingQRCodes = StockOpnameReport::where('product_id', $productId)
                     ->whereNotNull('scanned_qr_codes')
                     ->pluck('scanned_qr_codes')
@@ -1180,6 +1189,7 @@ class InventoryController extends Controller
                     $filteredScannedQRCodes[] = $qrCode;
                 }
 
+                // Jika semua QR code sudah ada, lewati
                 if (empty($filteredScannedQRCodes) && !empty($scannedQRCodes)) {
                     Log::warning("All QR codes for product ID {$productId} already exist, skipping.");
                     continue;
@@ -1194,6 +1204,7 @@ class InventoryController extends Controller
                 }, $filteredScannedQRCodes));
 
                 if ($reportData['physical_stock'] == 0 && $product) {
+                    // Logika hapus produk jika stok fisik 0
                     $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
                     $stockMismatch = [
                         'product_id' => $product->id,
@@ -1263,10 +1274,12 @@ class InventoryController extends Controller
                 ];
 
                 if ($latestReport) {
+                    // Update laporan terakhir
                     $existingScannedQRCodes = $latestReport->scanned_qr_codes ?? [];
                     $reportAttributes['scanned_qr_codes'] = array_unique(array_merge($existingScannedQRCodes, $filteredScannedQRCodes));
                     $latestReport->update($reportAttributes);
                 } else {
+                    // Buat laporan baru jika belum ada
                     $reportAttributes['product_id'] = $productId;
                     $reportAttributes['scanned_qr_codes'] = $filteredScannedQRCodes;
                     StockOpnameReport::create($reportAttributes);

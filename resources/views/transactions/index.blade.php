@@ -62,7 +62,7 @@
         }
         .custom-header {
             background-color: #292929;
-            padding: 1.25rem 0;
+            padding: 0.75rem 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -73,34 +73,34 @@
             margin: 0;
             left: 0;
             right: 0;
-            min-height: 90px;
+            min-height: 60px;
         }
         .custom-header .close-icon {
-            width: 36px;
-            height: 36px;
+            width: 28px;
+            height: 28px;
             background-color: #FF4500;
             clip-path: polygon(20% 0%, 0% 20%, 30% 50%, 0% 80%, 20% 100%, 50% 70%, 80% 100%, 100% 80%, 70% 50%, 100% 20%, 80% 0%, 50% 30%);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            margin-left: 1.25rem;
+            margin-left: 0.75rem;
         }
         .custom-header .close-icon svg {
-            width: 18px;
-            height: 18px;
+            width: 14px;
+            height: 14px;
             fill: #FFFFFF;
         }
         .custom-header .dashboard-button {
             background-color: #FF4500;
             color: #FFFFFF;
-            padding: 0.75rem 1.25rem;
-            border-radius: 0.5rem;
-            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
             font-weight: 500;
             text-decoration: none;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-right: 1.25rem;
+            margin-right: 0.75rem;
         }
         .custom-header .dashboard-button:hover {
             background-color: #FF5722;
@@ -109,8 +109,8 @@
         .dark-mode-toggle {
             background-color: #FF4500;
             color: #FFFFFF;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
         }
@@ -148,10 +148,11 @@
         .header-buttons a {
             background: #FF4500;
             color: #FFFFFF;
-            padding: 0.875rem 1.5rem;
-            border-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
             text-decoration: none;
-            font-size: 1.125rem;
+            font-size: 0.875rem;
+            font-weight: 500;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 4px 8px rgba(255, 69, 0, 0.2);
         }
@@ -162,35 +163,31 @@
         }
         .filter-section {
             background: #292929;
-            padding: 1.75rem;
+            padding: 1.5rem;
             border-radius: 1rem;
             margin-bottom: 1.5rem;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
         .filter-section label {
             color: #FFFFFF;
-            font-size: 1.125rem;
+            font-size: 1rem;
+            font-weight: 500;
         }
-        .filter-section input, .filter-section select {
+        .filter-section input, .filter-section select, .filter-section button {
             background: #374151;
             border: 1px solid #6B7280;
             color: #F3F4F6;
-            border-radius: 0.75rem;
-            padding: 0.875rem;
-            font-size: 1.125rem;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-size: 1rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            height: 2.75rem;
+            width: 100%;
+            display: flex;
+            align-items: center;
         }
         .filter-section input:focus, .filter-section select:focus {
             outline: 2px solid #FF4500;
-            box-shadow: 0 4px 8px rgba(255, 69, 0, 0.2);
-        }
-        .filter-section button {
-            background: #FF4500;
-            color: #FFFFFF;
-            padding: 0.875rem 1.5rem;
-            border-radius: 0.75rem;
-            font-size: 1.125rem;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 4px 8px rgba(255, 69, 0, 0.2);
         }
         .filter-section button:hover {
@@ -202,8 +199,8 @@
             background: rgba(255, 255, 255, 0.95);
             border: 1px solid #D1D5DB;
             border-radius: 1rem;
-            padding: 1.75rem;
-            margin-bottom: 1.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
             animation: fadeIn 0.3s ease-in;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
         }
@@ -212,9 +209,9 @@
             border: 1px solid #4B5563;
         }
         .transaction-card .badge {
-            padding: 0.5rem 1rem;
-            border-radius: 0.75rem;
-            font-size: 1rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
             font-weight: 600;
         }
         .transaction-card .badge-success {
@@ -232,12 +229,52 @@
             color: #EF4444;
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
-        .transaction-details > div:not(:last-child) {
-            border-top: 1px solid #D1D5DB;
-            padding-top: 1rem;
+        .transaction-card .badge-neutral {
+            background: rgba(156, 163, 175, 0.1);
+            color: #9CA3AF;
+            border: 1px solid rgba(156, 163, 175, 0.3);
         }
-        .dark .transaction-details > div:not(:last-child) {
-            border-top: 1px solid #4B5563;
+        .transaction-card .badge-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .transaction-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            padding-top: 0.5rem;
+        }
+        .transaction-details > div {
+            display: flex;
+            flex-direction: column;
+        }
+        .dark .transaction-details > div {
+            border-top: none;
+        }
+        .product-list-container {
+            max-height: 80px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #FF4500 #D1D5DB;
+            max-width: 100%;
+        }
+        .product-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .product-list-container::-webkit-scrollbar-track {
+            background: #D1D5DB;
+            border-radius: 4px;
+        }
+        .product-list-container::-webkit-scrollbar-thumb {
+            background: #FF4500;
+            border-radius: 4px;
+        }
+        .dark .product-list-container::-webkit-scrollbar-track {
+            background: #4B5563;
+        }
+        .dark .product-list-container::-webkit-scrollbar-thumb {
+            background: #FF5722;
         }
         .modal-overlay {
             position: fixed;
@@ -262,6 +299,76 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+        }
+        .transaction-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #FF4500 #D1D5DB;
+        }
+        .transaction-table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .transaction-table-container::-webkit-scrollbar-track {
+            background: #D1D5DB;
+            border-radius: 4px;
+        }
+        .transaction-table-container::-webkit-scrollbar-thumb {
+            background: #FF4500;
+            border-radius: 4px;
+        }
+        .dark .transaction-table-container::-webkit-scrollbar-track {
+            background: #4B5563;
+        }
+        .dark .transaction-table-container::-webkit-scrollbar-thumb {
+            background: #FF5722;
+        }
+        .transaction-table {
+            width: 100%;
+            min-width: 1000px;
+            border-collapse: collapse;
+        }
+        .transaction-table th,
+        .transaction-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #D1D5DB;
+        }
+        .dark .transaction-table th,
+        .dark .transaction-table td {
+            border-bottom: 1px solid #4B5563;
+        }
+        .transaction-table th {
+            background: rgba(255, 255, 255, 0.95);
+            font-weight: 600;
+            color: #1F2937;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .dark .transaction-table th {
+            background: rgba(31, 41, 55, 0.95);
+            color: #F3F4F6;
+        }
+        .transaction-table tr {
+            background: rgba(255, 255, 255, 0.95);
+        }
+        .dark .transaction-table tr {
+            background: rgba(31, 41, 55, 0.95);
+        }
+        .transaction-table tr.new-transaction {
+            background: rgba(255, 69, 0, 0.1);
+        }
+        .dark .transaction-table tr.new-transaction {
+            background: rgba(255, 69, 0, 0.2);
+        }
+        .transaction-table .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .transaction-table .product-column {
+            max-width: 200px;
+            overflow: hidden;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -292,32 +399,47 @@
                 font-size: 1rem;
             }
             .header-buttons a {
-                font-size: 1rem;
-                padding: 0.75rem 1.25rem;
+                font-size: 0.875rem;
+                padding: 0.5rem 1rem;
             }
-            .filter-section input, .filter-section select {
-                font-size: 1rem;
-                padding: 0.75rem;
-            }
-            .filter-section button {
-                font-size: 1rem;
-                padding: 0.75rem 1.25rem;
-            }
-            .transaction-card {
+            .filter-section {
                 padding: 1.25rem;
             }
-            .transaction-card .badge {
+            .filter-section input, .filter-section select, .filter-section button {
+                font-size: 0.875rem;
+                padding: 0.625rem;
+                height: 2.5rem;
+            }
+            .filter-section label {
                 font-size: 0.875rem;
             }
+            .transaction-card {
+                padding: 0.75rem;
+            }
+            .transaction-card .badge {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+            }
+            .transaction-details {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+                font-size: 0.75rem;
+            }
+            .transaction-details > div {
+                margin-bottom: 0.25rem;
+            }
+            .transaction-details .product-list-container {
+                max-height: 60px;
+            }
             .custom-header {
-                min-height: 80px;
-                padding: 1rem 0;
+                min-height: 50px;
+                padding: 0.5rem 0;
             }
             .custom-header .close-icon {
-                margin-left: 0.75rem;
+                margin-left: 0.5rem;
             }
             .custom-header .dashboard-button {
-                margin-right: 0.75rem;
+                margin-right: 0.5rem;
             }
         }
     </style>
@@ -326,15 +448,15 @@
 
     <!-- Custom Header -->
     <header class="custom-header">
-        <div class="logo" style="margin-left: 20px;">
-            <img src="{{ asset('images/logo2.jpg') }}" alt="Sepatu by Sovan Logo" class="h-16 w-auto sm:h-14 md:h-18" loading="lazy">
+        <div class="logo" style="margin-left: 15px;">
+            <img src="{{ asset('images/logo2.jpg') }}" alt="Sepatu by Sovan Logo" class="h-12 w-auto sm:h-12 md:h-14" loading="lazy">
         </div>
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
             <button @click="toggleDarkMode" class="dark-mode-toggle" :title="darkMode ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'" aria-label="Ganti mode tema">
-                <svg x-show="!darkMode" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg x-show="!darkMode" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
-                <svg x-show="darkMode" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
+                <svg x-show="darkMode" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 01 8.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
             </button>
@@ -399,7 +521,7 @@
                         </svg>
                         <span class="highlight-gold">@SEPATUBYSOVAN</span>
                     </h1>
-                    <p class="highlight-pos text-sm">Cabang Kudus</p>
+                    <p class="highlight-pos text-sm">Toko Puri Anjasmoro</p>
                 </div>
                 <div class="header-buttons flex gap-2">
                     <a href="{{ route('transactions.create') }}" class="flex items-center">
@@ -414,7 +536,7 @@
 
         <!-- Filter Card -->
         <div x-data="{ showFilters: true }" class="filter-section">
-            <div class="flex justify-between items-center border-b border-gray-600 pb-2">
+            <div class="flex justify-between items-center border-b border-gray-600 pb-3 mb-6">
                 <h2 class="text-lg font-semibold text-white flex items-center">
                     <svg class="h-6 w-6 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -430,35 +552,24 @@
                     </svg>
                 </button>
             </div>
-            <div x-show="showFilters" class="p-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0" style="transition: max-height 0.3s ease;">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-base font-medium mb-1">Tanggal</label>
-                        <input type="date" x-model="dateFilter" @change="fetchTransactions" class="w-full text-base">
-                    </div>
-                    <div>
-                        <label class="block text-base font-medium mb-1">Metode Pembayaran</label>
-                        <select x-model="paymentMethodFilter" @change="fetchTransactions" class="w-full text-base">
-                            <option value="">Semua Metode</option>
-                            <option value="cash">Tunai</option>
-                            <option value="credit_card">QRIS</option>
-                            <option value="debit">Debit</option>
-                            <option value="transfer">Transfer</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-base font-medium mb-1">Status Pembayaran</label>
-                        <select x-model="statusFilter" @change="fetchTransactions" class="w-full text-base">
-                            <option value="">Semua Status</option>
-                            <option value="paid">Lunas</option>
-                            <option value="pending">Pending</option>
-                            <option value="cancelled">Dibatalkan</option>
-                        </select>
-                    </div>
+            <div x-show="showFilters" class="grid grid-cols-1 sm:grid-cols-3 gap-6" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-1 transform translate-y-0" style="transition: max-height 0.3s ease;">
+                <div class="flex flex-col space-y-2">
+                    <label class="block text-base font-medium text-white">Tanggal</label>
+                    <input type="date" x-model="dateFilter" @change="fetchTransactions" class="w-full">
                 </div>
-                <div class="mt-4 flex justify-end">
-                    <button @click="resetFilters" class="btn-primary px-4 py-2 text-base flex items-center">
-                        <svg class="h-5 w-5 mr-1 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="flex flex-col space-y-2">
+                    <label class="block text-base font-medium text-white">Metode Pembayaran</label>
+                    <select x-model="paymentMethodFilter" @change="fetchTransactions" class="w-full">
+                        <option value="">Semua Metode</option>
+                        <option value="cash">Tunai</option>
+                        <option value="credit_card">QRIS</option>
+                        <option value="debit">Debit</option>
+                        <option value="transfer">Transfer</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button @click="resetFilters" class="w-full sm:w-auto flex items-center justify-center">
+                        <svg class="h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                         Reset Filter
@@ -509,77 +620,148 @@
                 </div>
             </div>
 
-            <!-- Transactions Grid -->
-            <div x-show="!loading && filteredTransactions.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <template x-for="transaction in paginatedTransactions" :key="transaction.id">
-                    <div :class="{'bg-orange-custom/10 dark:bg-orange-custom/20': isNewTransaction(transaction.id), 'alternate-row': true}" class="transaction-card">
-                        <div class="flex flex-col gap-3">
-                            <!-- Transaction Header -->
-                            <div class="flex justify-between items-start border-b border-gray-200 dark:border-gray-600 pb-2">
-                                <div>
-                                    <span class="text-xl font-semibold text-gray-900 dark:text-gray-100" x-text="transaction.invoice_number"></span>
-                                    <div class="text-base text-gray-medium dark:text-gray-400" x-text="formatTime(transaction.created_at)"></div>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button @click="openNotesModal(transaction.id, transaction.note)" class="inline-flex items-center p-2.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Tambah/Edit Catatan" aria-label="Tambah atau edit catatan">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </button>
-                                    <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id)" class="inline-flex items-center p-2.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Cetak Struk" aria-label="Cetak struk transaksi">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </div>
-                            <!-- Transaction Details -->
-                            <div class="transaction-details grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Pelanggan</span>
-                                    <div class="text-gray-900 dark:text-gray-100" x-text="transaction.customer_name || 'Tanpa Nama'"></div>
-                                    <div class="text-base text-gray-medium dark:text-gray-400" x-text="transaction.customer_phone || '-'"></div>
-                                </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Produk</span>
-                                    <div class="product-list" x-html="getProductNames(transaction.items)"></div>
-                                </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Metode</span>
+            <!-- Transactions Display -->
+            <div x-show="!loading && filteredTransactions.length > 0">
+                <!-- Desktop: Horizontal Scrollable Table -->
+                <div class="hidden sm:block transaction-table-container">
+                    <table class="transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Nomor Invoice</th>
+                                <th>Waktu</th>
+                                <th>Pelanggan</th>
+                                <th>Produk</th>
+                                <th>Metode</th>
+                                <th>Diskon</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Catatan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="transaction in paginatedTransactions" :key="transaction.id">
+                                <tr :class="{ 'new-transaction': isNewTransaction(transaction.id) }">
+                                    <td>
+                                        <span class="text-base font-semibold text-gray-900 dark:text-gray-100" x-text="transaction.invoice_number"></span>
+                                    </td>
+                                    <td x-text="formatTime(transaction.created_at)"></td>
+                                    <td>
+                                        <div x-text="transaction.customer_name || 'Tanpa Nama'"></div>
+                                        <div class="text-sm text-gray-medium dark:text-gray-400" x-text="transaction.customer_phone || '-'"></div>
+                                    </td>
+                                    <td class="product-column">
+                                        <div class="product-list-container">
+                                            <div class="product-list" x-html="getProductNames(transaction.items)"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge" :class="{
+                                            'badge-success': transaction.payment_method === 'cash',
+                                            'badge-neutral': transaction.payment_method === 'credit_card',
+                                            'badge-info': transaction.payment_method === 'transfer' || transaction.payment_method === 'debit'
+                                        }" x-text="translatePaymentMethod(transaction.payment_method, transaction.card_type)"></span>
+                                    </td>
+                                    <td x-text="formatRupiah(transaction.discount_amount || 0)" class="text-orange-custom"></td>
+                                    <td x-text="formatRupiah(transaction.final_amount)" class="text-orange-custom"></td>
+                                    <td>
+                                        <span class="badge" :class="{
+                                            'badge-success': transaction.payment_status === 'paid',
+                                            'badge-warning': transaction.payment_status === 'pending',
+                                            'badge-danger': transaction.payment_status === 'cancelled'
+                                        }" x-text="translateStatus(transaction.payment_status)"></span>
+                                    </td>
+                                    <td x-text="transaction.note || '-'"></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button @click="openNotesModal(transaction.id, transaction.note)" class="inline-flex items-center p-2.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Tambah/Edit Catatan" aria-label="Tambah atau edit catatan">
+                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </button>
+                                            <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id)" class="inline-flex items-center p-2.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Cetak Struk" aria-label="Cetak struk transaksi">
+                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile: Compact Card Grid -->
+                <div class="sm:hidden grid grid-cols-1 gap-4">
+                    <template x-for="transaction in paginatedTransactions" :key="transaction.id">
+                        <div :class="{'bg-orange-custom/10 dark:bg-orange-custom/20': isNewTransaction(transaction.id), 'alternate-row': true}" class="transaction-card">
+                            <div class="flex flex-col gap-2">
+                                <!-- Transaction Header -->
+                                <div class="flex justify-between items-start border-b border-gray-200 dark:border-gray-600 pb-1">
                                     <div>
+                                        <span class="text-lg font-semibold text-gray-900 dark:text-gray-100" x-text="transaction.invoice_number"></span>
+                                        <div class="text-sm text-gray-medium dark:text-gray-400" x-text="formatTime(transaction.created_at)"></div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button @click="openNotesModal(transaction.id, transaction.note)" class="inline-flex items-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Tambah/Edit Catatan" aria-label="Tambah atau edit catatan">
+                                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
+                                        <a :href="`{{ route('transactions.print', ':id') }}`.replace(':id', transaction.id)" class="inline-flex items-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full hover:bg-orange-custom hover:text-white" title="Cetak Struk" aria-label="Cetak struk transaksi">
+                                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </div>
+                                <!-- Transaction Details -->
+                                <div class="transaction-details">
+                                    <div>
+                                        <span class="block text-xs font-medium text-gray-700 dark:text-gray-300">Pelanggan</span>
+                                        <div class="text-xs text-gray-900 dark:text-gray-100" x-text="transaction.customer_name || 'Tanpa Nama'"></div>
+                                        <div class="text-xs text-gray-medium dark:text-gray-400" x-text="transaction.customer_phone || '-'"></div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-xs font-medium text-gray-700 dark:text-gray-300">Produk</span>
+                                        <div class="product-list-container">
+                                            <div class="product-list" x-html="getProductNames(transaction.items)"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-xs font-medium text-gray-700 dark:text-gray-300">Metode</span>
                                         <span class="badge" :class="{
                                             'badge-success': transaction.payment_method === 'cash',
                                             'badge-neutral': transaction.payment_method === 'credit_card',
                                             'badge-info': transaction.payment_method === 'transfer' || transaction.payment_method === 'debit'
                                         }" x-text="translatePaymentMethod(transaction.payment_method, transaction.card_type)"></span>
                                     </div>
-                                </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Diskon</span>
-                                    <div class="text-orange-custom" x-text="formatRupiah(transaction.discount_amount || 0)"></div>
-                                </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Total</span>
-                                    <div class="text-orange-custom" x-text="formatRupiah(transaction.final_amount)"></div>
-                                </div>
-                                <div>
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Status</span>
                                     <div>
+                                        <span class="block text-xs font-medium text-gray-700 dark:text-gray-300">Diskon</span>
+                                        <div class="text-xs text-orange-custom" x-text="formatRupiah(transaction.discount_amount || 0)"></div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-xs font-medium text-gray-700 dark:text-gray-300">Total</span>
+                                        <div class="text-xs text-orange-custom" x-text="formatRupiah(transaction.final_amount)"></div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-xs font-medium text-gray-700 dark:text-gray-300">Status</span>
                                         <span class="badge" :class="{
                                             'badge-success': transaction.payment_status === 'paid',
                                             'badge-warning': transaction.payment_status === 'pending',
                                             'badge-danger': transaction.payment_status === 'cancelled'
                                         }" x-text="translateStatus(transaction.payment_status)"></span>
                                     </div>
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <span class="block text-base font-medium text-gray-700 dark:text-gray-300">Catatan</span>
-                                    <div class="text-gray-900 dark:text-gray-100" x-text="transaction.note || '-'"></div>
+                                    <div>
+                                        <span class="block text-xs font-medium text-gray-700 dark:text-gray-300">Catatan</span>
+                                        <div class="text-xs text-gray-900 dark:text-gray-100" x-text="transaction.note || '-'"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </template>
+                    </template>
+                </div>
             </div>
 
             <!-- Empty State -->
@@ -685,14 +867,13 @@
                                 }
                             });
 
-                            // Check if popup has been shown in this session
                             const hasSeenPopup = sessionStorage.getItem('hasSeenPopup');
                             if (!hasSeenPopup) {
                                 this.showPopup = true;
                                 sessionStorage.setItem('hasSeenPopup', 'true');
                                 setTimeout(() => {
                                     this.closePopup();
-                                }, 30000); // Close popup after 30 seconds
+                                }, 30000);
                             }
 
                             const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
@@ -782,9 +963,9 @@
                             if (index >= 0) {
                                 this.goToPage(Math.floor(index / this.perPage) + 1);
                                 this.$nextTick(() => {
-                                    const newCard = document.querySelector(`div.bg-orange-custom\\/10`);
-                                    if (newCard) {
-                                        newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    const newElement = document.querySelector(`.new-transaction`) || document.querySelector(`div.bg-orange-custom\\/10`);
+                                    if (newElement) {
+                                        newElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
                                     }
                                 });
                             }
@@ -822,13 +1003,13 @@
                         },
 
                         getProductNames(items) {
-                            if (!items || !items.length) return '<span class="text-base text-gray-medium dark:text-gray-400">-</span>';
+                            if (!items || !items.length) return '<span class="text-xs text-gray-medium dark:text-gray-400">-</span>';
                             return items.map(item => `
                                 <div class="flex items-center space-x-1">
-                                    <span class="text-base text-gray-900 dark:text-gray-100 whitespace-normal overflow-wrap-break-word">
+                                    <span class="text-xs text-gray-900 dark:text-gray-100 whitespace-normal overflow-wrap-break-word">
                                         ${item.product && item.product.name ? item.product.name : '-'}
                                     </span>
-                                    <span class="text-sm text-gray-medium dark:text-gray-400">
+                                    <span class="text-xs text-gray-medium dark:text-gray-400">
                                         (${item.product && item.product.size ? item.product.size : '-'}${item.product && item.product.color ? ', ' + item.product.color : ''})
                                     </span>
                                 </div>
