@@ -6,7 +6,7 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\Product;
 use App\Models\ProductUnit;
-use App\Models\ProductHistory; // Tambahkan model ProductHistory
+use App\Models\ProductHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +16,6 @@ use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
-    // Helper method untuk cache key, sesuai dengan InventoryController
     private function getUserCacheKey($key)
     {
         $userId = Auth::id() ?? 'guest';
@@ -55,11 +54,7 @@ class TransactionController extends Controller
                 ->whereDate('created_at', $date);
 
             if ($paymentMethod) {
-                if (in_array($paymentMethod, ['debit_mandiri', 'debit_bri', 'debit_bca'])) {
-                    $query->where('payment_method', $paymentMethod);
-                } else {
-                    $query->where('payment_method', $paymentMethod);
-                }
+                $query->where('payment_method', $paymentMethod);
             }
 
             if ($status) {
@@ -92,6 +87,7 @@ class TransactionController extends Controller
                         'total_amount' => $transaction->total_amount,
                         'discount_amount' => $transaction->discount_amount,
                         'final_amount' => $transaction->final_amount,
+                        'note' => $transaction->notes,
                         'items' => $transaction->items->map(function ($item) {
                             return [
                                 'product_id' => $item->product_id,
@@ -101,11 +97,13 @@ class TransactionController extends Controller
                                     'color' => $item->product->color ?? '-',
                                 ] : null,
                                 'product_unit_id' => $item->product_unit_id,
-                                'unit_code' => $item->productUnit ? $item->productUnit->unit_code : null,
+                                'unit_code' => $item->productUnit?->unit_code ?? null,
                                 'quantity' => $item->quantity,
                                 'price' => $item->price,
                                 'new_price' => $item->new_price,
                                 'subtotal' => $item->subtotal,
+                                'is_return' => (bool) $item->is_return,
+                                'exchange_note' => $item->exchange_note,
                             ];
                         })->toArray(),
                     ];
@@ -170,6 +168,9 @@ class TransactionController extends Controller
                 'products.*.product_id' => 'required|exists:products,id',
                 'products.*.unit_code' => 'required|exists:product_units,unit_code,is_active,1',
                 'products.*.new_price' => 'nullable|numeric|min:0',
+                // UBAH INI: Terima 1/0, true/false, "1"/"0"
+                'products.*.is_return' => 'nullable|in:1,0,true,false',
+                'products.*.exchange_note' => 'nullable|string|max:255',
                 'overall_new_price' => 'nullable|numeric|min:0',
                 'notes' => 'nullable|string',
             ]);
@@ -195,35 +196,29 @@ class TransactionController extends Controller
             $transactionItems = [];
             $brandNames = Cache::get($this->getUserCacheKey('brand_names'), []);
 
-            foreach ($request->products as $item) {
-                $product = Product::findOrFail($item['product_id']);
-                $unit = ProductUnit::where('product_id', $item['product_id'])
-                    ->where('unit_code', $item['unit_code'])
+            foreach ($request->products as $itemData) {
+                $product = Product::findOrFail($itemData['product_id']);
+                $unit = ProductUnit::where('product_id', $itemData['product_id'])
+                    ->where('unit_code', $itemData['unit_code'])
                     ->where('is_active', true)
                     ->firstOrFail();
 
-                // Determine original price (selling_price or discount_price if available)
                 $originalPrice = $product->discount_price ?? $product->selling_price;
-                // Use new_price if provided, otherwise use original price
-                $price = isset($item['new_price']) && $item['new_price'] !== null 
-                    ? $item['new_price'] 
+                $price = isset($itemData['new_price']) && $itemData['new_price'] !== null 
+                    ? $itemData['new_price'] 
                     : $originalPrice;
-                
-                // Validate new_price does not exceed original price
+
                 if ($price > $originalPrice) {
                     throw new \Exception("Harga baru untuk {$product->name} tidak boleh melebihi Rp " . number_format($originalPrice, 0, ',', '.'));
                 }
 
-                // Calculate discount for this item
                 $itemDiscount = ($originalPrice - $price);
                 $subtotal = $price;
-                $totalAmount += $originalPrice; // Total before discount
+                $totalAmount += $originalPrice;
                 $totalDiscount += $itemDiscount;
 
-                // Nonaktifkan unit
                 $unit->update(['is_active' => false]);
 
-                // Update cache untuk unit
                 Cache::forever($this->getUnitCacheKey($product->id, $unit->unit_code), [
                     'product_id' => $product->id,
                     'unit_code' => $unit->unit_code,
@@ -231,7 +226,6 @@ class TransactionController extends Controller
                     'is_active' => false,
                 ]);
 
-                // Update cache untuk produk
                 $currentStock = $product->productUnits()->where('is_active', true)->count();
                 Cache::forever($this->getProductCacheKey($product->id), [
                     'id' => $product->id,
@@ -245,7 +239,6 @@ class TransactionController extends Controller
                     'stock' => $currentStock,
                 ]);
 
-                // Catat ke product_histories
                 $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
                 $model = trim(str_replace($brand, '', $product->name));
                 ProductHistory::create([
@@ -264,20 +257,25 @@ class TransactionController extends Controller
                     'timestamp' => Carbon::now('Asia/Jakarta'),
                 ]);
 
-                $transactionItems[] = new TransactionItem([
+                // UBAH INI: Konversi ke boolean
+                $isReturn = in_array($itemData['is_return'] ?? '', ['1', 'true', true], true);
+
+                $transactionItem = new TransactionItem([
                     'product_id' => $product->id,
                     'product_unit_id' => $unit->id,
                     'quantity' => 1,
-                    'price' => $originalPrice, // Store original price
-                    'new_price' => $price,    // Store new price (after discount)
-                    'subtotal' => $subtotal,  // Subtotal after discount
+                    'price' => $originalPrice,
+                    'new_price' => $price,
+                    'subtotal' => $subtotal,
+                    'is_return' => $isReturn,
+                    'exchange_note' => $itemData['exchange_note'] ?? null,
                 ]);
+
+                $transactionItems[] = $transactionItem;
             }
 
-            // Handle overall_new_price if provided
             if ($request->filled('overall_new_price')) {
                 $overallNewPrice = (float) $request->overall_new_price;
-                // Validate overall_new_price
                 if ($overallNewPrice > $totalAmount) {
                     throw new \Exception('Harga baru keseluruhan tidak boleh melebihi subtotal Rp ' . number_format($totalAmount, 0, ',', '.'));
                 }
@@ -301,8 +299,7 @@ class TransactionController extends Controller
 
             return redirect()->route('transactions.index')
                 ->with('success', 'Transaksi berhasil diselesaikan.')
-                ->with('transaction_id', $transaction->id)
-                ->with('new_transaction', $transaction->load(['items.product', 'items.productUnit', 'user']));
+                ->with('transaction_id', $transaction->id);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed: ' . json_encode($e->errors()));
             return back()->withErrors($e->errors())->withInput();
@@ -323,7 +320,6 @@ class TransactionController extends Controller
                 if ($item->productUnit) {
                     $item->productUnit->update(['is_active' => true]);
 
-                    // Update cache untuk unit
                     Cache::forever($this->getUnitCacheKey($item->product_id, $item->productUnit->unit_code), [
                         'product_id' => $item->product_id,
                         'unit_code' => $item->productUnit->unit_code,
@@ -331,7 +327,6 @@ class TransactionController extends Controller
                         'is_active' => true,
                     ]);
 
-                    // Update cache untuk produk
                     $product = Product::find($item->product_id);
                     if ($product) {
                         $currentStock = $product->productUnits()->where('is_active', true)->count();
@@ -347,7 +342,6 @@ class TransactionController extends Controller
                             'stock' => $currentStock,
                         ]);
 
-                        // Catat ke product_histories untuk pengembalian stok
                         $brand = $brandNames[$product->id] ?? explode(' ', trim($product->name))[0];
                         $model = trim(str_replace($brand, '', $product->name));
                         ProductHistory::create([
@@ -372,6 +366,7 @@ class TransactionController extends Controller
             $transaction->items()->delete();
             $transaction->delete();
             DB::commit();
+
             return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -403,8 +398,7 @@ class TransactionController extends Controller
         $query = Transaction::with(['user', 'items.product', 'items.productUnit']);
 
         if ($reportType === 'monthly') {
-            $query->whereYear('created_at', $year)
-                  ->whereMonth('created_at', $month);
+            $query->whereYear('created_at', $year)->whereMonth('created_at', $month);
         } elseif ($reportType === 'weekly') {
             $startOfWeek = Carbon::parse($date, 'Asia/Jakarta')->startOfWeek();
             $endOfWeek = Carbon::parse($date, 'Asia/Jakarta')->endOfWeek();
@@ -431,26 +425,14 @@ class TransactionController extends Controller
             return $transaction->items->sum('quantity');
         });
 
-        // Include week range for display in weekly report
         $weekRange = $reportType === 'weekly' 
-            ? [
-                'start' => $startOfWeek->format('Y-m-d'),
-                'end' => $endOfWeek->format('Y-m-d')
-            ] 
+            ? ['start' => $startOfWeek->format('Y-m-d'), 'end' => $endOfWeek->format('Y-m-d')] 
             : null;
 
         return view('transactions.report', compact(
-            'transactions',
-            'totalSales',
-            'totalTransactions',
-            'totalDiscount',
-            'totalProductsSold',
-            'date',
-            'month',
-            'year',
-            'reportType',
-            'productSearch',
-            'weekRange'
+            'transactions', 'totalSales', 'totalTransactions', 'totalDiscount',
+            'totalProductsSold', 'date', 'month', 'year', 'reportType',
+            'productSearch', 'weekRange'
         ));
     }
 

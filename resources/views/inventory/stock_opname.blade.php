@@ -43,6 +43,79 @@
                 </button>
             </div>
 
+            <!-- Unreported Products Section -->
+            <div id="unreported-products" class="mt-8">
+                <h2 class="text-lg font-semibold text-gray-800 mb-3">Produk Belum Dilaporkan</h2>
+                <div id="unreported-table" class="bg-gray-50 p-4 rounded-lg shadow text-gray-800 overflow-x-auto">
+                    @php
+                        $unreportedProducts = App\Models\Product::whereDoesntHave('stockOpnameReports')
+                            ->whereHas('productUnits', function ($query) {
+                                $query->where('is_active', true);
+                            })
+                            ->withCount(['productUnits' => function ($query) {
+                                $query->where('is_active', true);
+                            }])
+                            ->get()
+                            ->map(function ($product) {
+                                $brand = explode(' ', trim($product->name))[0];
+                                $model = trim(str_replace($brand, '', $product->name));
+                                return [
+                                    'id' => $product->id,
+                                    'brand' => $brand,
+                                    'model' => $model,
+                                    'name' => $product->name,
+                                    'size' => $product->size,
+                                    'color' => $product->color,
+                                    'stock' => $product->product_units_count,
+                                    'selling_price' => $product->selling_price,
+                                    'discount_price' => $product->discount_price,
+                                ];
+                            })
+                            ->groupBy('brand')
+                            ->sortKeys();
+                        $unreportedBrandQuantities = [];
+                        foreach ($unreportedProducts as $brand => $products) {
+                            $unreportedBrandQuantities[$brand] = $products->sum('stock');
+                        }
+                    @endphp
+                    @if($unreportedProducts->isNotEmpty())
+                        @foreach($unreportedProducts as $brand => $products)
+                            <h3 class="text-md font-semibold text-gray-800 mt-4 mb-2">{{ $brand }} (Total Quantity: {{ $unreportedBrandQuantities[$brand] }})</h3>
+                            <table class="w-full border-collapse text-sm mb-6">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-3 border border-gray-300">Produk</th>
+                                        <th class="p-3 border border-gray-300">Ukuran</th>
+                                        <th class="p-3 border border-gray-300">Warna</th>
+                                        <th class="p-3 border border-gray-300">Stok Sistem</th>
+                                        <th class="p-3 border border-gray-300">Catatan</th>
+                                        <th class="p-3 border border-gray-300">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($products as $product)
+                                        <tr class="hover:bg-gray-100">
+                                            <td class="p-3 border border-gray-300">{{ $product['name'] }}</td>
+                                            <td class="p-3 border border-gray-300">{{ $product['size'] }}</td>
+                                            <td class="p-3 border border-gray-300">{{ $product['color'] }}</td>
+                                            <td class="p-3 border border-gray-300">{{ $product['stock'] }}</td>
+                                            <td class="p-3 border border-gray-300">
+                                                <input type="text" class="note-input w-full border border-gray-300 rounded px-2 py-1" data-product-id="{{ $product['id'] }}" placeholder="Tambah catatan...">
+                                            </td>
+                                            <td class="p-3 border border-gray-300">
+                                                <button class="add-unreported-btn bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors font-semibold" data-product-id="{{ $product['id'] }}">Tambah ke Scan</button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endforeach
+                    @else
+                        <p class="text-center text-gray-500 text-sm">Semua produk telah dilaporkan.</p>
+                    @endif
+                </div>
+            </div>
+
             <!-- Stock Opname Reports Section -->
             <div id="reports-list" class="mt-8">
                 <div class="flex justify-between items-center mb-3">
@@ -259,22 +332,22 @@
         font-size: 18px;
         line-height: 1;
     }
-    #products-table table, #reports-table table {
+    #products-table table, #reports-table table, #unreported-table table {
         width: 100%;
         border-collapse: collapse;
         font-size: 14px;
     }
-    #products-table th, #products-table td, #reports-table th, #reports-table td {
+    #products-table th, #products-table td, #reports-table th, #reports-table td, #unreported-table th, #unreported-table td {
         padding: 12px;
         border: 1px solid #e5e7eb;
         text-align: left;
     }
-    #products-table th, #reports-table th {
+    #products-table th, #reports-table th, #unreported-table th {
         background-color: #f3f4f6;
         font-weight: 600;
         color: #1f2937;
     }
-    #products-table input {
+    #products-table input, #unreported-table input {
         background-color: #f3f4f6;
         color: #1f2937;
         padding: 6px;
@@ -321,21 +394,33 @@
     #search-results .search-result-item:hover {
         background-color: #f3f4f6;
     }
+    .add-unreported-btn {
+        background-color: #3b82f6;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .add-unreported-btn:hover {
+        background-color: #2563eb;
+    }
     @media (max-width: 640px) {
-        #products-table table, #reports-table table {
+        #products-table table, #reports-table table, #unreported-table table {
             font-size: 12px;
         }
-        #products-table th, #products-table td, #reports-table th, #reports-table td {
+        #products-table th, #products-table td, #reports-table th, #reports-table td, #unreported-table th, #unreported-table td {
             padding: 8px;
         }
-        #products-table input {
+        #products-table input, #unreported-table input {
             width: 60px;
         }
         #save-report {
             font-size: 14px;
             padding: 10px 20px;
         }
-        #reports-table h3 {
+        #reports-table h3, #unreported-table h3 {
             font-size: 14px;
         }
         .qr-codes-details {
@@ -343,6 +428,10 @@
         }
         #product-search {
             font-size: 14px;
+        }
+        .add-unreported-btn {
+            font-size: 12px;
+            padding: 4px 8px;
         }
     }
 </style>
@@ -358,6 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const productsTable = document.getElementById('products-table');
     const saveReportBtn = document.getElementById('save-report');
     const reportsTable = document.getElementById('reports-table');
+    const unreportedTable = document.getElementById('unreported-table');
     const productSearch = document.getElementById('product-search');
     const searchResults = document.getElementById('search-results');
     const scannedList = document.createElement('div');
@@ -370,25 +460,55 @@ document.addEventListener('DOMContentLoaded', function() {
     let scanTimeout = null;
     let lastScanTime = 0;
     let searchTimeout = null;
+    let productNotes = {};
 
-    // Reset state saat halaman dimuat
-    scannedProducts = {};
-    scannedQRCodes.clear();
-    updateProductsTable();
+    // Load cached notes
+    fetch('/inventory/notes', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        productNotes = data.notes || {};
+        updateUnreportedTable();
+    })
+    .catch(error => {
+        console.error('Error loading cached notes:', error);
+    });
 
-    // Event delegation untuk tombol toggle-qr-codes
+    // Event delegation for note inputs
+    unreportedTable.addEventListener('input', function(event) {
+        const input = event.target.closest('.note-input');
+        if (input) {
+            const productId = input.dataset.productId;
+            const note = input.value.trim();
+            productNotes[productId] = note;
+            saveNotesToCache();
+        }
+    });
+
+    // Event delegation for toggle-qr-codes
     reportsTable.addEventListener('click', function(event) {
         const button = event.target.closest('.toggle-qr-codes');
         if (button) {
             const index = button.dataset.index;
             const details = document.querySelector(`.qr-codes-details[data-index="${index}"]`);
             if (details) {
-                console.log('Toggling QR codes for index:', index);
                 details.classList.toggle('hidden');
                 button.textContent = details.classList.contains('hidden') ? 'Lihat QR Codes' : 'Sembunyikan QR Codes';
-            } else {
-                console.warn('QR codes details not found for index:', index);
             }
+        }
+    });
+
+    // Event delegation for add-unreported-btn
+    unreportedTable.addEventListener('click', function(event) {
+        const button = event.target.closest('.add-unreported-btn');
+        if (button) {
+            const productId = button.dataset.productId;
+            addManualProduct(productId);
         }
     });
 
@@ -437,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     });
 
-    // Klik di luar search results untuk menutup
+    // Click outside search results to close
     document.addEventListener('click', function(event) {
         if (!searchResults.contains(event.target) && event.target !== productSearch) {
             searchResults.classList.add('hidden');
@@ -446,7 +566,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     startScannerBtn.addEventListener('click', async () => {
         try {
-            console.log('Starting scanner, resetting state...');
             scannedProducts = {};
             scannedQRCodes.clear();
             updateProductsTable();
@@ -509,12 +628,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function onScanSuccess(decodedText) {
         const currentTime = Date.now();
         if (currentTime - lastScanTime < 500) {
-            console.log('Scan ignored: too soon after last scan');
             return;
         }
         lastScanTime = currentTime;
-
-        console.log('Scanned QR:', decodedText, 'ScannedQRCodes:', [...scannedQRCodes]);
 
         validateQrCode(decodedText).then(response => {
             if (!response.valid) {
@@ -524,8 +640,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const productId = response.product_id;
             const unitCode = response.unit_code;
-
             const isNewScan = !scannedQRCodes.has(decodedText);
+
             if (isNewScan) {
                 scannedQRCodes.add(decodedText);
                 addScannedItem(decodedText, true);
@@ -539,7 +655,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         color: '-',
                         qrCodes: new Set(),
                         brand: '',
-                        model: ''
+                        model: '',
+                        note: productNotes[productId] || ''
                     };
                     fetchProductData(productId);
                 }
@@ -548,7 +665,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateProductsTable();
                 showAlert('success', `QR code dipindai untuk produk ID ${productId} (Unit: ${unitCode}).`);
             } else {
-                console.log('Duplicate scan detected:', decodedText);
                 if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
                     addScannedItem(decodedText, false);
                     showAlert('warning', 'QR code ini sudah dipindai dalam sesi ini.');
@@ -593,7 +709,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 color: '-',
                 qrCodes: new Set(),
                 brand: '',
-                model: ''
+                model: '',
+                note: productNotes[productId] || ''
             };
             fetchProductData(productId);
         }
@@ -603,7 +720,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchProductData(productId) {
-        console.log('Fetching product data for ID:', productId);
         fetch(`/inventory/${productId}/json`, {
             method: 'GET',
             headers: {
@@ -612,14 +728,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            console.log('Fetch response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Fetched product data:', data);
             if (data.error) {
                 showAlert('error', data.error);
                 scannedProducts[productId].name = 'Produk Tidak Ditemukan';
@@ -629,14 +743,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 scannedProducts[productId].brand = 'Unknown';
                 scannedProducts[productId].model = 'Unknown';
             } else {
+                const brand = data.name ? data.name.split(' ')[0] : 'Unknown';
+                const model = data.name ? data.name.replace(brand, '').trim() : 'Unknown';
                 scannedProducts[productId] = {
                     ...scannedProducts[productId],
                     name: data.name || 'Tidak Diketahui',
                     size: data.size || '-',
                     color: data.color || '-',
                     systemStock: data.stock || 0,
-                    brand: data.brand || 'Unknown',
-                    model: data.model || 'Unknown'
+                    brand: brand,
+                    model: model
                 };
             }
             updateProductsTable();
@@ -655,7 +771,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateProductsTable() {
-        console.log('Updating table with products:', scannedProducts);
         let html = `
             <table>
                 <thead>
@@ -666,6 +781,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <th>Stok Sistem</th>
                         <th>Stok Fisik</th>
                         <th>Selisih</th>
+                        <th>Catatan</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -697,6 +813,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     </td>
                     <td class="${statusClass}">${statusMessage}</td>
                     <td>
+                        <input type="text" value="${product.note || ''}" data-product-id="${productId}" class="note-input w-full border border-gray-300 rounded px-2 py-1">
+                    </td>
+                    <td>
                         <button class="update-stock-btn bg-orange-500 text-white px-2 py-1 rounded hover:bg-orange-600 transition-colors font-semibold" data-product-id="${productId}">Update</button>
                         <button class="remove-product-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors font-semibold ml-2" data-product-id="${productId}">Hapus</button>
                     </td>
@@ -709,13 +828,8 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         productsTable.innerHTML = html;
 
-        console.log('Scanned products count:', Object.keys(scannedProducts).length, 'Save report button hidden:', saveReportBtn.classList.contains('hidden'));
         saveReportBtn.classList.toggle('hidden', Object.keys(scannedProducts).length === 0);
-        if (Object.keys(scannedProducts).length > 0) {
-            saveReportBtn.style.display = 'inline-block';
-        } else {
-            saveReportBtn.style.display = 'none';
-        }
+        saveReportBtn.style.display = Object.keys(scannedProducts).length > 0 ? 'inline-block' : 'none';
 
         document.querySelectorAll('.physical-stock-input').forEach(input => {
             input.addEventListener('change', function() {
@@ -728,6 +842,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 scannedProducts[productId].count = newValue;
                 updateProductsTable();
+            });
+        });
+
+        document.querySelectorAll('.note-input').forEach(input => {
+            input.addEventListener('input', function() {
+                const productId = this.dataset.productId;
+                scannedProducts[productId].note = this.value.trim();
+                productNotes[productId] = this.value.trim();
+                saveNotesToCache();
             });
         });
 
@@ -751,6 +874,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function saveNotesToCache() {
+        fetch('/inventory/notes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ notes: productNotes })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                console.error('Failed to save notes:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving notes:', error);
+        });
+    }
+
     function updateStock(productId) {
         const formData = new FormData();
         formData.append('physical_stock', scannedProducts[productId].count);
@@ -764,14 +907,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
-            console.log('Update stock response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Update stock response:', data);
             if (data.success) {
                 showAlert('success', data.message);
                 scannedQRCodes = new Set([...scannedQRCodes].filter(qr => !qr.includes(`/inventory/${productId}`)));
@@ -790,7 +931,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     saveReportBtn.addEventListener('click', () => {
-        console.log('Save report button clicked, reports:', scannedProducts);
         const report = Object.entries(scannedProducts).map(([productId, product]) => ({
             product_id: productId,
             name: product.name,
@@ -801,7 +941,8 @@ document.addEventListener('DOMContentLoaded', function() {
             difference: product.count - product.systemStock,
             scanned_qr_codes: Array.from(product.qrCodes),
             brand: product.brand,
-            model: product.model
+            model: product.model,
+            note: product.note
         }));
 
         if (report.length === 0) {
@@ -839,7 +980,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function resetScanner() {
-        console.log('Resetting scanner...');
         if (html5QrCode) {
             html5QrCode.stop().then(() => {
                 html5QrCode.clear();
@@ -854,7 +994,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveReportBtn.style.display = 'none';
                 barcodeInput.blur();
                 searchResults.classList.add('hidden');
-                console.log('Scanner reset complete');
             }).catch(err => {
                 console.error('Error stopping scanner:', err);
             });
@@ -869,12 +1008,10 @@ document.addEventListener('DOMContentLoaded', function() {
             saveReportBtn.style.display = 'none';
             barcodeInput.blur();
             searchResults.classList.add('hidden');
-            console.log('Scanner reset complete (no html5QrCode)');
         }
     }
 
     function showAlert(type, message) {
-        console.log(`Showing ${type} alert: ${message}`);
         const alertDiv = document.createElement('div');
         alertDiv.className = `bg-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-100 border border-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-400 text-${type === 'success' ? 'green' : type === 'warning' ? 'yellow' : 'red'}-700 px-4 py-3 rounded-lg shadow mb-4 animate-fade-in`;
         alertDiv.innerHTML = `
@@ -896,7 +1033,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function addScannedItem(decodedText, isNew) {
         if (!scannedList.querySelector(`[data-qr="${decodedText}"]`)) {
-            console.log('Adding scanned item:', decodedText, 'Is new:', isNew);
             const item = document.createElement('div');
             item.className = `scanned-item ${isNew ? 'new' : ''}`;
             item.setAttribute('data-qr', decodedText);
@@ -926,8 +1062,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateProductsTable();
                 }
             });
-        } else {
-            console.log('Item already in scannedList:', decodedText);
         }
     }
 });

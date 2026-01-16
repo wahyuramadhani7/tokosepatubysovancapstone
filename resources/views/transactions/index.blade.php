@@ -1,3 +1,6 @@
+@extends('layouts.app')
+
+@section('content')
 <!DOCTYPE html>
 <html lang="id" x-data="{ darkMode: false }">
 <head>
@@ -60,52 +63,7 @@
         .dark body {
             color: #F3F4F6;
         }
-        .custom-header {
-            background-color: #292929;
-            padding: 0.75rem 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            width: 100%;
-            margin: 0;
-            left: 0;
-            right: 0;
-            min-height: 60px;
-        }
-        .custom-header .close-icon {
-            width: 28px;
-            height: 28px;
-            background-color: #FF4500;
-            clip-path: polygon(20% 0%, 0% 20%, 30% 50%, 0% 80%, 20% 100%, 50% 70%, 80% 100%, 100% 80%, 70% 50%, 100% 20%, 80% 0%, 50% 30%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            margin-left: 0.75rem;
-        }
-        .custom-header .close-icon svg {
-            width: 14px;
-            height: 14px;
-            fill: #FFFFFF;
-        }
-        .custom-header .dashboard-button {
-            background-color: #FF4500;
-            color: #FFFFFF;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-decoration: none;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-right: 0.75rem;
-        }
-        .custom-header .dashboard-button:hover {
-            background-color: #FF5722;
-            transform: scale(1.05);
-        }
+      
         .dark-mode-toggle {
             background-color: #FF4500;
             color: #FFFFFF;
@@ -431,40 +389,13 @@
             .transaction-details .product-list-container {
                 max-height: 60px;
             }
-            .custom-header {
-                min-height: 50px;
-                padding: 0.5rem 0;
-            }
-            .custom-header .close-icon {
-                margin-left: 0.5rem;
-            }
-            .custom-header .dashboard-button {
-                margin-right: 0.5rem;
-            }
+           
         }
     </style>
 </head>
 <body class="min-h-screen custom-scrollbar" x-data="transactionListApp()" x-init="init()">
 
-    <!-- Custom Header -->
-    <header class="custom-header">
-        <div class="logo" style="margin-left: 15px;">
-            <img src="{{ asset('images/logo2.jpg') }}" alt="Sepatu by Sovan Logo" class="h-12 w-auto sm:h-12 md:h-14" loading="lazy">
-        </div>
-        <div class="flex items-center space-x-3">
-            <button @click="toggleDarkMode" class="dark-mode-toggle" :title="darkMode ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'" aria-label="Ganti mode tema">
-                <svg x-show="!darkMode" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <svg x-show="darkMode" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 01 8.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-            </button>
-            <a href="{{ Auth::user()->role === 'owner' ? route('owner.dashboard') : route('employee.dashboard') }}" class="dashboard-button card-hover" title="Kembali ke Dashboard" aria-label="Kembali ke Dashboard">
-                <i class="fas fa-home"></i>
-            </a>
-        </div>
-    </header>
+
 
     <main class="container mx-auto px-4 sm:px-6 py-12 max-w-7xl">
         <!-- Success Alert -->
@@ -511,28 +442,34 @@
             </button>
         </div>
 
-        <!-- Page Header -->
-        <div class="header-section">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 class="flex items-center">
-                        <svg class="h-7 w-7 mr-2 text-orange-custom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        <span class="highlight-gold">@SEPATUBYSOVAN</span>
-                    </h1>
-                    <p class="highlight-pos text-sm">Toko Puri Anjasmoro</p>
-                </div>
-                <div class="header-buttons flex gap-2">
-                    <a href="{{ route('transactions.create') }}" class="flex items-center">
-                        Transaksi Baru
-                    </a>
-                    <a href="{{ route('transactions.report') }}" class="flex items-center">
-                        Laporan Penjualan
-                    </a>
-                </div>
-            </div>
+       <!-- Page Header -->
+<div class="header-section mt-8">  <!-- Tambahan mt-8 untuk memberi jarak dari atas -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">  <!-- gap sedikit lebih besar agar lebih lega -->
+        <div>
+            <h1 class="flex items-center text-3xl md:text-4xl font-bold">  <!-- Ukuran sedikit lebih besar agar lebih menonjol -->
+                <svg class="h-8 w-8 mr-3 text-orange-custom flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span class="text-gold-custom">@SEPATUBYSOVAN</span>
+            </h1>
+            <p class="text-white text-lg mt-2 opacity-90">Toko Puri Anjasmoro</p>  <!-- Sedikit lebih besar dan opacity agar elegan -->
         </div>
+        <div class="header-buttons flex flex-col sm:flex-row gap-3">  <!-- Tombol lebih rapi di mobile -->
+            <a href="{{ route('transactions.create') }}" class="bg-orange-custom text-white font-semibold px-6 py-3 rounded-lg hover:bg-orange-600 transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Transaksi Baru
+            </a>
+            <a href="{{ route('transactions.report') }}" class="bg-gray-700 text-white font-semibold px-6 py-3 rounded-lg hover:bg-gray-600 transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Laporan Penjualan
+            </a>
+        </div>
+    </div>
+</div>
 
         <!-- Filter Card -->
         <div x-data="{ showFilters: true }" class="filter-section">
@@ -1130,3 +1067,4 @@
     </main>
 </body>
 </html>
+@endsection

@@ -185,16 +185,8 @@
     <!-- Popup Notification -->
     <div x-show="showFeaturePopup" class="popup-overlay" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-1" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-1" x-transition:leave-end="opacity-0">
         <div class="card p-4 max-w-md">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Pembaruan Fitur</h2>
-                <button @click="closeFeaturePopup" class="text-gray-medium dark:text-gray-400 hover:text-orange-custom p-1.5 rounded-full" aria-label="Tutup pemberitahuan">
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
             <p class="text-base text-gray-700 dark:text-gray-300">
-                Kini, Anda dapat memasukkan harga baru keseluruhan untuk transaksi di Ringkasan Pembayaran.
+                Kini, Anda dapat memasukkan harga baru keseluruhan untuk transaksi di Ringkasan Pembayaran. Juga mendukung retur dan tukar produk.
             </p>
             <div class="mt-3 flex justify-end">
                 <button @click="closeFeaturePopup" class="btn-primary px-4 py-2 text-base flex items-center">
@@ -258,6 +250,19 @@
                     <button type="button" @click="closePopup" class="mt-6 bg-orange-custom text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 hover-scale">
                         OK
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tukar Modal (Hanya Keterangan) -->
+        <div x-show="showExchangeModal" class="modal-overlay" x-cloak @click.self="closeExchangeModal">
+            <div class="card rounded-lg p-6 w-full max-w-lg">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Catatan Tukar Produk</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Untuk: <span class="font-medium" x-text="exchangeItem.name"></span> (<span x-text="exchangeItem.unit_code"></span>)</p>
+                <textarea x-model="exchangeNote" rows="3" placeholder="Contoh: Tukar dengan UNIT-ABC123, warna hitam, ukuran 42" class="w-full mb-4"></textarea>
+                <div class="flex justify-end space-x-2">
+                    <button @click="closeExchangeModal" class="px-4 py-2 border rounded-lg text-gray-700 dark:text-gray-300">Batal</button>
+                    <button @click="confirmExchangeNote" class="px-4 py-2 bg-orange-custom text-white rounded-lg">Simpan Catatan</button>
                 </div>
             </div>
         </div>
@@ -391,7 +396,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
-                                <textarea name="notes" rows="3" placeholder="Catatan tambahan untuk transaksi" class="w-full px-3 py-2 text-base rounded-lg">{{ old('notes') }}</textarea>
+                                <textarea name="notes" rows="3" placeholder="Catatan tambahan untuk transaksi" class="w-full px-3 py-2 text-base rounded-lg" x-model="notes">{{ old('notes') }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -420,24 +425,49 @@
                                             <span class="inline-block h-2 w-2 rounded-full" :style="`background-color: ${getColorCode(item.color)}`"></span>
                                             <span x-text="`${item.color}, Ukuran: ${item.size}, Kode: ${item.unit_code}`"></span>
                                         </div>
+
+                                        <!-- Action Buttons -->
+                                        <div class="mt-3 flex gap-2">
+                                            <button type="button" @click="markAsReturn(index)" :class="item.is_return ? 'bg-gray-500' : 'bg-red-600'" class="text-xs px-2 py-1 text-white rounded hover:bg-red-700 disabled:opacity-50" :disabled="item.is_return">
+                                                <span x-show="!item.is_return">Rusak/Retur</span>
+                                                <span x-show="item.is_return">Retur</span>
+                                            </button>
+                                            <button type="button" @click="openExchangeModal(index)" class="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                                <span x-show="!item.exchange_note">Tukar</span>
+                                                <span x-show="item.exchange_note">Tukar</span>
+                                            </button>
+                                        </div>
+
+                                        <!-- Exchange Note Preview -->
+                                        <div x-show="item.exchange_note" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/30 rounded text-xs text-blue-700 dark:text-blue-300">
+                                            <strong>Catatan Tukar:</strong> <span x-text="item.exchange_note"></span>
+                                        </div>
+
                                         <div class="mt-4 space-y-2">
                                             <div class="flex justify-between items-center">
                                                 <span class="text-gray-medium dark:text-gray-400">Harga Asli:</span>
                                                 <p class="font-semibold text-gray-900 dark:text-gray-100 text-base" x-text="item.discount_price ? formatRupiah(item.discount_price) : formatRupiah(item.selling_price)"></p>
                                             </div>
-                                            <div class="flex justify-between items-center">
+                                            <div class="flex justify-between items-center" x-show="!item.is_return">
                                                 <span class="text-gray-medium dark:text-gray-400">Harga Baru:</span>
                                                 <input type="number" :name="'products['+index+'][new_price]'" x-model.number="item.new_price" min="0" :max="item.discount_price || item.selling_price" @input="validateNewPrice(index)" placeholder="Harga baru" class="w-28 text-right px-3 py-2 text-base rounded-lg">
                                             </div>
-                                            <div class="flex justify-between items-center" x-show="item.new_price !== null && item.new_price !== '' && item.new_price >= 0">
+                                            <div class="flex justify-between items-center" x-show="item.new_price !== null && item.new_price !== '' && item.new_price >= 0 && !item.is_return">
                                                 <span class="text-gray-medium dark:text-gray-400">Diskon:</span>
                                                 <p class="font-semibold text-green-custom" x-text="formatRupiah(calculateItemDiscount(item))"></p>
                                             </div>
+                                            <div class="flex justify-between items-center" x-show="item.is_return">
+                                                <span class="text-red-600 dark:text-red-400 font-medium">RETUR (Rp 0)</span>
+                                            </div>
                                         </div>
+
+                                        <!-- Hidden Inputs -->
                                         <input type="hidden" :name="'products['+index+'][product_id]'" x-model="item.product_id">
                                         <input type="hidden" :name="'products['+index+'][unit_code]'" x-model="item.unit_code">
                                         <input type="hidden" :name="'products['+index+'][discount_price]'" x-model="item.discount_price || item.selling_price">
                                         <input type="hidden" :name="'products['+index+'][quantity]'" value="1">
+                                        <input type="hidden" :name="'products['+index+'][is_return]'" x-model="item.is_return">
+                                        <input type="hidden" :name="'products['+index+'][exchange_note]'" x-model="item.exchange_note">
                                     </li>
                                 </template>
                             </ul>
@@ -505,6 +535,13 @@
                 showManualSelection: false,
                 showFeaturePopup: false,
                 overallNewPrice: null,
+                notes: '{{ old('notes') }}',
+
+                // Tukar Modal (Catatan Saja)
+                showExchangeModal: false,
+                exchangeIndex: null,
+                exchangeItem: {},
+                exchangeNote: '',
 
                 init() {
                     this.darkMode = localStorage.getItem('darkMode') === 'true';
@@ -512,14 +549,11 @@
                         localStorage.setItem('darkMode', value);
                     });
 
-                    // Show feature update popup only once per session
                     const hasSeenPopup = sessionStorage.getItem('hasSeenFeaturePopup');
                     if (!hasSeenPopup) {
                         this.showFeaturePopup = true;
                         sessionStorage.setItem('hasSeenFeaturePopup', 'true');
-                        setTimeout(() => {
-                            this.closeFeaturePopup();
-                        }, 30000); // Close after 30 seconds
+                        setTimeout(() => this.closeFeaturePopup(), 30000);
                     }
 
                     this.initialize();
@@ -532,13 +566,16 @@
                             ...item,
                             selling_price: parseFloat(item.selling_price) || 0,
                             discount_price: item.discount_price ? parseFloat(item.discount_price) : null,
-                            new_price: item.new_price ? parseFloat(item.new_price) : null
+                            new_price: item.new_price ? parseFloat(item.new_price) : null,
+                            is_return: item.is_return === '1' || item.is_return === true,
+                            exchange_note: item.exchange_note || null
                         }));
                         this.scannedUnitCodes = this.cart.map(item => item.unit_code);
                     @endif
                     this.paymentMethod = '{{ old('payment_method') }}';
                     this.cardType = '{{ old('card_type') }}';
                     this.overallNewPrice = '{{ old('overall_new_price') }}' ? parseFloat('{{ old('overall_new_price') }}') : null;
+                    this.notes = '{{ old('notes') }}';
                 },
 
                 closeFeaturePopup() {
@@ -566,18 +603,9 @@
 
                 getColorCode(color) {
                     const colorMap = {
-                        'Merah': '#DC2626',
-                        'Hitam': '#292929',
-                        'Putih': '#FAFAFA',
-                        'Biru': '#2563EB',
-                        'Navy': '#1E3A8A',
-                        'Hijau': '#065F46',
-                        'Kuning': '#FACC15',
-                        'Abu-abu': '#6B7280',
-                        'Coklat': '#5D2E0B',
-                        'Pink': '#EC4899',
-                        'Ungu': '#7C3AED',
-                        'Orange': '#EA580C'
+                        'Merah': '#DC2626', 'Hitam': '#292929', 'Putih': '#FAFAFA', 'Biru': '#2563EB',
+                        'Navy': '#1E3A8A', 'Hijau': '#065F46', 'Kuning': '#FACC15', 'Abu-abu': '#6B7280',
+                        'Coklat': '#5D2E0B', 'Pink': '#EC4899', 'Ungu': '#7C3AED', 'Orange': '#EA580C'
                     };
                     return colorMap[color] || '#6B7280';
                 },
@@ -602,10 +630,7 @@
 
                 addToCart(unit) {
                     if (this.scannedUnitCodes.includes(unit.unit_code)) {
-                        this.popupTitle = 'Unit Sudah Discan';
-                        this.popupMessage = `Unit dengan kode "${unit.unit_code}" sudah ada di keranjang.`;
-                        this.popupType = 'error';
-                        this.showPopup = true;
+                        this.showPopupMessage('Unit Sudah Discan', `Unit dengan kode "${unit.unit_code}" sudah ada di keranjang.`, 'error');
                         return;
                     }
                     this.cart.push({
@@ -616,13 +641,12 @@
                         selling_price: parseFloat(unit.selling_price) || 0,
                         discount_price: unit.discount_price ? parseFloat(unit.discount_price) : null,
                         unit_code: unit.unit_code,
-                        new_price: null
+                        new_price: null,
+                        is_return: false,
+                        exchange_note: null
                     });
                     this.scannedUnitCodes.push(unit.unit_code);
-                    this.popupTitle = 'Unit Ditambahkan';
-                    this.popupMessage = `Unit "${unit.unit_code}" berhasil ditambahkan ke keranjang!`;
-                    this.popupType = 'success';
-                    this.showPopup = true;
+                    this.showPopupMessage('Unit Ditambahkan', `Unit "${unit.unit_code}" berhasil ditambahkan ke keranjang!`, 'success');
                     this.searchQuery = '';
                     this.searchResults = [];
                 },
@@ -631,163 +655,154 @@
                     const unitCode = this.cart[index].unit_code;
                     this.scannedUnitCodes = this.scannedUnitCodes.filter(code => code !== unitCode);
                     this.cart.splice(index, 1);
-                    this.overallNewPrice = null; // Reset overall new price when cart changes
+                    this.overallNewPrice = null;
+                    this.updateNotes();
+                },
+
+                markAsReturn(index) {
+                    if (confirm(`Tandai "${this.cart[index].name}" sebagai RUSAK/RETUR?`)) {
+                        this.cart[index].is_return = true;
+                        this.cart[index].new_price = 0;
+                        this.showPopupMessage('Ditandai Retur', 'Produk ditandai sebagai retur dan harga diatur ke Rp 0.', 'success');
+                        this.updateNotes();
+                    }
+                },
+
+                openExchangeModal(index) {
+                    this.exchangeIndex = index;
+                    this.exchangeItem = { ...this.cart[index] };
+                    this.exchangeNote = this.cart[index].exchange_note || '';
+                    this.showExchangeModal = true;
+                },
+
+                closeExchangeModal() {
+                    this.showExchangeModal = false;
+                    this.exchangeIndex = null;
+                    this.exchangeItem = {};
+                    this.exchangeNote = '';
+                },
+
+                confirmExchangeNote() {
+                    if (!this.exchangeNote.trim()) {
+                        this.showPopupMessage('Catatan Kosong', 'Masukkan keterangan tukar terlebih dahulu.', 'error');
+                        return;
+                    }
+                    this.cart[this.exchangeIndex].exchange_note = this.exchangeNote.trim();
+                    this.showPopupMessage('Catatan Disimpan', 'Keterangan tukar berhasil disimpan.', 'success');
+                    this.closeExchangeModal();
+                    this.updateNotes();
+                },
+
+                updateNotes() {
+                    let notes = [];
+                    this.cart.forEach(item => {
+                        if (item.is_return) {
+                            notes.push(`Retur RUSAK: ${item.name} (Kode: ${item.unit_code})`);
+                        }
+                        if (item.exchange_note) {
+                            notes.push(`Tukar: ${item.exchange_note}`);
+                        }
+                    });
+                    if (notes.length > 0) {
+                        this.notes = notes.join('\n');
+                    } else {
+                        this.notes = '';
+                    }
                 },
 
                 calculateItemDiscount(item) {
                     if (item.new_price === null || item.new_price === '' || item.new_price < 0) return 0;
-                    const originalPrice = item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
-                    const newPrice = parseFloat(item.new_price) || originalPrice;
-                    return originalPrice - newPrice;
+                    const originalPrice = item.discount_price !== null ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
+                    return originalPrice - parseFloat(item.new_price);
                 },
 
                 validateNewPrice(index) {
                     const item = this.cart[index];
-                    const maxPrice = item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
+                    const maxPrice = item.discount_price ?? item.selling_price;
                     const newPrice = parseFloat(item.new_price) || 0;
 
                     if (newPrice > maxPrice && item.new_price !== null && item.new_price !== '') {
                         this.cart[index].new_price = maxPrice;
-                        this.popupTitle = 'Harga Baru Tidak Valid';
-                        this.popupMessage = `Harga baru untuk "${item.name}" tidak boleh melebihi ${this.formatRupiah(maxPrice)}.`;
-                        this.popupType = 'error';
-                        this.showPopup = true;
+                        this.showPopupMessage('Harga Tidak Valid', `Harga baru tidak boleh melebihi ${this.formatRupiah(maxPrice)}.`, 'error');
                     } else if (newPrice < 0) {
                         this.cart[index].new_price = null;
-                        this.popupTitle = 'Harga Baru Tidak Valid';
-                        this.popupMessage = `Harga baru untuk "${item.name}" tidak boleh kurang dari 0.`;
-                        this.popupType = 'error';
-                        this.showPopup = true;
+                        this.showPopupMessage('Harga Tidak Valid', 'Harga baru tidak boleh kurang dari 0.', 'error');
                     }
-                    this.overallNewPrice = null; // Reset overall new price if per-item price changes
+                    this.overallNewPrice = null;
                 },
 
                 validateOverallNewPrice() {
                     const subtotal = this.calculateSubtotal();
                     const newPrice = parseFloat(this.overallNewPrice) || 0;
-
-                    if (newPrice > subtotal && this.overallNewPrice !== null && this.overallNewPrice !== '') {
+                    if (newPrice > subtotal && this.overallNewPrice !== null) {
                         this.overallNewPrice = subtotal;
-                        this.popupTitle = 'Harga Baru Keseluruhan Tidak Valid';
-                        this.popupMessage = `Harga baru keseluruhan tidak boleh melebihi subtotal ${this.formatRupiah(subtotal)}.`;
-                        this.popupType = 'error';
-                        this.showPopup = true;
+                        this.showPopupMessage('Harga Tidak Valid', `Tidak boleh melebihi subtotal ${this.formatRupiah(subtotal)}.`, 'error');
                     } else if (newPrice < 0) {
                         this.overallNewPrice = null;
-                        this.popupTitle = 'Harga Baru Keseluruhan Tidak Valid';
-                        this.popupMessage = `Harga baru keseluruhan tidak boleh kurang dari 0.`;
-                        this.popupType = 'error';
-                        this.showPopup = true;
                     }
                 },
 
                 calculateSubtotal() {
                     return this.cart.reduce((total, item) => {
-                        const price = item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
-                        return total + (price || 0);
+                        if (item.is_return) return total;
+                        const price = item.discount_price ?? item.selling_price;
+                        return total + price;
                     }, 0);
                 },
 
                 calculateDiscount() {
-                    if (this.overallNewPrice !== null && this.overallNewPrice !== '' && this.overallNewPrice >= 0) {
-                        return this.calculateSubtotal() - parseFloat(this.overallNewPrice);
+                    if (this.overallNewPrice !== null && this.overallNewPrice >= 0) {
+                        return this.calculateSubtotal() - this.overallNewPrice;
                     }
                     return this.cart.reduce((total, item) => {
-                        if (item.new_price === null || item.new_price === '' || item.new_price < 0) return total;
-                        const originalPrice = item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
-                        const newPrice = parseFloat(item.new_price) || originalPrice;
-                        return total + (originalPrice - newPrice);
+                        if (item.is_return || !item.new_price) return total;
+                        const original = item.discount_price ?? item.selling_price;
+                        return total + (original - parseFloat(item.new_price));
                     }, 0);
                 },
 
                 calculateTotal() {
-                    if (this.overallNewPrice !== null && this.overallNewPrice !== '' && this.overallNewPrice >= 0) {
-                        return parseFloat(this.overallNewPrice) || 0;
+                    if (this.overallNewPrice !== null && this.overallNewPrice >= 0) {
+                        return this.overallNewPrice;
                     }
                     return this.cart.reduce((total, item) => {
-                        const price = parseFloat(item.new_price) || (item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price));
-                        return total + (price || 0);
+                        if (item.is_return) return total;
+                        const price = parseFloat(item.new_price) || (item.discount_price ?? item.selling_price);
+                        return total + price;
                     }, 0);
                 },
 
                 updateCardTypeVisibility() {
-                    if (this.paymentMethod !== 'debit') {
-                        this.cardType = '';
-                    }
+                    if (this.paymentMethod !== 'debit') this.cardType = '';
+                },
+
+                showPopupMessage(title, message, type = 'success') {
+                    this.popupTitle = title;
+                    this.popupMessage = message;
+                    this.popupType = type;
+                    this.showPopup = true;
+                },
+
+                closePopup() {
+                    this.showPopup = false;
                 },
 
                 validateForm(event) {
                     if (this.cart.length === 0) {
                         event.preventDefault();
-                        this.popupTitle = 'Keranjang Kosong';
-                        this.popupMessage = 'Tambahkan unit produk terlebih dahulu.';
-                        this.popupType = 'error';
-                        this.showPopup = true;
+                        this.showPopupMessage('Keranjang Kosong', 'Tambahkan unit produk terlebih dahulu.', 'error');
                         return false;
                     }
-
                     if (!this.paymentMethod) {
                         event.preventDefault();
-                        this.popupTitle = 'Metode Pembayaran Kosong';
-                        this.popupMessage = 'Silakan pilih metode pembayaran!';
-                        this.popupType = 'error';
-                        this.showPopup = true;
+                        this.showPopupMessage('Metode Pembayaran', 'Silakan pilih metode pembayaran!', 'error');
                         return false;
                     }
-
                     if (this.paymentMethod === 'debit' && !this.cardType) {
                         event.preventDefault();
-                        this.popupTitle = 'Tipe Kartu Kosong';
-                        this.popupMessage = 'Silakan pilih tipe kartu untuk metode pembayaran Debit!';
-                        this.popupType = 'error';
-                        this.showPopup = true;
+                        this.showPopupMessage('Tipe Kartu', 'Pilih tipe kartu untuk Debit!', 'error');
                         return false;
                     }
-
-                    const subtotal = this.calculateSubtotal();
-                    const overallNewPrice = parseFloat(this.overallNewPrice) || 0;
-                    if (overallNewPrice > subtotal && this.overallNewPrice !== null && this.overallNewPrice !== '') {
-                        event.preventDefault();
-                        this.popupTitle = 'Harga Baru Keseluruhan Tidak Valid';
-                        this.popupMessage = `Harga baru keseluruhan tidak boleh melebihi subtotal ${this.formatRupiah(subtotal)}.`;
-                        this.popupType = 'error';
-                        this.showPopup = true;
-                        return false;
-                    }
-
-                    if (overallNewPrice < 0) {
-                        event.preventDefault();
-                        this.popupTitle = 'Harga Baru Keseluruhan Tidak Valid';
-                        this.popupMessage = 'Harga baru keseluruhan tidak boleh kurang dari 0.';
-                        this.popupType = 'error';
-                        this.showPopup = true;
-                        return false;
-                    }
-
-                    for (let i = 0; i < this.cart.length; i++) {
-                        const item = this.cart[i];
-                        const maxPrice = item.discount_price !== null && item.discount_price !== undefined ? parseFloat(item.discount_price) : parseFloat(item.selling_price);
-                        const newPrice = parseFloat(item.new_price) || 0;
-
-                        if (item.new_price !== null && item.new_price !== '' && newPrice > maxPrice) {
-                            event.preventDefault();
-                            this.popupTitle = 'Harga Baru Tidak Valid';
-                            this.popupMessage = `Harga baru untuk "${item.name}" tidak boleh melebihi ${this.formatRupiah(maxPrice)}.`;
-                            this.popupType = 'error';
-                            this.showPopup = true;
-                            return false;
-                        }
-
-                        if (item.new_price !== null && item.new_price !== '' && newPrice < 0) {
-                            event.preventDefault();
-                            this.popupTitle = 'Harga Baru Tidak Valid';
-                            this.popupMessage = `Harga baru untuk "${item.name}" tidak boleh kurang dari 0.`;
-                            this.popupType = 'error';
-                            this.showPopup = true;
-                            return false;
-                        }
-                    }
-
                     return true;
                 },
 
@@ -796,41 +811,22 @@
                     this.scanError = '';
                     this.$nextTick(() => {
                         try {
-                            this.qrScanner = new Html5QrcodeScanner(
-                                "qr-reader",
-                                { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
-                                false
-                            );
+                            this.qrScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
                             this.qrScanner.render(
-                                (decodedText) => this.handleQrScan(decodedText),
-                                (error) => {
-                                    console.warn('QR scan error:', error);
-                                    this.scanError = 'Gagal membaca QR code. Coba lagi.';
-                                }
+                                (text) => this.handleQrScan(text),
+                                (err) => { this.scanError = 'Gagal membaca QR. Coba lagi.'; }
                             );
                         } catch (err) {
-                            console.error('Scanner initialization failed:', err);
-                            this.scanError = 'Gagal memulai scanner. Periksa izin kamera.';
+                            this.scanError = 'Gagal memulai scanner.';
                             this.isScannerOpen = false;
                         }
                     });
                 },
 
                 closeScanner() {
-                    if (this.qrScanner) {
-                        this.qrScanner.clear().then(() => {
-                            this.qrScanner = null;
-                        }).catch(err => console.error('Error stopping scanner:', err));
-                    }
+                    if (this.qrScanner) this.qrScanner.clear();
                     this.isScannerOpen = false;
                     this.scanError = '';
-                },
-
-                closePopup() {
-                    this.showPopup = false;
-                    this.popupTitle = '';
-                    this.popupMessage = '';
-                    this.popupType = 'success';
                 },
 
                 async handleQrScan(decodedText) {
@@ -838,37 +834,26 @@
                     let unitCode;
                     try {
                         const url = new URL(decodedText);
-                        const pathSegments = url.pathname.split('/');
-                        unitCode = pathSegments[pathSegments.length - 1];
-                        if (!unitCode || !unitCode.startsWith('UNIT-')) {
-                            throw new Error('Invalid unit code');
-                        }
-                    } catch (e) {
-                        this.scanError = 'QR code tidak valid. Harus berisi URL unit produk.';
+                        unitCode = url.pathname.split('/').pop();
+                        if (!unitCode.startsWith('UNIT-')) throw new Error();
+                    } catch {
+                        this.scanError = 'QR tidak valid.';
                         return;
                     }
-
                     if (this.scannedUnitCodes.includes(unitCode)) {
-                        this.scanError = `Unit dengan kode "${unitCode}" sudah discan.`;
+                        this.scanError = 'Unit sudah discan.';
                         return;
                     }
-
                     try {
-                        const response = await fetch(`/transactions/add-product/${unitCode}`, {
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            }
+                        const res = await fetch(`/transactions/add-product/${unitCode}`, {
+                            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                         });
-                        const data = await response.json();
-                        if (!data.success) {
-                            this.scanError = data.message;
-                            return;
-                        }
+                        const data = await res.json();
+                        if (!data.success) throw new Error(data.message);
                         this.addToCart(data.unit);
                         this.closeScanner();
-                    } catch (err) {
-                        this.scanError = 'Gagal memuat unit produk. Coba lagi.';
-                        console.error('Fetch error:', err);
+                    } catch {
+                        this.scanError = 'Gagal memuat unit.';
                     }
                 }
             };
